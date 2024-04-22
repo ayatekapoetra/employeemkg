@@ -20,7 +20,7 @@ const ShowFormSakit = () => {
         karyawan_id: null,
         karyawan: {nama: "Ayat Ekapoetra"},
         date_start: new Date(),
-        date_end: new Date(moment().add(1, 'day')),
+        date_end: new Date(moment().add(1, "day")),
         narasi: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout."
     })
 

@@ -980,6 +980,10 @@ PODS:
     - Google-Maps-iOS-Utils (= 4.2.2)
     - GoogleMaps (= 7.4.0)
     - React-Core
+  - react-native-image-picker (7.1.2):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
   - react-native-maps (1.14.0):
     - React-Core
   - react-native-safe-area-context (4.9.0):
@@ -1225,6 +1229,7 @@ DEPENDENCIES:
   - react-native-date-picker (from `../node_modules/react-native-date-picker`)
   - "react-native-geolocation (from `../node_modules/@react-native-community/geolocation`)"
   - react-native-google-maps (from `../node_modules/react-native-maps`)
+  - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-maps (from `../node_modules/react-native-maps`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
@@ -1336,6 +1341,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/geolocation"
   react-native-google-maps:
     :path: "../node_modules/react-native-maps"
+  react-native-image-picker:
+    :path: "../node_modules/react-native-image-picker"
   react-native-maps:
     :path: "../node_modules/react-native-maps"
   react-native-safe-area-context:
@@ -1439,6 +1446,7 @@ SPEC CHECKSUMS:
   react-native-date-picker: 90687f1dbd374ff0265dca99d949998364c22fa9
   react-native-geolocation: 0ac6e11c1097d61b3836ab570c48c2bebb052604
   react-native-google-maps: 94df984b1647973baffe17c0b7b52828d6b69d94
+  react-native-image-picker: 994a97b28e7f2c2197e21801569bb19f6e494e38
   react-native-maps: cbf2f03bfeebfd7ec45966b066db13a075fd2af3
   react-native-safe-area-context: b97eb6f9e3b7f437806c2ce5983f479f8eb5de4b
   React-nativeconfig: d753fbbc8cecc8ae413d615599ac378bbf6999bb

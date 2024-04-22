@@ -4,8 +4,11 @@ import { TouchableOpacity, Dimensions } from 'react-native'
 import { VStack, Text, Center, HStack } from 'native-base'
 import { useSelector } from 'react-redux'
 import { Scan } from 'iconsax-react-native'
-import React, { useState } from 'react'
-import MapView, { Circle, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import React, { useEffect, useState } from 'react'
+import MapView, { Circle, Marker, PROVIDER_GOOGLE } from 'react-native-maps'
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker'
+import Geolocation from '@react-native-community/geolocation'
+import { getDistance } from 'geolib'
 import AppScreen from '../../components/AppScreen'
 import HeaderScreen from '../../components/HeaderScreen'
 import appcolor from '../../common/colorMode'
@@ -13,15 +16,42 @@ import appcolor from '../../common/colorMode'
 const { width } = Dimensions.get("screen")
 
 let posistion = {
-    latitude: -5.14515, //-5.196104, 119.459791
-    longitude: 119.4479473,
+    latitude: -5.145109, //-5.196104, 119.459791
+    longitude: 119.44856182,
 }
 
 const ChecklogPage = () => {
     const mode = useSelector(state => state.themes).value
+    const [ jarak, setJarak ] = useState(100)
     const [ currentClock, setCurrentClock ] = useState(moment().format("HH:mm:ss"))
     const [ location, setLocation ] = useState(posistion)
-    console.log(moment().format("dddd, DD MMMM YYYY"));
+    const [ myLocation, setMyLocation ] = useState(null)
+
+    useEffect(() => {
+        Geolocation.getCurrentPosition(info => {
+            // console.log(info);
+            setMyLocation(info)
+            setJarak(getDistance(
+                posistion,
+                { 
+                    latitude: info?.coords?.latitude,
+                    longitude: info?.coords?.longitude
+                }
+            ))
+        });
+    }, [myLocation])
+
+    useEffect(() => {
+        setTimeout(() => {
+            setCurrentClock(moment().format("HH:mm:ss"))
+        }, 1000);
+
+    }, [currentClock])
+
+    const openCameraHandle = async () => {
+        const result = await launchCamera({cameraType: "front"});
+        console.log(result);
+    }
     return (
         <AppScreen>
             <VStack h={"full"}>
@@ -39,7 +69,7 @@ const ChecklogPage = () => {
                     </Text>
                 </Center>
                 <HStack mx={3} alignItems={"center"} justifyContent={"space-around"}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={openCameraHandle}>
                         <HStack p={2} space={1} alignItems={"center"} bg={"#d1fae5"} rounded={"md"} shadow={2}>
                             <Scan size="32" color={appcolor.teks[mode][4]} variant="Bulk"/>
                             <Text 
@@ -65,8 +95,8 @@ const ChecklogPage = () => {
                         fontSize={12} 
                         fontWeight={"300"} 
                         fontFamily={"Poppins-Light"} 
-                        color={appcolor.teks[mode][1]}>
-                        Anda berada pada radius checklog 100 meter
+                        color={appcolor.teks[mode][jarak > 10 ? 3:4]}>
+                        Anda berada pada radius checklog {jarak} meter
                     </Text>
                 </VStack>
                 <VStack flex={1} bg={"amber.100"}>

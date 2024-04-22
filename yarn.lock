@@ -4592,6 +4592,11 @@ gensync@^1.0.0-beta.2:
   resolved "https://registry.yarnpkg.com/gensync/-/gensync-1.0.0-beta.2.tgz#32a6ee76c3d7f52d46b2b1ae5d93fea8580a25e0"
   integrity sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==
 
+geolib@^3.3.4:
+  version "3.3.4"
+  resolved "https://registry.yarnpkg.com/geolib/-/geolib-3.3.4.tgz#09883ba2fdab84d2764cf3615dbafb9bce3c54d0"
+  integrity sha512-EicrlLLL3S42gE9/wde+11uiaYAaeSVDwCUIv2uMIoRBfNJCn8EsSI+6nS3r4TCKDO6+RQNM9ayLq2at+oZQWQ==
+
 get-caller-file@^2.0.1, get-caller-file@^2.0.5:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-2.0.5.tgz#4f94412a82db32f36e3b0b9741f8a97feb031f7e"
@@ -6824,6 +6829,11 @@ react-native-gifted-charts@^1.4.10:
   integrity sha512-9zJbvn4Fp38wgVUF5QVtQJUMRqCVzYXp0knW4IuPJ25BsetganwaXC36F26J9XuhJqtu6KWvWQgKshvIj2N/JA==
   dependencies:
     gifted-charts-core "^0.1.4"
+
+react-native-image-picker@^7.1.2:
+  version "7.1.2"
+  resolved "https://registry.yarnpkg.com/react-native-image-picker/-/react-native-image-picker-7.1.2.tgz#383849d1953caf4578874a1f5e5dd11c737bd5cd"
+  integrity sha512-b5y5nP60RIPxlAXlptn2QwlIuZWCUDWa/YPUVjgHc0Ih60mRiOg1PSzf0IjHSLeOZShCpirpvSPGnDExIpTRUg==
 
 react-native-maps@^1.14.0:
   version "1.14.0"

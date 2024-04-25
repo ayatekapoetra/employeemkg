@@ -23,11 +23,6 @@ import LoadingHauler from '../../components/LoadingHauler'
 
 const { width } = Dimensions.get("screen")
 
-let posistion = {
-    latitude: -5.145109, //-5.196104, 119.459791
-    longitude: 119.44856182,
-}
-
 let lokasi = lokasiAbsensi.RECORDS
 
 const ChecklogPage = () => {
@@ -41,17 +36,25 @@ const ChecklogPage = () => {
     const [ loading, setLoading ] = useState(false)
     const [ isLogmasuk, setLogmasuk ] = useState(true)
     const [ isLogpulang, setLogpulang ] = useState(true)
-    const [ location, setLocation ] = useState(posistion)
+    const [ location, setLocation ] = useState({
+        latitude: -5.145109, //-5.196104, 119.459791
+        longitude: 119.44856182,
+    })
 
     useEffect(() => {
         Geolocation.getCurrentPosition(info => {
+            console.log(info);
             setMyLocation(info)
-            const arr = lokasi.map( m => {
+            setLocation({...location, latitude: info?.coords?.latitude, longitude: info?.coords?.longitude})
+            
+            let arr = lokasi.map( m => {
                 return getDistance(
                     { latitude: m.latitude, longitude: m.longitude }, 
                     { latitude: info?.coords?.latitude, longitude: info?.coords?.longitude }
                 )
             }).sort((a, b) => {return a - b})
+                
+            console.log(arr);
             setJarak(arr[0])
         });
     }, [myLocation])
@@ -119,6 +122,8 @@ const ChecklogPage = () => {
                 }
             })
 
+            console.log(resp);
+
             if(resp.data.diagnostic.error){
                 setLogmasuk(true)
                 setLoading(false)
@@ -144,6 +149,7 @@ const ChecklogPage = () => {
             )
             
         } catch (error) {
+            console.log(error);
             setLogmasuk(true)
             setLoading(false)
             dispatch(
@@ -151,7 +157,7 @@ const ChecklogPage = () => {
                     show: true, 
                     status: "error", 
                     title: "Peringatan", 
-                    subtitle: error.message || "Batal membuka kamera depan pada device anda...."
+                    subtitle: error.response.data.diagnostic.message || "Batal membuka kamera depan pada device anda...."
                 })
             )
             return
@@ -235,6 +241,8 @@ const ChecklogPage = () => {
             return
         }
     }
+
+    
 
     return (
         <AppScreen>
@@ -349,7 +357,7 @@ const ChecklogPage = () => {
                                 ...location,
                                 latitudeDelta: 0.002,
                                 longitudeDelta: 0.002,
-                            }}/>
+                            }}>
                             {
                                 lokasi?.map( m => {
                                     return (
@@ -359,7 +367,7 @@ const ChecklogPage = () => {
                                             strokeColor={"red"}
                                             fillColor={"error.100"}
                                             center={{latitude: m.latitude, longitude: m.longitude}}
-                                            radius={30} style={{position: "absolute", zIndex: 999}}/>
+                                            radius={30}/>
                                     )
                                 })
                             }
@@ -370,11 +378,11 @@ const ChecklogPage = () => {
                                             key={m.id} 
                                             title={`Titik Checklog ${m.nama}`} 
                                             description={"Radius checklog untuk absensi"} 
-                                            coordinate={{latitude: m.latitude, longitude: m.longitude}}
-                                            style={{position: "absolute"}}/>
+                                            coordinate={{latitude: m.latitude, longitude: m.longitude}}/>
                                     )
                                 })
                             }
+                        </MapView>
                     </Center>
                 </VStack>
             </VStack>

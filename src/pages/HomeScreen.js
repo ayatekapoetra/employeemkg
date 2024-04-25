@@ -1,7 +1,6 @@
 import { TouchableOpacity } from 'react-native'
 import { Center, Button, Text, VStack, HStack, Image, ScrollView } from 'native-base'
 import React, { useEffect, useState } from 'react'
-import { Sun1, Moon, Notification } from 'iconsax-react-native';
 import themeManager from '../common/themeScheme'
 import AppScreen from '../components/AppScreen';
 import HomeDonutChart from '../components/HomeDonutChart';
@@ -11,12 +10,16 @@ import { useNavigation } from '@react-navigation/native';
 import HeaderScreen from '../components/HeaderScreen';
 import moment from 'moment'
 import 'moment/locale/id'
+import appcolor from '../common/colorMode';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = () => {
     const route = useNavigation()
     const dispatch = useDispatch()
     const themes = useSelector(state => state.themes)
+    const { user } = useSelector(state => state.auth)
     const [ colorTheme, setColorTheme ] = useState(themes.value) 
+    const [ uuid, setUUID ] = useState("") 
 
     useEffect(() => {
         initialScheme()
@@ -26,7 +29,11 @@ const HomeScreen = () => {
         const initMode = await themeManager.get()
         dispatch(applyTheme(initMode))
         setColorTheme(initMode)
+
+        const device = await AsyncStorage.getItem("@DEVICESID")
+        console.log(device);
     }
+
 
     return (
         <AppScreen>
@@ -39,7 +46,7 @@ const HomeScreen = () => {
                             fontFamily={"Quicksand-SemiBold"} 
                             fontWeight={700} 
                             color={colorTheme != 'dark'?"#2f313e":"#F5F5F5"}>
-                            Ayat Ekapoetra
+                            { user?.karyawan?.nama }
                         </Text>
 
                         <Text 
@@ -47,7 +54,7 @@ const HomeScreen = () => {
                             fontFamily={"Quicksand-Light"} 
                             fontWeight={300} 
                             color={colorTheme != 'dark'?"#2f313e":"#F5F5F5"}>
-                            Developer System
+                            { user?.usertype }
                         </Text>
 
                         <HStack my={3} space={3} h={"170px"}>

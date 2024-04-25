@@ -13,6 +13,7 @@ import SettingPage from '../pages/setting'
 import RiwayatAbsensiPage from '../pages/riwayat-kehadiran'
 import PerintahLemburPage from '../pages/spl'
 import ChecklogPage from '../pages/checklog'
+import RiwayatAbsensiToday from '../pages/checklog/riwayatToday'
 import PermintaanPage from '../pages/permintaan'
 import CreateFormSakit from '../pages/permintaan/informasi-sakit/create'
 import ShowFormSakit from '../pages/permintaan/informasi-sakit/show'
@@ -27,6 +28,7 @@ export default function AppStack() {
       <Stack.Screen name="Home" component={HomeInitialTab} options={{headerShown: false}}/>
       <Stack.Screen name="Riwayat-Absensi" component={RiwayatAbsensiPage} options={{headerShown: false}}/>
       <Stack.Screen name="Checklog-Absensi" component={ChecklogPage} options={{headerShown: false}}/>
+      <Stack.Screen name="Checklog-Absensi-Riwayat" component={RiwayatAbsensiToday} options={{headerShown: false}}/>
       <Stack.Screen name="Permintaan" component={PermintaanPage} options={{headerShown: false}}/>
       <Stack.Screen name="Permintaan-Create-Sakit" component={CreateFormSakit} options={{headerShown: false}}/>
       <Stack.Screen name="Permintaan-Show-Sakit" component={ShowFormSakit} options={{headerShown: false}}/>

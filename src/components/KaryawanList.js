@@ -4,7 +4,7 @@ import { VStack, Text, HStack } from 'native-base'
 import { useSelector } from 'react-redux'
 import appcolor from '../common/colorMode'
 import employee from '../../assets/json/karyawans.json'
-import { Airdrop, SearchStatus, UserTag } from 'iconsax-react-native'
+import { Airdrop, SearchStatus, TriangleLogo, UserTag } from 'iconsax-react-native'
 import moment from 'moment'
 
 const KaryawanList = ( { state, setState, setOpenKaryawan } ) => {
@@ -31,8 +31,8 @@ const KaryawanList = ( { state, setState, setOpenKaryawan } ) => {
             borderWidth={1} 
             borderStyle={"dotted"}
             borderColor={appcolor.line[mode][2]}>
-            <HStack p={2} mb={2} space={2} rounded={"md"} borderWidth={1} borderColor={appcolor.line[mode][2]}>
-                <SearchStatus size="22" color="#ff8a65" variant="Bulk"/>
+            <HStack p={2} mb={2} space={2} rounded={"md"} alignItems={"center"} borderWidth={1} borderColor={appcolor.line[mode][2]}>
+                <SearchStatus size="22" color={appcolor.ico[mode][1]} variant="Bulk"/>
                 <TextInput 
                     onChangeText={(teks) => searchKeywordHandle(teks)}
                     placeholder='Cari karyawan di sini...'
@@ -79,7 +79,7 @@ function ListItems( { mode, item, state, setState, setOpenKaryawan } ) {
                             color={appcolor.teks[mode][2]}>
                             { item.ktp }
                         </Text>
-                        <Airdrop size="16" color="#ff8a65" variant="Bulk"/>
+                        <TriangleLogo size="16" color={appcolor.ico[mode][2]} variant="Bulk"/>
                         <Text 
                             fontSize={12}
                             fontFamily={"Poppins-Regular"}

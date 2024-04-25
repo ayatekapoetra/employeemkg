@@ -9,14 +9,15 @@ import "react-native-devsettings";
 import "react-native-devsettings/withAsyncStorage";
 
 import 'react-native-gesture-handler';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { NativeBaseProvider } from "native-base";
 import RootNavigation from './src/routes';
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
-
+import { getUniqueId } from 'react-native-device-info'
 import BackgroundJob from 'react-native-background-actions'
-import { Linking, Platform } from "react-native";
+import { Linking, PermissionsAndroid, Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const sleep = time => new Promise(resolve => setTimeout(() => resolve(), time))
 
@@ -91,9 +92,42 @@ function App(){
   // };
 
   useMemo(() => {
-    // toggleBackground
     BackgroundJob.start(taskRandom, options);
   }, [])
+
+  useEffect(() => {
+    requestLocationPermission()
+    getUniqueId().then( async (uniqueId) => {
+      await AsyncStorage.setItem("@DEVICESID", uniqueId)
+    });
+
+  }, [])
+
+  const requestLocationPermission = async () => {
+    if(Platform.OS != "ios"){
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+          {
+            title: 'Cool Photo App Camera Permission',
+            message:
+              'Cool Photo App needs access to your camera ' +
+              'so you can take awesome pictures.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('You can use the camera');
+        } else {
+          console.log('Camera permission denied');
+        }
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+};
 
   return (
     <Provider store={store}>

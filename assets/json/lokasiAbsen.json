@@ -1,0 +1,46 @@
+{
+  "RECORDS": [
+    {
+      "id": "1",
+      "nama": "Pacalaya",
+      "latitude": "-5.1958649999999995",
+      "longitude": "119.45986999999998",
+      "aktif": "Y"
+    },
+    {
+      "id": "2",
+      "nama": "Workshop I",
+      "latitude": "-5.144458333333334",
+      "longitude": "119.44881333333333",
+      "aktif": "Y"
+    },
+    {
+      "id": "4",
+      "nama": "Kopi Kebun",
+      "latitude": "-5.145160066718947",
+      "longitude": "119.44856202229857",
+      "aktif": "Y"
+    },
+    {
+      "id": "5",
+      "nama": "Site I",
+      "latitude": "-3.01007",
+      "longitude": "122.250008",
+      "aktif": "Y"
+    },
+    {
+      "id": "6",
+      "nama": "Site II",
+      "latitude": "-1.948823",
+      "longitude": "121.321803",
+      "aktif": "Y"
+    },
+    {
+      "id": "7",
+      "nama": "Site III",
+      "latitude": "-1.949685",
+      "longitude": "121.321615",
+      "aktif": "Y"
+    }
+  ]
+}

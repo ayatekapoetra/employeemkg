@@ -1,7 +1,11 @@
 module.exports = {
     project: {
-        ios: {},
-        android: {},
+        ios: {
+            // unstable_reactLegacyComponentNames: ['AIRMap'],
+        },
+        android: {
+            unstable_reactLegacyComponentNames: ['AIRMap'],
+        },
     },
     assets: ['./assets/fonts/'],
 };

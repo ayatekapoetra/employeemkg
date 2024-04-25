@@ -5,9 +5,11 @@ import { HStack, VStack, Text, Divider } from 'native-base'
 import { ArrowRight2, ColorSwatch, Convert, DirectNotification, Logout, Profile, Scan, ShieldSecurity, Stickynote } from 'iconsax-react-native'
 import { applyTheme } from '../../redux/themeSlice'
 import { useDispatch, useSelector } from 'react-redux'
+import { login } from '../../redux/authSlice'
 import themeManager from '../../common/themeScheme'
 import HeaderScreen from '../../components/HeaderScreen'
 import appcolor from '../../common/colorMode'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const SettingPage = () => {
     const dispatch = useDispatch()
@@ -22,6 +24,31 @@ const SettingPage = () => {
         dispatch(applyTheme(initMode))
     }
 
+    const actionHandle = (val) => {
+        console.log(val);
+        if(val.key == 8){
+            onUserLogout()
+        }
+    }
+
+    const onUserLogout =async () => {
+        const keys = (await AsyncStorage.getAllKeys()).filter( f => f != "@DEVICESID")
+        try {
+          await AsyncStorage.multiRemove(keys)
+        } catch(e) {
+          console.log(e);
+        }
+        
+        dispatch(login.fulfilled({
+                data: {
+                    type: "",
+                    token: null
+                },
+                user: null
+            })
+        )
+    }
+
     return (
         <AppScreen>
             <VStack h={"full"}>
@@ -30,9 +57,8 @@ const SettingPage = () => {
                 <VStack flex={1}>
                     {
                         array.map( item => {
-                            console.log(item.grpIcon.props);
                             return (
-                                <TouchableOpacity key={item.key}>
+                                <TouchableOpacity onPress={() => actionHandle(item)} key={item.key}>
                                     <HStack 
                                         p={3}
                                         alignItems={"center"} 

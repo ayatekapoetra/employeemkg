@@ -1,22 +1,39 @@
 import { FlatList, TouchableOpacity, Dimensions, TextInput } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { VStack, Text, HStack } from 'native-base'
 import { useSelector } from 'react-redux'
 import appcolor from '../common/colorMode'
 import employee from '../../assets/json/karyawans.json'
-import { Airdrop, SearchStatus, TriangleLogo, UserTag } from 'iconsax-react-native'
-import moment from 'moment'
+import { SearchStatus, TriangleLogo, UserTag } from 'iconsax-react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+const dataEmployee = employee.RECORDS
 
 const KaryawanList = ( { state, setState, setOpenKaryawan } ) => {
-    const dataEmployee = employee.RECORDS
     const mode = useSelector(state => state.themes).value
     const [ karyawan, setKaryawan ] = useState(dataEmployee)
 
-    const searchKeywordHandle = (teks) => {
-        teks = teks.toLowerCase()
-        console.log(teks);
-        if(teks){
-            setKaryawan(dataEmployee.filter( f => f.nama.includes(teks) || f.section.includes(teks)))
+    useEffect(() => {
+        getDataLokal()
+    }, [])
+
+    const getDataLokal = async () => {
+        try {
+            const data = await AsyncStorage.getItem("@karyawan")
+            if(data){
+                setKaryawan(JSON.parse(data))
+            }
+        } catch (error) {
+            setKaryawan(dataEmployee)
+        }
+    }
+
+    const searchKeywordHandle = async (teks) => {
+        if(teks != ""){
+            console.log(teks);
+            var dataFilter = karyawan.filter( f => (f.nama).includes(teks) || (f.section).includes(teks))
+            console.log(dataFilter);
+            setKaryawan(dataFilter)
         }else{
             setKaryawan(dataEmployee)
         }
@@ -35,6 +52,7 @@ const KaryawanList = ( { state, setState, setOpenKaryawan } ) => {
                 <SearchStatus size="22" color={appcolor.ico[mode][1]} variant="Bulk"/>
                 <TextInput 
                     onChangeText={(teks) => searchKeywordHandle(teks)}
+                    // onSubmitEditing={(teks) => searchKeywordHandle(teks)}
                     placeholder='Cari karyawan di sini...'
                     placeholderTextColor={appcolor.teks[mode][2]}
                     style={{flex: 1, color: appcolor.teks[mode][1]}}/>

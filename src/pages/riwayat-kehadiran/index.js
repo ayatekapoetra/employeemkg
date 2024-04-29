@@ -8,11 +8,13 @@ import themeManager from '../../common/themeScheme'
 import { applyTheme } from '../../redux/themeSlice'
 import AgendaScreen from './AgendaScreen'
 import HeaderScreen from '../../components/HeaderScreen'
+import FilterKehadiran from './filterKehadiran'
 
 const RiwayatAbsensiPage = () => {
     const dispatch = useDispatch()
     const themes = useSelector(state => state.themes)
     const [ colorTheme, setColorTheme ] = useState(themes.value)
+    const [ openFilter, setOpenFilter ] = useState(false)
 
     useEffect(() => {
         initialScheme()
@@ -24,24 +26,16 @@ const RiwayatAbsensiPage = () => {
         setColorTheme(initMode)
     }
 
-    const handleChangeScheme = async () => {
-        const initMode = await themeManager.get()
-        if(initMode === 'dark'){
-            dispatch(applyTheme("light"))
-            await themeManager.set("light")
-            setColorTheme('light')
-        }else{
-            dispatch(applyTheme("dark"))
-            await themeManager.set("dark")
-            setColorTheme('dark')
-        }
+    const onOpenFilterHandle = () => {
+        setOpenFilter(!openFilter)
     }
 
     return (
         <AppScreen>
             <VStack h={"full"}>
-                <HeaderScreen title={"Riwayat Kehadiran"} onBack={true} onThemes={true} onFilter={true} onNotification={true}/>
-                <AgendaScreen isDark={colorTheme === 'dark'} mode={themes.value}/>
+                <HeaderScreen title={"Riwayat Kehadiran"} onBack={true} onThemes={true} onFilter={onOpenFilterHandle} onNotification={true}/>
+                
+                <AgendaScreen isDark={colorTheme === 'dark'} mode={themes.value} openFilter={openFilter} setOpenFilter={setOpenFilter}/>
             </VStack>
         </AppScreen>
     )

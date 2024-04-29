@@ -43,27 +43,30 @@ const ChecklogPage = () => {
 
     useEffect(() => {
         Geolocation.getCurrentPosition(info => {
-            console.log(info);
+            // console.log(info);
             setMyLocation(info)
             setLocation({...location, latitude: info?.coords?.latitude, longitude: info?.coords?.longitude})
             
             let arr = lokasi.map( m => {
-                return getDistance(
+                var distance = getDistance(
                     { latitude: m.latitude, longitude: m.longitude }, 
                     { latitude: info?.coords?.latitude, longitude: info?.coords?.longitude }
                 )
-            }).sort((a, b) => {return a - b})
+                return {
+                    jarak: distance,
+                    checkpoint: m.nama,
+                    latitude: info?.coords?.latitude, 
+                    longitude: info?.coords?.longitude
+                }
+            }).sort((a, b) => {return a.jarak - b.jarak})
                 
-            console.log(arr);
+            // console.log(arr);
             setJarak(arr[0])
         });
     }, [myLocation])
 
     useEffect(() => {
-        setTimeout(() => {
-            setCurrentClock(moment().format("HH:mm:ss"))
-        }, 1000);
-
+        setTimeout(() => setCurrentClock(moment().format("HH:mm:ss")), 1000);
     }, [currentClock])
 
     useEffect(() => {
@@ -71,11 +74,19 @@ const ChecklogPage = () => {
     }, [])
 
     const getDataInitial = async () => {
-        const resp = await apiFetch.get(`mobile/checklog-today/${user.karyawan.id}/${user.karyawan.pin}`)
-        const result = resp.data
-        if(!result.diagnostic.error){
-            setLogmasuk(!result.data.checklog_in ? true:false)
-            setLogpulang(!result.data.checklog_out ? true:false)
+        try {
+            const resp = await apiFetch.get(`mobile/checklog-today/${user.karyawan?.id || "0"}/${user.karyawan?.pin || "0"}`)
+            console.log(resp);
+            const result = resp.data
+            if(!result.diagnostic.error){
+                setLogmasuk(!result.data.checklog_in ? true:false)
+                setLogpulang(!result.data.checklog_out ? true:false)
+            }else{
+                console.log(resp);
+            }
+            
+        } catch (error) {
+            console.log(error);
         }
     }
 
@@ -85,7 +96,7 @@ const ChecklogPage = () => {
 
     const selfyLogmasukHandle = async () => {
         setLoading(true)
-        if(jarak >= 30){
+        if(jarak.jarak >= 30){
             dispatch(
                 applyAlert({
                     show: true, 
@@ -105,8 +116,9 @@ const ChecklogPage = () => {
 
             const uuid = await AsyncStorage.getItem("@DEVICESID")
             const uriPhoto = Platform.OS === "android" ? photo.uri : photo.uri.replace("file://", "")
-            data.append("pin", user.karyawan.pin)
-            data.append("karyawan_id", user.karyawan.id)
+            
+            data.append("pin", user.karyawan?.pin || '')
+            data.append("karyawan_id", user.karyawan?.id || '')
             data.append("device_id", uuid)
             data.append('photo', {
                 uri: uriPhoto,
@@ -166,7 +178,7 @@ const ChecklogPage = () => {
 
     const selfyLogpulangHandle = async () => {
         setLoading(true)
-        if(jarak >= 30){
+        if(jarak.jarak >= 30){
             dispatch(
                 applyAlert({
                     show: true, 
@@ -242,8 +254,6 @@ const ChecklogPage = () => {
         }
     }
 
-    
-
     return (
         <AppScreen>
             <VStack h={"full"}>
@@ -278,7 +288,7 @@ const ChecklogPage = () => {
                         </TouchableOpacity>
                         :
                         <TouchableOpacity onPress={riwayatAbsensiHandle}>
-                            <HStack w={"180px"} p={2} space={1} alignItems={"center"} bg={"muted.100"} rounded={"md"} shadow={2}>
+                            <HStack maxW={"170px"} p={2} space={1} alignItems={"center"} bg={"muted.100"} rounded={"md"} shadow={2}>
                                 <Scan size="32" color={appcolor.teks[mode][2]} variant="Bulk"/>
                                 <Text 
                                     fontWeight={"600"}
@@ -303,7 +313,7 @@ const ChecklogPage = () => {
                         </TouchableOpacity>
                         :
                         <TouchableOpacity onPress={riwayatAbsensiHandle}>
-                            <HStack w={"180px"} p={2} space={1} alignItems={"center"} bg={"muted.100"} rounded={"md"} shadow={2}>
+                            <HStack maxW={"170px"} p={2} space={1} alignItems={"center"} bg={"muted.100"} rounded={"md"} shadow={2}>
                                 <Scan size="32" color={appcolor.teks[mode][2]} variant="Bulk"/>
                                 <Text 
                                     fontWeight={"600"}
@@ -317,33 +327,33 @@ const ChecklogPage = () => {
                 </HStack>
                 <VStack my={2} justifyContent={"center"} alignItems={"center"}>
                     {
-                        jarak < 10 &&
+                        jarak.jarak < 10 &&
                         <Text 
                             fontSize={12} 
                             fontWeight={"300"} 
                             fontFamily={"Poppins-Light"} 
                             color={appcolor.teks[mode][4]}>
-                            Anda berada pada radius checklog {jarak} meter
+                            Anda berada pada radius checklog {jarak.jarak} meter
                         </Text>
                     }
                     {
-                        jarak >= 10 && jarak <= 30 &&
+                        jarak.jarak >= 10 && jarak.jarak <= 30 &&
                         <Text 
                             fontSize={12} 
                             fontWeight={"300"} 
                             fontFamily={"Poppins-Light"} 
                             color={appcolor.teks[mode][3]}>
-                            Anda berada pada radius checklog {jarak} meter
+                            Anda berada pada radius checklog {jarak.jarak} meter
                         </Text>
                     }
                     {
-                        jarak > 30 && 
+                        jarak.jarak > 30 && 
                         <Text 
                             fontSize={12} 
                             fontWeight={"300"} 
                             fontFamily={"Poppins-Light"} 
                             color={appcolor.teks[mode][5]}>
-                            Anda berada pada radius checklog {jarak} meter
+                            Anda berada pada radius checklog {jarak.jarak} meter
                         </Text>
                     }
                 </VStack>
@@ -351,7 +361,8 @@ const ChecklogPage = () => {
                     <Center flex={1}>
                         <MapView
                             provider={PROVIDER_GOOGLE} // remove if not using Google Maps
-                            style={{width: width, height: "100%", position: "absolute"}}
+                            style={{width: width, height: "100%"}}
+                            showsMyLocationButton={true}
                             showsUserLocation={true}
                             region={{
                                 ...location,
@@ -359,6 +370,7 @@ const ChecklogPage = () => {
                                 longitudeDelta: 0.002,
                             }}>
                             {
+                                Platform.OS === 'ios' &&
                                 lokasi?.map( m => {
                                     return (
                                         <Circle 
@@ -372,6 +384,7 @@ const ChecklogPage = () => {
                                 })
                             }
                             {
+                                Platform.OS === 'ios' &&
                                 lokasi?.map( m => {
                                     return ( 
                                         <Marker 

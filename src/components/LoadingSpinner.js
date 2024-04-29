@@ -7,12 +7,12 @@ import { useSelector } from 'react-redux';
 
 const { height } = Dimensions.get("screen")
 
-const LoadingHauler = () => {
+const LoadingSpinner = () => {
     const mode = useSelector(state => state.themes).value
     return (
         <VStack h={"full"} mx={5}>
             <Center mt={5}>
-                <LottieView source={require('../../assets/lottie/hauler.json')} autoPlay loop style={{height: height * .4, width: "100%"}} />
+                <LottieView source={require('../../assets/lottie/loading-google.json')} autoPlay loop style={{height: height * .2, width: "100%"}} />
                 <Text 
                     fontSize={"xl"}
                     fontWeight={"semibold"}
@@ -33,4 +33,4 @@ const LoadingHauler = () => {
     )
 }
 
-export default LoadingHauler
+export default LoadingSpinner

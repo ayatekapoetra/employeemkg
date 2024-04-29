@@ -240,7 +240,6 @@ const ShowFormSakit = () => {
                                 <Text fontWeight={"bold"} color={"#FFFFFF"}>form persetujuan</Text>
                             </HStack>
                         </Button>
-                        {/* <Button w={"20%"} bg={appcolor.teks[mode][6]}>Simpan</Button> */}
                     </HStack>
                 </VStack>
             </VStack>

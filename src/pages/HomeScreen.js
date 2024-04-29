@@ -1,6 +1,6 @@
-import { TouchableOpacity } from 'react-native'
+import { RefreshControl, TouchableOpacity } from 'react-native'
 import { Center, Button, Text, VStack, HStack, Image, ScrollView } from 'native-base'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import themeManager from '../common/themeScheme'
 import AppScreen from '../components/AppScreen';
 import HomeDonutChart from '../components/HomeDonutChart';
@@ -12,14 +12,18 @@ import moment from 'moment'
 import 'moment/locale/id'
 import appcolor from '../common/colorMode';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { applyAlert } from '../redux/alertSlice';
+import AlertCustom from '../components/AlertCustom';
+import LoadingHauler from '../components/LoadingHauler';
+
 
 const HomeScreen = () => {
     const route = useNavigation()
     const dispatch = useDispatch()
     const themes = useSelector(state => state.themes)
-    const { user } = useSelector(state => state.auth)
+    const { user, loading } = useSelector(state => state.auth)
     const [ colorTheme, setColorTheme ] = useState(themes.value) 
-    const [ uuid, setUUID ] = useState("") 
+    const [ refresh, setRefresh ] = useState(loading) 
 
     useEffect(() => {
         initialScheme()
@@ -32,22 +36,63 @@ const HomeScreen = () => {
 
         const device = await AsyncStorage.getItem("@DEVICESID")
         console.log(device);
+
+        if(!user.karyawan){
+            dispatch(applyAlert({
+                show: true, 
+                status: "error", 
+                title: "Peringatan", 
+                subtitle: "User anda tidak tehubung dengan data karyawan anda, segera hubungi admin HRD di lokasi anda..."
+            }))
+        }
+
+        if(!user.karyawan.pin){
+            dispatch(applyAlert({
+                show: true, 
+                status: "error", 
+                title: "Peringatan", 
+                subtitle: "User anda tidak tehubung dengan pin mesin..."
+            }))
+        }
     }
 
+    const onRefreshHandle = useCallback(() => {
+        setRefresh(true)
+        setTimeout(() => setRefresh(false), 3 * 1000);
+    })
+
+    if(refresh){
+        return(
+            <AppScreen>
+                <LoadingHauler/>
+            </AppScreen>
+        )
+    }
 
     return (
         <AppScreen>
-            <ScrollView h={"full"} bg={colorTheme === 'dark'?"#2f313e":"#F5F5F5"}>
+            <ScrollView 
+                h={"full"} 
+                refreshControl={ <RefreshControl refreshing={refresh} onRefresh={onRefreshHandle} />}
+                bg={colorTheme === 'dark'?"#2f313e":"#F5F5F5"}>
                 <VStack flex={1}>
                     <HeaderScreen title={"Home"} onThemes={true} onNotification={true}/>
+                    <AlertCustom/>
                     <VStack px={3} flex={1}>
-                        <Text 
-                            fontSize={25} 
-                            fontFamily={"Quicksand-SemiBold"} 
-                            fontWeight={700} 
-                            color={colorTheme != 'dark'?"#2f313e":"#F5F5F5"}>
-                            { user?.karyawan?.nama }
-                        </Text>
+                        {
+                            user?.karyawan?.nama ?
+                            <Text 
+                                fontSize={25} 
+                                fontFamily={"Quicksand-SemiBold"} 
+                                fontWeight={700} 
+                                color={colorTheme != 'dark'?"#2f313e":"#F5F5F5"}>
+                                { user?.karyawan?.nama }
+                            </Text>
+                            :
+                            <Text color={appcolor.teks[colorTheme][3]}>
+                                - data anda tidak terhubung dengan data karyawan -
+                            </Text>
+                        }
 
                         <Text 
                             fontSize={16} 

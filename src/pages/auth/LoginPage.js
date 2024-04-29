@@ -171,6 +171,7 @@ const LoginPage = () => {
                             onBlur={() => setVisibleImg(!visibleImg)}
                             secureTextEntry={true}
                             onChangeText={(teks) => setUserAuth({...userAuth, password: teks})}
+                            onSubmitEditing={loginUserHandle}
                             style={{flex: 1, color: colorScheme === 'dark'?"#F5F5F5":"#1f2125", textTransform: "lowercase", fontFamily: "Poppins-Regular", fontSize: 18}}/>
                     </HStack>
                     
@@ -188,7 +189,7 @@ const LoginPage = () => {
                     </Button>
                 </VStack>
             </VStack>
-            <Image alt='...' source={require('../../../assets/images/background.png')} style={{width: "100%", height: 170}}/>
+            <Image zIndex={1} alt='...' source={require('../../../assets/images/background.png')} style={{width: "100%", height: 120}}/>
         </VStack>
     )
 }

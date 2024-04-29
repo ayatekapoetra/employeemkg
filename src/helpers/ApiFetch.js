@@ -14,12 +14,15 @@ const apiFetch = axios.create({
 });
   
 apiFetch.interceptors.request.use(async (config, data) => {
-  const token = await AsyncStorage.getItem('@token');
-  if (token) {
-    config.headers['Authorization'] = 'Bearer ' + token;
-  }
+    const uuid = await AsyncStorage.getItem('@DEVICESID');
+    config.headers['X-UUID-DEVICE'] = uuid;
+    
+    const token = await AsyncStorage.getItem('@token');
+    if (token) {
+        config.headers['Authorization'] = 'Bearer ' + token;
+    }
 
-  return config;
+    return config;
 });
   
 export default apiFetch;

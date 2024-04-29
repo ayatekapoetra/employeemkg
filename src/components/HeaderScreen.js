@@ -76,7 +76,7 @@ const HeaderScreen = ( { title, onBack, onThemes, onFilter, onNotification } ) =
 
                 {
                     onFilter &&
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={onFilter}>
                         {
                             colorTheme === 'dark' ?
                             <Filter size="25" color={"#efb539"}/>

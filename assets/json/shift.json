@@ -1,0 +1,46 @@
+{
+  "RECORDS": [
+    {
+      "id": "1",
+      "kode": "I",
+      "nama": "Shift 1",
+      "start_shift": "07:00:00",
+      "start_int": "7",
+      "end_shift": "19:00:00",
+      "end_int": "19",
+      "duration_shift": "720",
+      "min_checkin": "0",
+      "max_checkin": "0",
+      "min_checkout": "0",
+      "max_checkout": "0"
+    },
+    {
+      "id": "2",
+      "kode": "II",
+      "nama": "Shift 2",
+      "start_shift": "19:00:00",
+      "start_int": "19",
+      "end_shift": "07:00:00",
+      "end_int": "7",
+      "duration_shift": "720",
+      "min_checkin": "0",
+      "max_checkin": "0",
+      "min_checkout": "0",
+      "max_checkout": "0"
+    },
+    {
+      "id": "3",
+      "kode": "X",
+      "nama": "Shift Normal",
+      "start_shift": "08:00:00",
+      "start_int": "8",
+      "end_shift": "17:00:00",
+      "end_int": "17",
+      "duration_shift": "540",
+      "min_checkin": "0",
+      "max_checkin": "0",
+      "min_checkout": "0",
+      "max_checkout": "0"
+    }
+  ]
+}

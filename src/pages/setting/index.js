@@ -1,7 +1,7 @@
 import { TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import AppScreen from '../../components/AppScreen'
-import { HStack, VStack, Text, Divider } from 'native-base'
+import { HStack, VStack, Text, Divider, useNativeBase } from 'native-base'
 import { ArrowRight2, ColorSwatch, Convert, DirectNotification, Logout, Profile, Scan, ShieldSecurity, Stickynote } from 'iconsax-react-native'
 import { applyTheme } from '../../redux/themeSlice'
 import { useDispatch, useSelector } from 'react-redux'
@@ -10,9 +10,11 @@ import themeManager from '../../common/themeScheme'
 import HeaderScreen from '../../components/HeaderScreen'
 import appcolor from '../../common/colorMode'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useNavigation } from '@react-navigation/native'
 
 const SettingPage = () => {
     const dispatch = useDispatch()
+    const route = useNavigation()
     const mode = useSelector(state => state.themes).value
 
     useEffect(() => {
@@ -28,7 +30,10 @@ const SettingPage = () => {
         console.log(val);
         if(val.key == 8){
             onUserLogout()
+        }else{
+            route.navigate(val.uri)
         }
+
     }
 
     const onUserLogout =async () => {
@@ -93,7 +98,7 @@ const array = [
         key: 1, 
         title: "Profile Saya", 
         icon: "circle-user",
-        uri: "profile-screen",
+        uri: "Profile",
         grpIcon: <Profile size="28" color="#d9e3f0" variant="Bulk"/>
     },
     {

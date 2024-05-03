@@ -3,41 +3,15 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { VStack, Text, HStack } from 'native-base'
 import { useSelector } from 'react-redux'
 import appcolor from '../common/colorMode'
-import employee from '../../assets/json/karyawans.json'
+import arrShift from '../../assets/json/shift.json'
 import { SearchStatus, TriangleLogo, UserTag } from 'iconsax-react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const dataEmployee = employee.RECORDS
+const shiftData = arrShift.RECORDS
 
-const KaryawanList = ( { state, setState, setOpenKaryawan } ) => {
+const ShiftList = ( { state, setState, setOpenKaryawan } ) => {
     const mode = useSelector(state => state.themes).value
-    const [ karyawan, setKaryawan ] = useState(dataEmployee)
-
-    useEffect(() => {
-        getDataLokal()
-    }, [])
-
-    const getDataLokal = async () => {
-        try {
-            const data = await AsyncStorage.getItem("@karyawan")
-            if(data){
-                setKaryawan(JSON.parse(data))
-            }
-        } catch (error) {
-            setKaryawan(dataEmployee)
-        }
-    }
-
-    const searchKeywordHandle = async (teks) => {
-        if(teks != ""){
-            // console.log(teks);
-            var dataFilter = karyawan.filter( f => (f.nama)?.includes(teks) || (f.section)?.includes(teks))
-            console.log(dataFilter);
-            setKaryawan(dataFilter)
-        }else{
-            setKaryawan(dataEmployee)
-        }
-    }
+    const [ shift, setShift ] = useState(shiftData)
 
     return (
         <VStack 
@@ -65,7 +39,7 @@ const KaryawanList = ( { state, setState, setOpenKaryawan } ) => {
     )
 }
 
-export default KaryawanList
+export default ShiftList
 
 function ListItems( { mode, item, state, setState, setOpenKaryawan } ) {
 

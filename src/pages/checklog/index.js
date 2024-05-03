@@ -258,7 +258,6 @@ const ChecklogPage = () => {
         <AppScreen>
             <VStack h={"full"}>
                 <AppAlertDevice/>
-                <AlertCustom/>
                 <HeaderScreen title={"Checklog Kehadiran"} onBack={true} onThemes={true} onNotification={true}/>
                 { loading && <LoadingHauler/> }
                 <Center>

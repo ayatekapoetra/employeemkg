@@ -1,3 +1,5 @@
+import moment from 'moment'
+import _ from "underscore"
 import { Dimensions, FlatList, TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { VStack, Text, HStack, Divider, Center } from 'native-base'
@@ -6,8 +8,6 @@ import { useSelector } from 'react-redux'
 import { ArrowCircleDown, ArrowCircleLeft, CalendarTick } from 'iconsax-react-native'
 import appcolor from '../../common/colorMode'
 import apiFetch from '../../helpers/ApiFetch'
-import moment from 'moment'
-import _ from "underscore"
 import LoadingSpinner from '../../components/LoadingSpinner'
 import FilterKehadiran from './filterKehadiran'
 
@@ -128,7 +128,7 @@ const AgendaScreen = ( { isDark, mode, openFilter, setOpenFilter } ) => {
                         }
                         <VStack flex={1}>
                             {
-                                data.length > 0 ?
+                                data?.length > 0 ?
                                 <FlatList 
                                     data={data} 
                                     showsVerticalScrollIndicator={false}

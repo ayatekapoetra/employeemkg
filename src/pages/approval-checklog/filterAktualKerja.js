@@ -1,17 +1,15 @@
-import { TouchableOpacity, Dimensions, ScrollView } from 'react-native'
+import { TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
-import { VStack, Text, HStack, PresenceTransition, Button, Switch } from 'native-base'
+import { VStack, Text, HStack, PresenceTransition, Button } from 'native-base'
 import appcolor from '../../common/colorMode'
 import { useSelector } from 'react-redux'
-import { CalendarSearch, CalendarTick, Dislike, Like1, UserSearch, Verify } from 'iconsax-react-native'
-import moment from 'moment'
+import { CalendarSearch, CalendarTick, CloseCircle, Dislike, Like1, UserSearch } from 'iconsax-react-native'
 import KaryawanList from '../../components/KaryawanList'
 import DatePicker from 'react-native-date-picker'
+import moment from 'moment'
 
-const { height } = Dimensions.get("screen")
-
-const FilterAbsensi = ({ onApplyFilter, setFilter, qstring, setQstring }) => {
-    const mode = useSelector(state => state.themes).value
+const FilterAktualKerja = ( { onApplyFilter, setFilter, qstring, setQstring } ) => {
+    const mode = useSelector(state => state.themes.value)
     const {user} = useSelector(state => state.auth)
     const [ openKaryawan, setOpenKaryawan ] = useState(false)
     const [ dateStart, setDateStart ] = useState(false)
@@ -19,7 +17,7 @@ const FilterAbsensi = ({ onApplyFilter, setFilter, qstring, setQstring }) => {
 
     const onResetHandle = () => {
         setQstring({
-            karywana_id: user.karyawan.id,
+            karyawan_id: user.karyawan.id,
             karyawan: user.karyawan,
             dateStart: moment().add(-1, 'day').format("YYYY-MM-DD"),
             dateEnd: moment().format("YYYY-MM-DD")
@@ -27,31 +25,39 @@ const FilterAbsensi = ({ onApplyFilter, setFilter, qstring, setQstring }) => {
         setFilter(false)
     }
 
-    console.log(qstring);
+    // console.log("XXXX", qstring);
 
     return (
-        <VStack h={`${height * .725}px`}>
+        <VStack mb={5} flex={1}>
             <VStack px={3} py={2} flex={1} rounded={"md"} borderWidth={1} borderColor={appcolor.line[mode][1]}>
                 {
                     ['developer', 'hrd', 'headspv', 'koordinator'].includes(user.usertype) &&
                     <>
-                    <VStack h={"75px"}>
+                    <VStack h={"75px"} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][2]}>
                         <Text 
                             fontFamily={"Poppins-Regular"}
                             color={appcolor.teks[mode][1]}>
                             Karyawan :
                         </Text>
-                        <TouchableOpacity onPress={() => setOpenKaryawan(!openKaryawan)}>
-                            <HStack py={2} space={2} alignItems={"center"} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][2]}>
-                                <UserSearch size="32" color="#555555" variant="Bulk"/>
-                                <Text 
-                                    fontSize={20}
-                                    fontFamily={"Poppins-Bold"}
-                                    color={appcolor.teks[mode][2]}>
-                                    { qstring.karyawan.nama }
-                                </Text>
-                            </HStack>
-                        </TouchableOpacity>
+                        <HStack>
+                            <TouchableOpacity style={{flex: 1}} onPress={() => setOpenKaryawan(!openKaryawan)}>
+                                <HStack py={2} space={2} alignItems={"center"}>
+                                    <HStack space={2}>
+                                        <UserSearch size="32" color="#555555" variant="Bulk"/>
+                                        <Text 
+                                            fontSize={20}
+                                            fontFamily={"Poppins-Bold"}
+                                            color={appcolor.teks[mode][2]}>
+                                            { qstring?.karyawan?.nama }
+                                        </Text>
+                                    </HStack>
+                                </HStack>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setQstring({...qstring, karyawan_id: null, karyawan: null})}>
+                                <CloseCircle size="28" color={appcolor.teks[mode][5]} variant="Bulk"/>
+                            </TouchableOpacity>
+
+                        </HStack>
                     </VStack>
                     {
                         openKaryawan &&
@@ -66,20 +72,20 @@ const FilterAbsensi = ({ onApplyFilter, setFilter, qstring, setQstring }) => {
                     </>
                 }
 
-                <VStack mt={2} h={"75px"}>
+                <VStack mt={2} h={"75px"} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][2]}>
                     <Text 
                         fontFamily={"Poppins-Regular"}
                         color={appcolor.teks[mode][1]}>
                         Mulai Tanggal :
                     </Text>
                     <TouchableOpacity onPress={() => setDateStart(true)}>
-                        <HStack py={2} space={2} alignItems={"center"} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][2]}>
+                        <HStack py={2} space={2} alignItems={"center"}>
                             <CalendarSearch size="32" color="#555555" variant="Bulk"/>
                             <Text 
                                 fontSize={20}
                                 fontFamily={"Poppins-Bold"}
                                 color={appcolor.teks[mode][2]}>
-                                { moment(qstring.dateStart).format("dddd, DD MMMM YYYY") }
+                                { moment(qstring?.dateStart).format("dddd, DD MMMM YYYY") }
                             </Text>
                         </HStack>
                     </TouchableOpacity>
@@ -97,20 +103,20 @@ const FilterAbsensi = ({ onApplyFilter, setFilter, qstring, setQstring }) => {
                     />
                 </VStack>
 
-                <VStack mt={2} h={"75px"}>
+                <VStack mt={2} h={"75px"} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][2]}>
                     <Text 
                         fontFamily={"Poppins-Regular"}
                         color={appcolor.teks[mode][1]}>
                         Hingga Tanggal :
                     </Text>
                     <TouchableOpacity onPress={() => setDateFinish(true)}>
-                        <HStack py={2} space={2} alignItems={"center"} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][2]}>
+                        <HStack py={2} space={2} alignItems={"center"}>
                             <CalendarTick size="32" color="#555555" variant="Bulk"/>
                             <Text 
                                 fontSize={20}
                                 fontFamily={"Poppins-Bold"}
                                 color={appcolor.teks[mode][2]}>
-                                { moment(qstring.dateEnd).format("dddd, DD MMMM YYYY") }
+                                { moment(qstring?.dateEnd).format("dddd, DD MMMM YYYY") }
                             </Text>
                         </HStack>
                     </TouchableOpacity>
@@ -126,45 +132,6 @@ const FilterAbsensi = ({ onApplyFilter, setFilter, qstring, setQstring }) => {
                             setDateFinish(false)
                         }}
                     />
-                </VStack>
-                <VStack mt={2} h={"75px"}>
-                    <Text 
-                        fontFamily={"Poppins-Regular"}
-                        color={appcolor.teks[mode][1]}>
-                        Status Verify :
-                    </Text>
-                    <HStack py={2} space={2} alignItems={"center"} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][2]}>
-                        <Switch 
-                            size="sm" 
-                            onToggle={() => setQstring({...qstring, verify_sts: qstring.verify_sts ? "":"A"})} 
-                            isChecked={qstring.verify_sts ? true:false}/>
-                        <Text 
-                            fontSize={20}
-                            fontFamily={"Poppins-Bold"}
-                            color={appcolor.teks[mode][2]}>
-                            { qstring.verify_sts ? "Verified":"Waiting Verified" }
-                        </Text>
-                    </HStack>
-                </VStack>
-
-                <VStack mt={2} h={"75px"}>
-                    <Text 
-                        fontFamily={"Poppins-Regular"}
-                        color={appcolor.teks[mode][1]}>
-                        Status Approval :
-                    </Text>
-                    <HStack py={2} space={2} alignItems={"center"} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][2]}>
-                        <Switch 
-                            size="sm" 
-                            onToggle={() => setQstring({...qstring, approve_sts: qstring.approve_sts ? "":"A"})} 
-                            isChecked={qstring.approve_sts ? true:false}/>
-                        <Text 
-                            fontSize={20}
-                            fontFamily={"Poppins-Bold"}
-                            color={appcolor.teks[mode][2]}>
-                            { qstring.approve_sts ? "Approved":"Waiting Approval" }
-                        </Text>
-                    </HStack>
                 </VStack>
 
                 <HStack mt={2}>
@@ -186,4 +153,4 @@ const FilterAbsensi = ({ onApplyFilter, setFilter, qstring, setQstring }) => {
     )
 }
 
-export default FilterAbsensi
+export default FilterAktualKerja

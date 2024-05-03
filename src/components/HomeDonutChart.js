@@ -1,11 +1,14 @@
 import { View } from 'react-native'
-import { Center, Button, Text, Flex, HStack, Image } from 'native-base'
+import { Center, Button, Text, Flex, HStack, Image, VStack } from 'native-base'
 import React from 'react'
 import { PieChart } from "react-native-gifted-charts"
 import { Calendar2 } from 'iconsax-react-native';
+import appcolor from '../common/colorMode';
+import { useSelector } from 'react-redux';
 
 
 const HomeDonutChart = () => {
+    const mode = useSelector(state => state.themes.value)
     const pieData = [
         {
             value: 47,
@@ -19,14 +22,14 @@ const HomeDonutChart = () => {
     ];
   
     return (
-        <Center>
+        <HStack flex={1} justifyContent={"space-around"}>
             <PieChart
                 data={pieData}
                 donut
                 showGradient
                 sectionAutoFocus
-                radius={120}
-                innerRadius={60}
+                radius={75}
+                innerRadius={50}
                 innerCircleColor={'#2f313e'}
                 centerLabelComponent={() => {
                 return (
@@ -38,27 +41,25 @@ const HomeDonutChart = () => {
                     <Text style={{fontSize: 14, color: 'white'}}>Kehadiran</Text>
                     </View>
                 )}}/>
-            <HStack my={3} space={2}>
+            <VStack my={3} space={2}>
                 <HStack space={2} alignItems={"center"}>
-                    <Calendar2 size="18" color="#009FFF" variant="Bulk"/>
-                    <Text fontFamily={"Poppins-Regular"} fontSize={10} color={"#009FFF"}>47% Hadir</Text>
+                    <Calendar2 size="22" color="#009FFF" variant="Bulk"/>
+                    <Text fontFamily={"Poppins-Regular"} fontSize={14} color={appcolor.teks[mode][1]}>47% Hadir</Text>
                 </HStack>
                 <HStack space={2} alignItems={"center"}>
-                    <Calendar2 size="18" color="#79d4d0" variant="Bulk"/>
-                    <Text fontFamily={"Poppins-Regular"} fontSize={10} color={"#79d4d0"}>40% Cuti</Text>
+                    <Calendar2 size="22" color="#79d4d0" variant="Bulk"/>
+                    <Text fontFamily={"Poppins-Regular"} fontSize={14} color={appcolor.teks[mode][1]}>40% Cuti</Text>
                 </HStack>
                 <HStack space={2} alignItems={"center"}>
-                    <Calendar2 size="18" color="#BDB2FA" variant="Bulk"/>
-                    <Text fontFamily={"Poppins-Regular"} fontSize={10} color={"#BDB2FA"}>17% Sakit</Text>
+                    <Calendar2 size="22" color="#BDB2FA" variant="Bulk"/>
+                    <Text fontFamily={"Poppins-Regular"} fontSize={14} color={appcolor.teks[mode][1]}>17% Sakit</Text>
                 </HStack>
-            </HStack>
-            <HStack space={2}>
                 <HStack space={2} alignItems={"center"}>
-                    <Calendar2 size="18" color="#FFA5BA" variant="Bulk"/>
-                    <Text fontFamily={"Poppins-Regular"} fontSize={10} color={"#FFA5BA"}>4% Alpha</Text>
+                    <Calendar2 size="22" color="#FFA5BA" variant="Bulk"/>
+                    <Text fontFamily={"Poppins-Regular"} fontSize={14} color={appcolor.teks[mode][1]}>4% Alpha</Text>
                 </HStack>
-            </HStack>
-        </Center>
+            </VStack>
+        </HStack>
     )
   }
 

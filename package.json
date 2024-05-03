@@ -6,7 +6,7 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "myPhone": "react-native run-ios --device undefined",
-    "mySim": "react-native run-ios --simulator 'mySimulator Simulator (17.2)'",
+    "mySim": "react-native run-ios --simulator 'iPhoneXr'",
     "andro:clean": "cd android &&./gradlew clean",
     "lint": "eslint .",
     "start": "react-native start",

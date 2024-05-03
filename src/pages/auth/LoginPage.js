@@ -81,10 +81,6 @@ const LoginPage = () => {
         setErrors(error)
     }
 
-    console.log(errors);
-    console.log("userAuth", userAuth);
-
-
     return (
         <VStack h={"full"} bg={colorScheme === 'dark'?"#2f313e":"#F5F5F5"}>
             <HStack px={2} py={3} h={"70px"} justifyContent={"flex-end"} alignItems={"flex-end"}>

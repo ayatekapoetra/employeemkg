@@ -46,12 +46,14 @@ const appcolor = {
             2: "#797c8e", 
             3: "#01a8d7", //primary
             4: "#58b455", //success
+            5: "#efb539", //warning
         },
         light: {
             1: "#555555",
             2: "#697689",
             3: "#0180c7", //primary
             4: "#50b903", //success
+            5: "#efb539", //warning
         }
     }
 }

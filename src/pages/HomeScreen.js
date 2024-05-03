@@ -1,4 +1,4 @@
-import { RefreshControl, TouchableOpacity } from 'react-native'
+import { RefreshControl, TouchableOpacity, Dimensions } from 'react-native'
 import { Center, Button, Text, VStack, HStack, Image, ScrollView } from 'native-base'
 import React, { useCallback, useEffect, useState } from 'react'
 import themeManager from '../common/themeScheme'
@@ -8,7 +8,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { applyTheme } from '../redux/themeSlice';
 import { useNavigation } from '@react-navigation/native';
 import HeaderScreen from '../components/HeaderScreen';
-import moment from 'moment'
 import 'moment/locale/id'
 import appcolor from '../common/colorMode';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +15,7 @@ import { applyAlert } from '../redux/alertSlice';
 import AlertCustom from '../components/AlertCustom';
 import LoadingHauler from '../components/LoadingHauler';
 
+const { width, height } = Dimensions.get("screen")
 
 const HomeScreen = () => {
     const route = useNavigation()
@@ -51,7 +51,7 @@ const HomeScreen = () => {
                 show: true, 
                 status: "error", 
                 title: "Peringatan", 
-                subtitle: "User anda tidak tehubung dengan pin mesin..."
+                subtitle: "User anda tidak tehubung dengan pin mesin fingerprint..."
             }))
         }
     }
@@ -77,7 +77,6 @@ const HomeScreen = () => {
                 bg={colorTheme === 'dark'?"#2f313e":"#F5F5F5"}>
                 <VStack flex={1}>
                     <HeaderScreen title={"Home"} onThemes={true} onNotification={true}/>
-                    <AlertCustom/>
                     <VStack px={3} flex={1}>
                         {
                             user?.karyawan?.nama ?
@@ -93,7 +92,6 @@ const HomeScreen = () => {
                                 - data anda tidak terhubung dengan data karyawan -
                             </Text>
                         }
-
                         <Text 
                             fontSize={16} 
                             fontFamily={"Quicksand-Light"} 
@@ -101,47 +99,52 @@ const HomeScreen = () => {
                             color={colorTheme != 'dark'?"#2f313e":"#F5F5F5"}>
                             { user?.usertype }
                         </Text>
-
-                        <HStack my={3} space={3} h={"170px"}>
-                            <TouchableOpacity style={{flex: 2}} onPress={() => route.navigate("Checklog-Absensi")}>
-                                <VStack bg={"#2297ff"} flex={1} rounded={"lg"} justifyContent={"center"} shadow={5} borderWidth={1} borderColor={"#ddd"}>
-                                    <Center>
-                                        <Image alt='...' source={require('../../assets/images/finger-mechine.png')} resizeMode="contain" size={"md"}/>
-                                        <Text color={"#F5F5F5"} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Checklog</Text>
-                                        <Text color={"#F5F5F5"} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Kehadiran</Text>
-                                    </Center>
-                                </VStack>
-                            </TouchableOpacity>
-                            <VStack space={3} flex={3}>
-                                {/* "#4cb404" */}
+                        <VStack space={5} mt={3} flex={1}>
+                            <HStack space={4} flex={1} justifyContent={"space-around"}>
+                                <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Checklog-Absensi")}>
+                                    <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
+                                        <Image 
+                                            alt='...' 
+                                            source={require('../../assets/images/finger-mechine.png')} 
+                                            resizeMode="contain"
+                                            style={{width: 100, height: 100}}/>
+                                        <Text color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Checklog</Text>
+                                    </VStack>
+                                </TouchableOpacity>
                                 <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate('Riwayat-Absensi')}>
-                                    <HStack p={2} flex={1} bg={"#2cd998"} rounded={"lg"} shadow={5} borderWidth={1} borderColor={"#ddd"} alignItems={"center"} justifyContent={"space-between"}>
-                                        <VStack>
-                                            <Text color={"#F5F5F5"} fontFamily={"Poppins-SemiBold"} fontSize={18} fontWeight={600}>
-                                                Informasi
-                                            </Text>
-                                            <Text lineHeight={"xs"} color={"#F5F5F5"} fontFamily={"Poppins-Light"} fontSize={14} fontWeight={400}>
-                                                Attendances
-                                            </Text>
-                                        </VStack>
-                                        <Image alt='...' source={require('../../assets/images/calendar-bell.png')} resizeMode="contain" size={"md"}/>
-                                    </HStack>
+                                    <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
+                                        <Image 
+                                            alt='...' 
+                                            source={require('../../assets/images/calendar-bell.png')} 
+                                            resizeMode="contain"
+                                            style={{width: 100, height: 100}}/>
+                                        <Text color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Riwayat Absensi</Text>
+                                    </VStack>
                                 </TouchableOpacity>
+                            </HStack>
+                            <HStack space={4} flex={1} justifyContent={"space-around"}>
                                 <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Permintaan")}>
-                                    <HStack p={2} flex={1} bg={"#ffcd20"} rounded={"lg"} shadow={5} borderWidth={1} borderColor={"#ddd"} alignItems={"center"} justifyContent={"space-between"}>
-                                        <VStack>
-                                            <Text color={"#F5F5F5"} fontFamily={"Poppins-SemiBold"} fontSize={18} fontWeight={600}>
-                                                Permintaan
-                                            </Text>
-                                            <Text lineHeight={"xs"} color={"#F5F5F5"} fontFamily={"Poppins-Light"} fontSize={14} fontWeight={400}>
-                                                Attendances
-                                            </Text>
-                                        </VStack>
-                                        <Image alt='...' source={require('../../assets/images/employee.png')} resizeMode="contain" size={"sm"}/>
-                                    </HStack>
+                                    <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
+                                        <Image 
+                                            alt='...' 
+                                            source={require('../../assets/images/schedules.png')} 
+                                            resizeMode="contain"
+                                            style={{width: 90, height: 90}}/>
+                                        <Text color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Request Absensi</Text>
+                                    </VStack>
                                 </TouchableOpacity>
-                            </VStack>
-                        </HStack>
+                                <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Perintah-Lembur")}>
+                                    <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
+                                        <Image 
+                                            alt='...' 
+                                            source={require('../../assets/images/spl.png')} 
+                                            resizeMode="contain"
+                                            style={{width: "100%", height: 85}}/>
+                                        <Text color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Form Lembur</Text>
+                                    </VStack>
+                                </TouchableOpacity>
+                            </HStack>
+                        </VStack>
                         <VStack>
                             <Center my={3}>
                                 <Text 

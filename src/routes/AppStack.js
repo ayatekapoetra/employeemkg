@@ -19,6 +19,11 @@ import RiwayatAbsensiToday from '../pages/checklog/riwayatToday'
 import PermintaanPage from '../pages/permintaan'
 import CreateFormSakit from '../pages/permintaan/informasi-sakit/create'
 import ShowFormSakit from '../pages/permintaan/informasi-sakit/show'
+import CreateFormCuti from '../pages/permintaan/request-cuti/create';
+import ShowFormCuti from '../pages/permintaan/request-cuti/show';
+import CreateFormAlpha from '../pages/permintaan/request-izin/create';
+import ShowFormAlpha from '../pages/permintaan/request-izin/show';
+
 import PerintahLemburPage from '../pages/perintah-lembur';
 import CreatePerintahLembur from '../pages/perintah-lembur/createPerintahLembur';
 import ShowPerintahLembur from '../pages/perintah-lembur/showPerintahLembur';
@@ -74,8 +79,12 @@ export default function AppStack() {
             <Stack.Screen name="Perintah-Lembur" component={PerintahLemburPage} options={{headerShown: false}}/>
             <Stack.Screen name="Create-Perintah-Lembur" component={CreatePerintahLembur} options={{headerShown: false}}/>
             <Stack.Screen name="Show-Perintah-Lembur" component={ShowPerintahLembur} options={{headerShown: false}}/>
-            <Stack.Screen name="Permintaan-Create-Sakit" component={CreateFormSakit} options={{headerShown: false}}/>
-            <Stack.Screen name="Permintaan-Show-Sakit" component={ShowFormSakit} options={{headerShown: false}}/>
+            <Stack.Screen name="Create-Permintaan-Sakit" component={CreateFormSakit} options={{headerShown: false}}/>
+            <Stack.Screen name="Show-Permintaan-Sakit" component={ShowFormSakit} options={{headerShown: false}}/>
+            <Stack.Screen name="Create-Permintaan-Cuti" component={CreateFormCuti} options={{headerShown: false}}/>
+            <Stack.Screen name="Show-Permintaan-Cuti" component={ShowFormCuti} options={{headerShown: false}}/>
+            <Stack.Screen name="Create-Permintaan-Alpha" component={CreateFormAlpha} options={{headerShown: false}}/>
+            <Stack.Screen name="Show-Permintaan-Alpha" component={ShowFormAlpha} options={{headerShown: false}}/>
             <Stack.Screen name="Show-Kehadiran-Details" component={ShowAbsensiDetails} options={{headerShown: false}}/>
             <Stack.Screen name="Create-Aktual-Kerja" component={CreateAktualKerja} options={{headerShown: false}}/>
             <Stack.Screen name="Show-Aktual-Kerja" component={ShowAktualKerja} options={{headerShown: false}}/>

@@ -183,7 +183,7 @@ const CreatePerintahLembur = () => {
                                                 textAlign={"justify"}
                                                 fontFamily={"Quicksand-Regular"}
                                                 color={appcolor.teks[mode][1]}>
-                                                { data?.narasi }
+                                                { data?.narasi || "???" }
                                             </Text>
                                         </VStack>
                                     </HStack>
@@ -242,6 +242,7 @@ const CreatePerintahLembur = () => {
                         <Modal.Body>
                             <Text>Penjelasan Tugas :</Text>
                             <Input 
+                                h={200}
                                 multiline
                                 keyboardAppearance={mode} 
                                 placeholder='Narasikan tugas disini...'

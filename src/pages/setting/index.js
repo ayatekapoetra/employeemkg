@@ -99,55 +99,55 @@ const array = [
         title: "Profile Saya", 
         icon: "circle-user",
         uri: "Profile",
-        grpIcon: <Profile size="28" color="#d9e3f0" variant="Bulk"/>
+        grpIcon: <Profile size="28" color="#787b83" variant="Bulk"/>
     },
     {
         key: 2, 
         title: "Keamanan Akun", 
         icon: "lock",
         uri: "keamanan-akun-screen",
-        grpIcon: <ShieldSecurity size="28" color="#d9e3f0" variant="Bulk"/>
+        grpIcon: <ShieldSecurity size="28" color="#787b83" variant="Bulk"/>
     },
     {
         key: 3, 
         title: "Notifikasi", 
         icon: "bell",
         uri: "notifikasi-screen",
-        grpIcon: <DirectNotification size="28" color="#d9e3f0" variant="Bulk"/>
+        grpIcon: <DirectNotification size="28" color="#787b83" variant="Bulk"/>
     },
     {
         key: 4, 
         title: "Internal Memo", 
         icon: "bullhorn",
         uri: "internal-memo-screen",
-        grpIcon: <Stickynote size="28" color="#d9e3f0" variant="Bulk"/>
+        grpIcon: <Stickynote size="28" color="#787b83" variant="Bulk"/>
     },
     {
         key: 5, 
         title: "Gagal Kirim", 
         icon: "satellite-dish",
         uri: "unsending-screen",
-        grpIcon: <Convert size="28" color="#d9e3f0" variant="Bulk"/>
+        grpIcon: <Convert size="28" color="#787b83" variant="Bulk"/>
     },
     {
         key: 6, 
         title: "Riwayat Kehadiran", 
         icon: "clock-rotate-left",
         uri: "riwayat-kehadiran-screen",
-        grpIcon: <Scan size="28" color="#d9e3f0" variant="Bulk"/>
+        grpIcon: <Scan size="28" color="#787b83" variant="Bulk"/>
     },
     {
         key: 7, 
         title: "Ganti Thema", 
         icon: "palette",
         uri: "",
-        grpIcon: <ColorSwatch size="28" color="#d9e3f0" variant="Bulk"/>
+        grpIcon: <ColorSwatch size="28" color="#787b83" variant="Bulk"/>
     },
     {
         key: 8, 
         title: "Keluar", 
         icon: "power-off",
         uri: "#logout",
-        grpIcon: <Logout size="28" color="#d9e3f0" variant="Bulk"/>
+        grpIcon: <Logout size="28" color="#787b83" variant="Bulk"/>
     },
 ]

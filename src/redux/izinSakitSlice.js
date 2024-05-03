@@ -4,12 +4,12 @@ import apiFetch from '../helpers/ApiFetch';
 
 console.log(nanoid());
 
-export const permohonan = createAsyncThunk(
-    'permohonan/izin',
-    async ( { type, qstring } ) => {
+export const getSakit = createAsyncThunk(
+    'izin/sakit',
+    async ( { qstring } ) => {
         let resp = null
         try {
-            resp = await apiFetch.get(`hrd/permohonan-izin-${type}`, { params: qstring })
+            resp = await apiFetch.get("hrd/permohonan-izin-sakit", {params: qstring})
             if(resp?.data?.data){
                 return resp.data
             }else{
@@ -31,17 +31,17 @@ const initialState = {
     data: []
 };
 
-const permohonanSlice = createSlice({
-    name: 'permohonan/izin',
+const sakitSlice = createSlice({
+    name: 'izin/sakit',
     initialState,
     extraReducers: (builder) => {
         builder
-        .addCase(permohonan.pending, (state) => {
+        .addCase(getSakit.pending, (state) => {
             state.loading = true
             state.error = null
             state.data = []
         })
-        .addCase(permohonan.fulfilled, (state, action) => {
+        .addCase(getSakit.fulfilled, (state, action) => {
             // console.log("action --------- ", action);
             state.loading = false
             if(!action?.payload?.diagnostic?.error){
@@ -52,7 +52,7 @@ const permohonanSlice = createSlice({
                 state.data = []
             }
         })
-        .addCase(permohonan.rejected, (state, action) => {
+        .addCase(getSakit.rejected, (state, action) => {
             // console.log("rejected", action);
             state.loading = false
             state.error = action.error.code
@@ -60,4 +60,4 @@ const permohonanSlice = createSlice({
     }
 })
 
-export default permohonanSlice.reducer
+export default sakitSlice.reducer

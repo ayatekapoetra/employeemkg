@@ -31,29 +31,29 @@ const PermintaanPage = () => {
     return (
         <AppScreen>
             <VStack h={"full"}>
-                <HeaderScreen title={"Permintaan Karyawan"} onBack={true} onThemes={true} onFilter={true} onNotification={true}/>
+                <HeaderScreen title={"Permintaan Karyawan"} onBack={true} onThemes={true} onFilter={false} onNotification={true}/>
                 <VStack flex={1}>
                     <HStack m={3} justifyContent={"space-around"}>
                         <TouchableOpacity onPress={() => switchLayerHandle('sakit')}>
-                            <VStack h={"80px"} w={"80px"} bg={appcolor.box[mode]} alignItems={"center"} justifyContent={"center"} rounded={"md"} shadow={2}>
+                            <VStack h={"80px"} w={"80px"} bg={appcolor.btn[mode][showLayer.sakit ? "active":"inactive"]} alignItems={"center"} justifyContent={"center"} rounded={"md"} shadow={2}>
                                 <Hospital size="50" color={appcolor.ico[mode][1]} variant="Bulk"/>
                                 <Text color={appcolor.teks[mode][1]} fontFamily={"Poppins-Regular"} fontSize={12}>Sakit</Text>
                             </VStack>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => switchLayerHandle('cuti')}>
-                            <VStack h={"80px"} w={"80px"} bg={appcolor.box[mode]} alignItems={"center"} justifyContent={"center"} rounded={"md"} shadow={2}>
+                            <VStack h={"80px"} w={"80px"} bg={appcolor.btn[mode][showLayer.cuti ? "active":"inactive"]} alignItems={"center"} justifyContent={"center"} rounded={"md"} shadow={2}>
                                 <NoteFavorite size="52" color={appcolor.ico[mode][1]} variant="Bulk"/>
                                 <Text color={appcolor.teks[mode][1]} fontFamily={"Poppins-Regular"} fontSize={12}>Cuti</Text>
                             </VStack>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => switchLayerHandle('izin')}>
-                            <VStack h={"80px"} w={"80px"} bg={appcolor.box[mode]} alignItems={"center"} justifyContent={"center"} rounded={"md"} shadow={2}>
+                            <VStack h={"80px"} w={"80px"} bg={appcolor.btn[mode][showLayer.izin ? "active":"inactive"]} alignItems={"center"} justifyContent={"center"} rounded={"md"} shadow={2}>
                                 <ShieldTick size="52" color={appcolor.ico[mode][1]} variant="Bulk"/>
                                 <Text color={appcolor.teks[mode][1]} fontFamily={"Poppins-Regular"} fontSize={12}>Izin</Text>
                             </VStack>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => switchLayerHandle('panjar')}>
-                            <VStack h={"80px"} w={"80px"} bg={appcolor.box[mode]} alignItems={"center"} justifyContent={"center"} rounded={"md"} shadow={2}>
+                            <VStack h={"80px"} w={"80px"} bg={appcolor.btn[mode][showLayer.panjar ? "active":"inactive"]} alignItems={"center"} justifyContent={"center"} rounded={"md"} shadow={2}>
                                 <EmptyWalletTime size="52" color={appcolor.ico[mode][1]} variant="Bulk"/>
                                 <Text color={appcolor.teks[mode][1]} fontFamily={"Poppins-Regular"} fontSize={12}>Panjar</Text>
                             </VStack>

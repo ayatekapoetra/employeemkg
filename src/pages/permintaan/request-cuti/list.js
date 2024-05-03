@@ -1,13 +1,46 @@
-import { TouchableOpacity } from 'react-native'
-import React from 'react'
+import { FlatList, TouchableOpacity } from 'react-native'
+import React, { useEffect } from 'react'
 import { VStack, Text, HStack, Center, Image } from 'native-base'
 import { CalendarAdd } from 'iconsax-react-native'
+import { useDispatch, useSelector } from 'react-redux'
+import { useIsFocused, useNavigation } from '@react-navigation/native'
+import { getCuti } from '../../../redux/izinCutiSlice'
+import { applyAlert } from '../../../redux/alertSlice'
 import appcolor from '../../../common/colorMode'
+import LoadingHauler from '../../../components/LoadingHauler'
+import NoData from '../../../components/NoData'
+import CutiCardList from './listCard'
 
 const RequestCutiScreen = ( { mode } ) => {
+    const route = useNavigation()
+    const isFocus = useIsFocused()
+    const dispatch = useDispatch()
+    const { data, error, loading } = useSelector(state => state.dataCuti)
+
+    useEffect(() => {
+        onGetDataHandle()
+    }, [isFocus])
+
+    const onGetDataHandle = async () => {
+        dispatch(getCuti({qstring: null}))
+    }
+
+    if(error){
+        dispatch(applyAlert({
+            show: true,
+            status: 'error',
+            title: "ERR_FETCH",
+            subtitle: "Request failed with status code 500"
+        }))
+    }
+
+    if(loading){
+        return <LoadingHauler/>
+    }
+
     return (
         <VStack mx={3} flex={5}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => route.navigate('Create-Permintaan-Cuti')}>
                 <HStack 
                     p={3}
                     mb={2}
@@ -17,7 +50,7 @@ const RequestCutiScreen = ( { mode } ) => {
                     borderStyle={"dashed"}
                     rounded={"md"}
                     borderColor={appcolor.teks[mode][1]}>
-                    <CalendarAdd size="32" color="#d9e3f0" variant="Bulk"/>
+                    <CalendarAdd size="32" color={appcolor.ico[mode][1]} variant="Bulk"/>
                     <VStack>
                         <Text 
                             fontSize={18}
@@ -38,25 +71,17 @@ const RequestCutiScreen = ( { mode } ) => {
                 </HStack>
             </TouchableOpacity>
             <VStack flex={1}>
-                <Center flex={1} justifyContent={"center"}>
-                    <Text 
-                        fontSize={14}
-                        fontFamily={"Poppins-Regular"}
-                        color={appcolor.teks[mode][2]}>
-                        Fitur ini masih dalam pengembangan
-                    </Text>
-                    <Image 
-                        alt='...' 
-                        source={require('../../../../assets/images/under-development.png')} 
-                        resizeMode="contain" 
-                        style={{width: "100%", height: 300}}/>
-                    <Text 
-                        fontSize={16}
-                        fontFamily={"Poppins-Regular"}
-                        color={appcolor.teks[mode][3]}>
-                        Fitur Under Development
-                    </Text>
-                </Center>
+                {
+                    data?.length > 0 ?
+                    <FlatList
+                        data={data}
+                        // refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefreshHandle}/>}
+                        showsVerticalScrollIndicator={false}
+                        renderItem={({item}) => <CutiCardList item={item} mode={mode}/>}
+                        keyExtractor={(item) => item.id}/>
+                    :
+                    <NoData title={"Oops !!"} subtitle={"Maaf data yang anda cari tidak ditemukan."}/>
+                }
             </VStack>
         </VStack>
     )

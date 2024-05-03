@@ -6,7 +6,17 @@ const appcolor = {
     box: {
         dark: "#697689", // gelap
         light: "#edecec" //terang
-        // light: "#ecedf1" //terang
+    },
+    btn: {
+        dark: {
+            active: "#373e48",
+            inactive: "#697689",
+        },
+        light: {
+            active: "#d6d6e5",
+            // active: "#dad8d8",
+            inactive: "#F5F5F5",
+        }
     },
     teks: {
         dark: {

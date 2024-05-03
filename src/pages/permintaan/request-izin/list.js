@@ -1,16 +1,47 @@
 import { FlatList, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { VStack, Text, HStack } from 'native-base'
 import { CalendarAdd } from 'iconsax-react-native'
 import appcolor from '../../../common/colorMode'
-import SakitCardList from '../informasi-sakit/listCard'
 import moment from 'moment'
+import NoData from '../../../components/NoData'
+import AlphaCardList from './listCard'
+import { applyAlert } from '../../../redux/alertSlice'
+import { useDispatch, useSelector } from 'react-redux'
+import { useIsFocused, useNavigation } from '@react-navigation/native'
+import { getAlpha } from '../../../redux/izinAlphaSlice'
+import LoadingHauler from '../../../components/LoadingHauler'
 
 const RequestIzinScreen = ( { mode } ) => {
-    const [ data, setData ] = useState([])
+    const route = useNavigation()
+    const isFocus = useIsFocused()
+    const dispatch = useDispatch()
+    const { data, error, loading } = useSelector(state => state.dataAlpha)
+
+    useEffect(() => {
+        onGetDataHandle()
+    }, [isFocus])
+
+    const onGetDataHandle = async () => {
+        dispatch(getAlpha({qstring: null}))
+    }
+
+    if(error){
+        dispatch(applyAlert({
+            show: true,
+            status: 'error',
+            title: "ERR_FETCH",
+            subtitle: "Request failed with status code 500"
+        }))
+    }
+
+    if(loading){
+        return <LoadingHauler/>
+    }
+
     return (
         <VStack mx={3} flex={5}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => route.navigate('Create-Permintaan-Alpha')}>
                 <HStack 
                     p={3}
                     mb={2}
@@ -41,11 +72,17 @@ const RequestIzinScreen = ( { mode } ) => {
                 </HStack>
             </TouchableOpacity>
             <VStack flex={1}>
-                <FlatList
-                    data={data}
-                    showsVerticalScrollIndicator={false}
-                    renderItem={({item}) => <SakitCardList item={item} mode={mode}/>}
-                    keyExtractor={(item) => item.id}/>
+                {
+                    data?.length > 0 ?
+                    <FlatList
+                        data={data}
+                        // refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefreshHandle}/>}
+                        showsVerticalScrollIndicator={false}
+                        renderItem={({item}) => <AlphaCardList item={item} mode={mode}/>}
+                        keyExtractor={(item) => item.id}/>
+                    :
+                    <NoData title={"Oops !!"} subtitle={"Maaf data yang anda cari tidak ditemukan."}/>
+                }
             </VStack>
         </VStack>
     )

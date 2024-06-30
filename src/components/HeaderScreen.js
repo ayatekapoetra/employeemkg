@@ -1,6 +1,6 @@
 import { TouchableOpacity } from 'react-native'
 import { HStack, Text } from 'native-base'
-import { Moon, Notification, Sun1, ArrowCircleLeft2, Filter } from 'iconsax-react-native'
+import { Moon, Notification, Sun1, ArrowCircleLeft2, Filter, MonitorMobbile } from 'iconsax-react-native'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigation } from '@react-navigation/native'
 import { applyTheme } from '../redux/themeSlice'
@@ -11,8 +11,9 @@ import appcolor from '../common/colorMode'
 const HeaderScreen = ( { title, onBack, onThemes, onFilter, onNotification } ) => {
     const route = useNavigation()
     const dispatch = useDispatch()
+    const { user } = useSelector(state => state.auth)
     const themes = useSelector(state => state.themes)
-    const mode = useSelector(state => state.themes).value
+    const mode = useSelector(state => state.themes.value)
     const [ colorTheme, setColorTheme ] = useState(themes.value)
 
     useEffect(() => {
@@ -62,6 +63,18 @@ const HeaderScreen = ( { title, onBack, onThemes, onFilter, onNotification } ) =
                 </HStack>
             }
             <HStack space={2} h={"50px"} alignItems={"center"} justifyContent={"flex-end"}>
+                {/* {
+                    ["developer", "administartor", "hrd"].includes(user?.usertype) &&
+                    <TouchableOpacity onPress={() => route.navigate("Reset-User-Devices")}>
+                        {
+                            colorTheme === 'dark' ?
+                            <MonitorMobbile size="25" color={appcolor.teks[mode][2]} variant="Bulk"/>
+                            :
+                            <MonitorMobbile size="25" color={appcolor.teks[mode][2]} variant="Bulk"/>
+                        }
+                    </TouchableOpacity>
+                } */}
+
                 {
                     onThemes &&
                     <TouchableOpacity onPress={handleChangeScheme}>
@@ -88,7 +101,7 @@ const HeaderScreen = ( { title, onBack, onThemes, onFilter, onNotification } ) =
 
                 {
                     onNotification &&
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => route.navigate("notifikasi-screen")}>
                         <HStack h={"10px"} w={"10px"} position={"absolute"} bg={"error.500"} rounded={"full"} zIndex={99} right={0}/>
                         {
                             colorTheme === 'dark' ?

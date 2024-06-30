@@ -4,7 +4,8 @@ import logger from 'redux-logger'
 import themeReducer from './themeSlice'
 import authReducer from './authSlice'
 import alertReducer from './alertSlice'
-import permohonanSlice from './permohonanSlice'
+import fetchDataSlice from './fetchDataSlice'
+import showDataSlice from './showDataSlice'
 
 import izinSakitSlice from './izinSakitSlice'
 import izinCutiSlice from './izinCutiSlice'
@@ -15,10 +16,11 @@ export default configureStore({
       themes: themeReducer,
       auth: authReducer,
       myalert: alertReducer,
-      // permohonan: permohonanSlice,
       dataSakit: izinSakitSlice,
       dataCuti: izinCutiSlice,
       dataAlpha: izinAlphaSlice,
+      fetchData: fetchDataSlice,
+      showData: showDataSlice
     },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
   })

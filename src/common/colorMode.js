@@ -31,7 +31,7 @@ const appcolor = {
             1: "#2f313e",
             2: "#4f4c46", // muted
             3: "#ef981e", //warning
-            4: "#50b903", //success
+            4: "#15803d", //success
             5: "#dc2626", //error
             6: "#0180c7", //primary
         }

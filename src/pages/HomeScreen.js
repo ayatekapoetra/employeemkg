@@ -14,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { applyAlert } from '../redux/alertSlice';
 import AlertCustom from '../components/AlertCustom';
 import LoadingHauler from '../components/LoadingHauler';
+import moment from 'moment';
 
 const { width, height } = Dimensions.get("screen")
 
@@ -49,7 +50,7 @@ const HomeScreen = () => {
         if(!user.karyawan.pin){
             dispatch(applyAlert({
                 show: true, 
-                status: "error", 
+                status: "warning", 
                 title: "Peringatan", 
                 subtitle: "User anda tidak tehubung dengan pin mesin fingerprint..."
             }))
@@ -118,10 +119,11 @@ const HomeScreen = () => {
                                             source={require('../../assets/images/calendar-bell.png')} 
                                             resizeMode="contain"
                                             style={{width: 100, height: 100}}/>
-                                        <Text color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Riwayat Absensi</Text>
+                                        <Text color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Riwayat Bulanan</Text>
                                     </VStack>
                                 </TouchableOpacity>
                             </HStack>
+                            
                             <HStack space={4} flex={1} justifyContent={"space-around"}>
                                 <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Permintaan")}>
                                     <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
@@ -144,6 +146,30 @@ const HomeScreen = () => {
                                     </VStack>
                                 </TouchableOpacity>
                             </HStack>
+
+                            <HStack space={4} flex={1} justifyContent={"space-around"}>
+                                <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Absensi-Tulis")}>
+                                    <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
+                                        <Image 
+                                            alt='...' 
+                                            source={require('../../assets/images/absen-tulis.png')} 
+                                            resizeMode="contain"
+                                            style={{width: 90, height: 95}}/>
+                                        <Text color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Absensi Tulis</Text>
+                                    </VStack>
+                                </TouchableOpacity>
+                                
+                                <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Approval")}>
+                                    <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
+                                        <Image 
+                                            alt='...' 
+                                            source={require('../../assets/images/approval-ico.png')} 
+                                            resizeMode="contain"
+                                            style={{width: "100%", height: 85, marginBottom: 10}}/>
+                                        <Text pt={1} textAlign={'center'} lineHeight={'xs'} color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Approval Pengawas</Text>
+                                    </VStack>
+                                </TouchableOpacity>
+                            </HStack>
                         </VStack>
                         <VStack>
                             <Center my={3}>
@@ -159,7 +185,7 @@ const HomeScreen = () => {
                                     fontFamily={"Poppins-Light"} 
                                     fontWeight={300} 
                                     color={colorTheme != 'dark'?"#2f313e":"#F5F5F5"}>
-                                    Periode Februari 2024
+                                    Periode { moment().add(-1, "month").format("MMMM YYYY") }
                                 </Text>
                             </Center>
                             <HomeDonutChart/>

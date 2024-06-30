@@ -28,9 +28,13 @@ const HomeDonutChart = () => {
     }, [])
 
     const onGetDataChartHandle = async () => {
-        const resp = await apiFetch.get("absensi-score-chart")
-        console.log(resp);
-        setData(resp.data)
+        try {
+            const resp = await apiFetch.get("absensi-score-chart")
+            console.log(resp);
+            setData(resp.data)
+        } catch (error) {
+            console.log(error);
+        }
     }
   
     return (
@@ -55,9 +59,9 @@ const HomeDonutChart = () => {
                 )}}/>
             <VStack space={2}>
                 {
-                    data?.map( m => {
+                    data?.map( (m, i) => {
                         return(
-                            <HStack space={2} alignItems={"center"}>
+                            <HStack key={i} space={2} alignItems={"center"}>
                                 <Calendar2 size="22" color={m.color} variant="Bulk"/>
                                 <Text fontFamily={"Poppins-Regular"} fontSize={14} color={appcolor.teks[mode][1]}>
                                     {m.value}% {m?.teks || "???"}

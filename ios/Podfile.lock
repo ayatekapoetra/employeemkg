@@ -974,8 +974,6 @@ PODS:
   - React-Mapbuffer (0.73.2):
     - glog
     - React-debug
-  - react-native-background-actions (3.0.1):
-    - React-Core
   - react-native-date-picker (5.0.2):
     - React-Core
   - react-native-geolocation (3.2.1):
@@ -1234,7 +1232,6 @@ DEPENDENCIES:
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector-modern`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
-  - react-native-background-actions (from `../node_modules/react-native-background-actions`)
   - react-native-date-picker (from `../node_modules/react-native-date-picker`)
   - "react-native-geolocation (from `../node_modules/@react-native-community/geolocation`)"
   - react-native-google-maps (from `../node_modules/react-native-maps`)
@@ -1346,8 +1343,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/logger"
   React-Mapbuffer:
     :path: "../node_modules/react-native/ReactCommon"
-  react-native-background-actions:
-    :path: "../node_modules/react-native-background-actions"
   react-native-date-picker:
     :path: "../node_modules/react-native-date-picker"
   react-native-geolocation:
@@ -1459,7 +1454,6 @@ SPEC CHECKSUMS:
   React-jsinspector: 03644c063fc3621c9a4e8bf263a8150909129618
   React-logger: 66b168e2b2bee57bd8ce9e69f739d805732a5570
   React-Mapbuffer: 9ee041e1d7be96da6d76a251f92e72b711c651d6
-  react-native-background-actions: ecffd3f0864140ef6cf21c29be6819a02b531a52
   react-native-date-picker: 90687f1dbd374ff0265dca99d949998364c22fa9
   react-native-geolocation: 0ac6e11c1097d61b3836ab570c48c2bebb052604
   react-native-google-maps: 94df984b1647973baffe17c0b7b52828d6b69d94

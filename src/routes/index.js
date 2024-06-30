@@ -3,7 +3,7 @@ import themeManager from '../common/themeScheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react'
-import LoginPage from '../pages/auth/LoginPage';
+import LoginPage from '../pages/_auth/LoginPage';
 import AppStack from './AppStack';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../redux/authSlice';

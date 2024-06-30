@@ -41,6 +41,13 @@
       "latitude": "-1.949685",
       "longitude": "121.321615",
       "aktif": "Y"
+    },
+    {
+      "id": "8",
+      "nama": "Gudang Patene",
+      "latitude": "-5.0584839000000000",
+      "longitude": "119.5046299000000000",
+      "aktif": "Y"
     }
   ]
 }

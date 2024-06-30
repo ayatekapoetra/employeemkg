@@ -17,7 +17,7 @@ const ButtonVerifyApprove = ( { mode, data, verifyAction, approvalAction, reject
             </Button>
         )
     }else if(
-        ['developer', 'administrator', 'hrd'].includes(user.usertype) && 
+        ['developer', 'administrator', 'hrd', 'pjo'].includes(user.usertype) && 
         data.verify_sts == "A" && 
         !data.approve_sts){
         return (

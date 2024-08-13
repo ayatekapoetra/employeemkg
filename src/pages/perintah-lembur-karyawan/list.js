@@ -1,6 +1,6 @@
 import { TouchableOpacity, FlatList, RefreshControl, View } from 'react-native'
 import { useDispatch, useSelector } from 'react-redux';
-import { VStack, Text, HStack } from 'native-base';
+import { VStack, Text, HStack, Badge } from 'native-base';
 import { Clock, NoteAdd, RulerPen } from 'iconsax-react-native';
 import React, { useEffect, useState } from 'react'
 import appcolor from '../../common/colorMode'
@@ -21,6 +21,7 @@ const ListPerintahLembur = ( { data, loading, onRefreshHandle } ) => {
                     data.length > 0 ?
                     <FlatList
                         data={data}
+                        showsVerticalScrollIndicator={false}
                         refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefreshHandle}/>}
                         renderItem={({item}) => <ItemList mode={mode} item={item} user={user}/>}
                         keyExtractor={item => item.id}/>
@@ -40,15 +41,19 @@ function ItemList ( { item, user, mode } ) {
     switch (item.status) {
         case "A":
             var iconColor = appcolor.ico[mode][4]
+            var statusBadge = <Badge colorScheme={"success"} rounded={'lg'} variant={'solid'}>approve</Badge>
             break;
         case "F":
             var iconColor = appcolor.ico[mode][5]
+            var statusBadge = <Badge colorScheme={"warning"} rounded={'lg'} variant={'solid'}>waiting acc</Badge>
             break;
         case "C":
             var iconColor = appcolor.ico[mode][3]
+            var statusBadge = <Badge colorScheme={'coolGray'} rounded={'lg'} variant={"solid"}>diterima</Badge>
             break;
         default:
             var iconColor = appcolor.ico[mode][2]
+            var statusBadge = <Badge colorScheme={"info"} rounded={'lg'} variant={'solid'}>spl baru</Badge>
             break;
     }
     return (
@@ -60,13 +65,16 @@ function ItemList ( { item, user, mode } ) {
                 }
                 <NoteAdd size="52" color={iconColor} variant="Bulk"/>
                 <VStack ml={1} flex={1}>
-                    <Text 
-                        fontSize={18}
-                        lineHeight={"xs"}
-                        fontFamily={"Poppins-Regular"}
-                        color={appcolor.teks[mode][1]}>
-                        { item.karyawan.nama }
-                    </Text>
+                    <HStack alignItems={"flex-start"} justifyContent={'space-between'}>
+                        <Text 
+                            fontSize={18}
+                            lineHeight={"xs"}
+                            fontFamily={"Poppins-Regular"}
+                            color={appcolor.teks[mode][1]}>
+                            { item.karyawan.nama }
+                        </Text>
+                        { statusBadge }
+                    </HStack>
                     <Text 
                         fontSize={12}
                         lineHeight={"xs"}
@@ -112,16 +120,28 @@ function ItemList ( { item, user, mode } ) {
                         lineHeight={"xs"}
                         fontFamily={"Quicksand-Regular"}
                         color={appcolor.teks[mode][1]}>
-                        { moment().format("dddd, DD MMMM YYYY") }
+                        { moment(item.date_ops).format("dddd, DD MMMM YYYY") }
                     </Text>
-                    <Text 
-                        fontSize={14}
-                        lineHeight={"xs"}
-                        fontWeight={700}
-                        fontFamily={"Quicksand-Regular"}
-                        color={appcolor.teks[mode][1]}>
-                        Author : { item.author.nama_lengkap }
-                    </Text>
+                    <HStack space={2} justifyContent={'space-between'}>
+                        <Text 
+                            flex={1}
+                            fontSize={14}
+                            lineHeight={"xs"}
+                            fontWeight={700}
+                            fontFamily={"Quicksand-Regular"}
+                            color={appcolor.teks[mode][1]}>
+                            By : { item.author.nama_lengkap }
+                        </Text>
+                        <Text 
+                            w={'1/3'}
+                            textAlign={'right'}
+                            fontSize={16}
+                            lineHeight={"xs"}
+                            fontFamily={"Teko-Medium"}
+                            color={appcolor.teks[mode][6]}>
+                            { moment(item.created_at).fromNow() }
+                        </Text>
+                    </HStack>
                 </VStack>
             </HStack>
         </TouchableOpacity>

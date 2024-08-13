@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react'
 import { VStack, Text, HStack, Divider, Center } from 'native-base'
 import { Agenda, Calendar, CalendarList } from 'react-native-calendars'
 import { useSelector } from 'react-redux'
-import { ArrowCircleDown, ArrowCircleLeft, CalendarTick } from 'iconsax-react-native'
+import { ArrowCircleDown, ArrowCircleLeft, CalendarTick, Clock } from 'iconsax-react-native'
 import appcolor from '../../common/colorMode'
 import apiFetch from '../../helpers/ApiFetch'
 import LoadingSpinner from '../../components/LoadingSpinner'
@@ -52,6 +52,7 @@ const AgendaScreen = ( { isDark, mode, openFilter, setOpenFilter } ) => {
     const getDataMarker = async (qstring = null) => {
         try {
             const resp = await apiFetch.get("my-attendances-calendar", {params: qstring})
+            console.log(resp);
             if(resp.status == 200){
                 setMarkedDates(resp.data.marker)
             }
@@ -170,6 +171,7 @@ const AgendaScreen = ( { isDark, mode, openFilter, setOpenFilter } ) => {
 export default AgendaScreen
 
 function ItemList({item, mode}) {
+    console.log(item);
     return(
         <HStack 
             px={3} 
@@ -201,6 +203,26 @@ function ItemList({item, mode}) {
                         fontFamily={"Quicksand-Regular"}>
                         { moment(new Date(item.tanggal)).format('dddd, DD MMMM YYYY') }
                     </Text>
+                    <HStack mt={1} space={3} flex={1}>
+                        <HStack space={1} alignItems={'center'}>
+                            <Clock size="22" color={appcolor.ico[mode][4]} variant="Bold"/>
+                            <Text 
+                                fontFamily={"Dosis"}
+                                fontWeight={'semibold'}
+                                color={appcolor.teks[mode][1]}>
+                                { item.masuk ? moment(item.masuk).format('HH:mm') : '--:--' }
+                            </Text>
+                        </HStack>
+                        <HStack space={1} alignItems={'center'}>
+                            <Clock size="22" color={appcolor.ico[mode][5]} variant="Bold"/>
+                            <Text 
+                                fontFamily={"Dosis"}
+                                fontWeight={'semibold'}
+                                color={appcolor.teks[mode][1]}>
+                                { item.pulang ? moment(item.pulang).format('HH:mm') : '--:--' }
+                            </Text>
+                        </HStack>
+                    </HStack>
                 </VStack>
             </HStack>
             <Text color={appcolor.teks[mode][2]} fontWeight={700} fontFamily={"Poppins-Bold"} fontSize={45}>

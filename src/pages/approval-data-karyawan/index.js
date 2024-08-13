@@ -40,7 +40,7 @@ const ApprovalPage = () => {
             title: 'Approval Lembur',
             subtitle: 'Form persetujuan surat perintah lembur karyawan',
             icon: <EmptyWalletTime size="32" color={appcolor.teks[mode][2]} variant="Bulk"/>,
-            uri: '',
+            uri: 'approval-lembur-karyawan',
             authorized: 'segment'
         },
         {

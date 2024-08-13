@@ -2,7 +2,7 @@
  * @format
  */
 
-import {AppRegistry} from 'react-native';
+import {AppRegistry, Text, TextInput} from 'react-native';
 import App from './App';
 import {name as appName} from './app.json';
 import {DevSettings, NativeModules} from 'react-native';
@@ -26,3 +26,11 @@ const addDebugMenuItems = async () => {
   };
 
 AppRegistry.registerComponent(appName, () => App);
+
+// DISABLED FONT SCALING SYSTEM
+if (Text.defaultProps == null) {
+  Text.defaultProps = {};
+  Text.defaultProps.allowFontScaling = false;
+  TextInput.defaultProps = TextInput.defaultProps || {};
+  TextInput.defaultProps.allowFontScaling = false;
+}

@@ -23,7 +23,7 @@ const FilterPerintahLembur = ( { dataFilter, setDataFilter, onApplyFilterHandle 
             dateStart: moment().startOf('month').format("YYYY-MM-DD"),
             dateEnd: moment().endOf('month').format("YYYY-MM-DD"),
             karyawan_id: null,
-            status: "",
+            status: "X",
         })
         
         onApplyFilterHandle()
@@ -153,10 +153,11 @@ const FilterPerintahLembur = ( { dataFilter, setDataFilter, onApplyFilterHandle 
                         mt={3} 
                         h={"50px"}
                         onValueChange={itemValue => onChangeStatusHandle(itemValue)}>
-                        <Select.Item label="SPL Baru" fontFamily={"Poppins-Regular"} value=""/>
-                        <Select.Item label="SPL Diterima" fontFamily={"Poppins-Regular"} value="C"/>
-                        <Select.Item label="SPL Verifikasi" fontFamily={"Poppins-Regular"} value="F"/>
-                        <Select.Item label="SPL Disetujui" fontFamily={"Poppins-Regular"} value="A"/>
+                        <Select.Item label="SPL Baru" fontFamily={"Poppins-Regular"} value="X"/>
+                        <Select.Item label="Diterima oleh karyawan" fontFamily={"Poppins-Regular"} value="C"/>
+                        <Select.Item label="Menunggu Persetujuan" fontFamily={"Poppins-Regular"} value="F"/>
+                        <Select.Item label="Disetujui Penanggung Jawab" fontFamily={"Poppins-Regular"} value="A"/>
+                        <Select.Item label="Semua Data" fontFamily={"Poppins-Regular"} value="ALL"/>
                     </Select>
                 </VStack>
 

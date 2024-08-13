@@ -22,26 +22,37 @@ const ShowApprovalAbsenTulis = () => {
     const route = useNavigation()
     const mode = useSelector(state => state.themes).value
     const { user } = useSelector(state => state.auth)
-    const { data, loading, error } = useSelector(state => state.showData)
-    // const [ loading, setLoading ] = useState(false)
+    const [ loading, setLoading ] = useState(false)
     const [ openDateStart, setOpenDateStart ] = useState(false)
     const [ openDateEnd, setOpenDateEnd ] = useState(false)
     const [modalVisible, setModalVisible] = useState(false);
-    const [ state, setState ] = useState(data)
+    const [ state, setState ] = useState(null)
 
     useEffect(() => {
         getDataRdx()
     }, [])
 
     const getDataRdx = async () => {
-        dispatch(showDataFetch(`hrd/worksheet/${params.id}/show-worksheet`))
+        setLoading(true)
+        try {
+            const resp = await apiFetch(`hrd/worksheet/${params.id}/show-worksheet`)
+            const { data } = resp.data
+            setState(data)
+            setLoading(false)
+        } catch (error) {
+            setLoading(false)
+            dispatch(applyAlert({
+                show: true,
+                status: "error",
+                title: "Gagal memuat data",
+                subtitle: error?.data?.diagnostic?.message || error.message
+            }))
+        }
     }
-
-    console.log(data);
 
     const onApproveDataHandle = async () => {
         try {
-            const resp = await apiFetch.post(`hrd/worksheet/${params.id}/approval-worksheet`, data)
+            const resp = await apiFetch.post(`hrd/worksheet/${params.id}/approval-worksheet`, state)
             console.log(resp);
             if(resp.data.diagnostic.error){
                 dispatch(applyAlert({
@@ -74,7 +85,7 @@ const ShowApprovalAbsenTulis = () => {
 
     const onUpdateDataHandle = async () => {
         try {
-            const resp = await apiFetch.post(`hrd/worksheet/${params.id}/update-worksheet`, data)
+            const resp = await apiFetch.post(`hrd/worksheet/${params.id}/update-worksheet`, state)
             console.log(resp);
             if(resp.data.diagnostic.error){
                 dispatch(applyAlert({
@@ -139,7 +150,7 @@ const ShowApprovalAbsenTulis = () => {
     }
 
     // console.log("SHOW-DATA----", data);
-    if(loading && data){
+    if(loading){
         return (
             <AppScreen>
                 <VStack h={"full"}>
@@ -184,7 +195,9 @@ const ShowApprovalAbsenTulis = () => {
                             </HStack>
                         </VStack>
                     </HStack>
-                    <ScrollView showsVerticalScrollIndicator={false}>
+                    <ScrollView 
+                        refreshControl={<RefreshControl refreshing={loading} onRefresh={getDataRdx}/>}
+                        showsVerticalScrollIndicator={false}>
                         <HStack mt={3} px={3} py={2} rounded={"md"} alignItems={"center"} borderWidth={1} borderColor={appcolor.line[mode][1]}>
                             <VStack flex={1}>
                                 <Text 
@@ -381,7 +394,7 @@ const ShowApprovalAbsenTulis = () => {
                                             lineHeight={"xs"}
                                             fontFamily={"Poppins-Regular"}
                                             color={appcolor.teks[mode][1]}>
-                                            Koordinator { state?.ws_approve?.section }
+                                            Penanggung Jawab { state?.ws_approve?.section }
                                         </Text>
                                     </VStack>
                                 </HStack>

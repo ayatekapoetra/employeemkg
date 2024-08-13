@@ -87,6 +87,7 @@ const RiwayatChecklogHarianPage = () => {
                                     data.length > 0 ?
                                     <FlatList 
                                         data={data} 
+                                        showsVerticalScrollIndicator={false}
                                         refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefreshHandle}/>}
                                         keyExtractor={(item) => item.id} 
                                         renderItem={({item}) => <ListAbsensi item={item}/>} />

@@ -167,7 +167,7 @@ const ItemApprovalAbsenTulis = ( { mode, data } ) => {
                         fontSize={'md'}
                         fontFamily={'Abel-Regular'} 
                         color={appcolor.teks[mode][2]}>
-                        { moment(data?.created_at, 'YYYYMMDDHHmm').fromNow() }
+                        { moment(new Date(data?.created_at), 'YYYYMMDDHHmm').fromNow() }
                     </Text>
                 </HStack>
             </VStack>

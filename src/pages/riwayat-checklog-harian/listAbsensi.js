@@ -1,6 +1,6 @@
 import { TouchableOpacity } from 'react-native'
 import React from 'react'
-import { VStack, Text, HStack } from 'native-base'
+import { VStack, Text, HStack, Center } from 'native-base'
 import { useSelector } from 'react-redux'
 import { useNavigation } from '@react-navigation/native'
 import { Calendar, Calendar2, Logout } from 'iconsax-react-native'
@@ -52,7 +52,8 @@ const ListAbsensi = ( { item } ) => {
                     </Text>
                     
                     <HStack 
-                        my={1} 
+                        my={1}
+                        px={2}
                         flex={1} 
                         borderWidth={1}
                         borderColor={appcolor.line[mode][2]}
@@ -60,33 +61,81 @@ const ListAbsensi = ( { item } ) => {
                         rounded={'md'}
                         justifyContent={"space-around"} 
                         alignItems={"center"}>
-                        <HStack alignItems={"center"} w={'1/3'}>
-                            <Calendar size="32" color={color} variant="Bulk"/>
-                            <VStack>
-                                <Text 
-                                    fontSize={"2xl"}
-                                    fontWeight={300}
-                                    fontFamily={"Poppins-Regular"}
-                                    color={appcolor.teks[mode][1]}>
-                                    { item.checklog_in ? moment(item.checklog_in).format("HH:mm"):'--:--' }
-                                </Text>
-                            </VStack>
-                        </HStack>
-
-                        <Logout size="32" color="#555555" variant="Bulk"/>
-
-                        <HStack space={1} alignItems={"center"} w={'1/3'}>
-                            <Calendar2 size="32" color={color} variant="Bulk"/>
-                            <VStack>
-                                <Text 
-                                    fontSize={"2xl"}
-                                    fontWeight={300}
-                                    fontFamily={"Poppins-Regular"}
-                                    color={appcolor.teks[mode][1]}>
-                                    { item.checklog_out ? moment(item.checklog_out).format("HH:mm"):'--:--' }
-                                </Text>
-                            </VStack>
-                        </HStack>
+                        <VStack py={2} flex={2}>
+                            <HStack space={1} alignItems={"center"} justifyContent={'center'}>
+                                <Calendar size="32" color={color} variant="Bulk"/>
+                                <VStack>
+                                    <Text 
+                                        fontSize={"2xl"}
+                                        fontWeight={300}
+                                        fontFamily={"Poppins-Regular"}
+                                        color={appcolor.teks[mode][1]}>
+                                        { item.checklog_in ? moment(item.checklog_in).format("HH:mm [wita]"):'--:--' }
+                                    </Text>
+                                </VStack>
+                            </HStack>
+                            <Center>
+                                {
+                                    item.via_in === 'M' ?
+                                    <Text 
+                                        fontSize={'md'}
+                                        lineHeight={'xs'}
+                                        fontWeight={'semibold'}
+                                        fontFamily={'Dosis'}
+                                        color={appcolor.teks[mode][1]}>
+                                        Via Mesin Finger
+                                    </Text>
+                                    :
+                                    <Text 
+                                        fontSize={'md'}
+                                        lineHeight={'xs'}
+                                        fontWeight={'semibold'}
+                                        fontFamily={'Dosis'}
+                                        color={appcolor.teks[mode][1]}>
+                                        Via Aplikasi
+                                    </Text>
+                                }
+                            </Center>
+                        </VStack>
+                        <Center flex={1}>
+                            <Logout size="32" color="#555555" variant="Bulk"/>
+                        </Center>
+                        <VStack py={2} flex={2}>
+                            <HStack space={1} alignItems={"center"} justifyContent={'center'}>
+                                <Calendar2 size="32" color={color} variant="Bulk"/>
+                                <VStack>
+                                    <Text 
+                                        fontSize={"2xl"}
+                                        fontWeight={300}
+                                        fontFamily={"Poppins-Regular"}
+                                        color={appcolor.teks[mode][1]}>
+                                        { item.checklog_out ? moment(item.checklog_out).format("HH:mm [wita]"):'--:--' }
+                                    </Text>
+                                </VStack>
+                            </HStack>
+                            <Center>
+                                {
+                                    item.via_out === 'M' ?
+                                    <Text 
+                                        fontSize={'md'}
+                                        lineHeight={'xs'}
+                                        fontWeight={'semibold'}
+                                        fontFamily={'Dosis'}
+                                        color={appcolor.teks[mode][1]}>
+                                        Via Mesin Finger
+                                    </Text>
+                                    :
+                                    <Text 
+                                        fontSize={'md'}
+                                        lineHeight={'xs'}
+                                        fontWeight={'semibold'}
+                                        fontFamily={'Dosis'}
+                                        color={appcolor.teks[mode][1]}>
+                                        Via Aplikasi
+                                    </Text>
+                                }
+                            </Center>
+                        </VStack>
                     </HStack>
                     <HStack justifyContent={'space-between'}>
                         {
@@ -102,7 +151,7 @@ const ListAbsensi = ( { item } ) => {
                             <Text 
                                 fontFamily={'Abel-Regular'}
                                 color={appcolor.teks[mode][6]}>
-                                { moment(item?.approve_at, 'YYYYMMDDHHmm').fromNow() }
+                                { moment(new Date(item?.approve_at), 'YYYYMMDD').fromNow() }
                             </Text>
                         }
                     </HStack>

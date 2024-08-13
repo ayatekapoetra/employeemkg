@@ -50,6 +50,8 @@ import ApprovalTimesheetPengawas from '../pages/approval-data-karyawan/approval-
 import ShowApprovalTimesheet from '../pages/approval-data-karyawan/approval-timesheet-pengawas/showItem';
 import ApprovalIzinSakit from '../pages/approval-data-karyawan/approval-izin-sakit';
 import ShowApprovalIzinSakit from '../pages/approval-data-karyawan/approval-izin-sakit/showItem';
+import ApprovalLemburKaryawan from '../pages/approval-data-karyawan/approval-lembur';
+import ShowApprovalLemburKaryawan from '../pages/approval-data-karyawan/approval-lembur/showItem';
 
 import { applyAlert } from '../redux/alertSlice';
 
@@ -125,6 +127,8 @@ export default function AppStack() {
             <Stack.Screen name="approval-absen-tulis-details" component={ShowApprovalAbsenTulis} options={{headerShown: false}}/>
             <Stack.Screen name="approval-timesheet-pengawas" component={ApprovalTimesheetPengawas} options={{headerShown: false}}/>
             <Stack.Screen name="approval-timesheet-pengawas-details" component={ShowApprovalTimesheet} options={{headerShown: false}}/>
+            <Stack.Screen name="approval-lembur-karyawan" component={ApprovalLemburKaryawan} options={{headerShown: false}}/>
+            <Stack.Screen name="approval-lembur-karyawan-details" component={ShowApprovalLemburKaryawan} options={{headerShown: false}}/>
             <Stack.Screen name="approval-izin-sakit" component={ApprovalIzinSakit} options={{headerShown: false}}/>
             <Stack.Screen name="approval-izin-sakit-details" component={ShowApprovalIzinSakit} options={{headerShown: false}}/>
         </Stack.Navigator>

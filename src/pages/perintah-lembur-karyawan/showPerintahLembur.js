@@ -1,5 +1,5 @@
 import { ScrollView, TouchableOpacity } from 'react-native'
-import { VStack, Text, HStack, Button, PresenceTransition, Modal, Input } from 'native-base'
+import { VStack, Text, HStack, Button, PresenceTransition, Modal, Input, Center } from 'native-base'
 import { useDispatch, useSelector } from 'react-redux'
 import { ArrowRight2, Calendar1, CalendarTick, DocumentText, Like1, Trash, UserTick } from 'iconsax-react-native'
 import React, { useEffect, useState } from 'react'
@@ -339,37 +339,6 @@ function ButtonUpdateLembur( { data, user, mode } ){
         }
     }
 
-    const onLemburApproval = async () => {
-        try {
-            const resp = await apiFetch.post(`hrd/perintah-lembur/${data.id}/approval`, data)
-            console.log(resp);
-            if(resp.data.diagnostic.error){
-                dispatch(applyAlert({
-                    show: true,
-                    status: "error",
-                    title: "Gagal menyimpan",
-                    subtitle: resp?.data?.diagnostic?.message || 'Error'
-                }))
-            }else{
-                route.goBack()
-                dispatch(applyAlert({
-                    show: true,
-                    status: "success",
-                    title: "Success",
-                    subtitle: resp?.data?.diagnostic?.message || 'Anda berhasil mengupdate perintah lembur'
-                }))
-            }
-        } catch (error) {
-            console.log(error);
-            dispatch(applyAlert({
-                show: true,
-                status: "error",
-                title: "Gagal menyimpan",
-                subtitle: error?.response?.data?.diagnostic?.message || 'Error'
-            }))
-        }
-    }
-
     const onLemburDelete = async () => {
         try {
             const resp = await apiFetch.post(`hrd/perintah-lembur/${data.id}/destroy`)
@@ -448,12 +417,10 @@ function ButtonUpdateLembur( { data, user, mode } ){
         )
     }else if(user?.id === data?.createdby && data.status === "F"){
         return (
-            <Button onPress={onLemburApproval} flex={1} bg={appcolor.teks[mode][6]}>
-                <HStack space={1} alignItems={"center"}>
-                    <Like1 size="26" color="#FFFFFF" variant="Bulk"/>
-                    <Text fontWeight={"bold"} color={"#FFFFFF"}>Setujui Form SPL</Text>
-                </HStack>
-            </Button>
+            <VStack w={'full'} space={1} alignItems={"center"}>
+                <Text color={appcolor.teks[mode][2]}>Gunakan Form Approval</Text>
+                <Text color={appcolor.teks[mode][2]}>untuk menyetujui form lembur ini</Text>
+            </VStack>
         )
     }else{
         return (

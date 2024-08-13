@@ -87,7 +87,7 @@ const ItemApprovalTimesheet = ( { mode, data } ) => {
                                 { data?.bbm } Liter
                             </Text>
                         </HStack>
-                        <HStack pr={2} justifyContent={'space-between'}>
+                        <HStack pr={4} space={10} justifyContent={'flex-start'}>
                             <HStack space={1}>
                                 <Clock size="20" color={appcolor.teks[mode][4]} variant="Bulk"/>
                                 <Text 
@@ -109,7 +109,7 @@ const ItemApprovalTimesheet = ( { mode, data } ) => {
                                 </Text>
                             </HStack>
                         </HStack>
-                        <HStack pr={2} justifyContent={'space-between'}>
+                        <HStack pr={4} space={9} justifyContent={'flex-start'}>
                             <HStack space={1}>
                                 <Clock size="20" color={appcolor.teks[mode][5]} variant="Bulk"/>
                                 <HStack space={1}>
@@ -125,7 +125,7 @@ const ItemApprovalTimesheet = ( { mode, data } ) => {
                                         fontSize={'sm'}
                                         fontFamily={'Abel-Regular'} 
                                         color={appcolor.teks[mode][1]}>
-                                            (+1) 
+                                            (+{ selisihDate }) 
                                         </Text>
                                     }
                                 </HStack>
@@ -137,7 +137,7 @@ const ItemApprovalTimesheet = ( { mode, data } ) => {
                                         data?.equipment?.kategori === 'DT' ?
                                         <Text>KM {data?.smustart || '-----'}</Text>
                                         :
-                                        <Text>HM {data?.smustart || '-----'}</Text>
+                                        <Text>HM {data?.smufinish || '-----'}</Text>
                                     }
                                 </Text>
                             </HStack>
@@ -146,7 +146,14 @@ const ItemApprovalTimesheet = ( { mode, data } ) => {
                         
                     <VStack w={'100px'}>
                         <Center>
-                            <HStack space={1} justifyContent={'space-between'}>
+                            
+                            {
+                                data?.equipment?.kategori === 'DT' ?
+                                <Image alt='alat-berat' source={require(`../../../../assets/images/IMG-DT.png`)} resizeMode='contain' style={{width: 80, height: 55}}/>
+                                :
+                                <Image alt='alat-berat' source={require(`../../../../assets/images/IMG-EXCA-BIG.png`)} resizeMode='contain'  style={{width: 80, height: 60}}/>
+                            }
+                            <HStack mt={3} space={1} justifyContent={'space-between'}>
                                 <Text 
                                     fontSize={'sm'}
                                     fontFamily={'Poppins-Regular'} 
@@ -154,12 +161,6 @@ const ItemApprovalTimesheet = ( { mode, data } ) => {
                                     Total { diff } Jam
                                 </Text>
                             </HStack>
-                            {
-                                data?.equipment?.kategori === 'DT' ?
-                                <Image alt='alat-berat' source={require(`../../../../assets/images/IMG-DT.png`)} resizeMode='contain' style={{width: 80, height: 55}}/>
-                                :
-                                <Image alt='alat-berat' source={require(`../../../../assets/images/IMG-EXCA-BIG.png`)} resizeMode='contain'  style={{width: 80, height: 60}}/>
-                            }
                             <>
                                 {
                                     data?.shift == '1' ?

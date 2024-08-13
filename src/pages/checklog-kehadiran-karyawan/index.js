@@ -1,7 +1,7 @@
 import moment from 'moment'
 import 'moment/locale/id'
-import { TouchableOpacity, Dimensions, Platform } from 'react-native'
-import { VStack, Text, Center, HStack } from 'native-base'
+import { TouchableOpacity, Dimensions, Platform, StyleSheet } from 'react-native'
+import { VStack, Text, Center, HStack, View, Image } from 'native-base'
 import { useDispatch, useSelector } from 'react-redux'
 import { Scan } from 'iconsax-react-native'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -25,9 +25,19 @@ const { width } = Dimensions.get("screen")
 
 let lokasi = lokasiAbsensi.RECORDS
 
+const config = {
+    skipPermissionRequests: false,
+    authorizationLevel: 'always',
+    enableBackgroundLocationUpdates: true,
+    locationProvider: 'auto'
+}
+
+Geolocation.setRNConfiguration(config)
+
 const ChecklogPage = () => {
     const route = useNavigation()
     const dispatch = useDispatch()
+    const os = Platform.OS === 'android' ? {height: 25, width: 30, marginTop: 50, marginLeft: 25 }:{height: 25, width: 30}
     const mode = useSelector(state => state.themes).value
     const { user } = useSelector(state => state.auth)
     const [ jarak, setJarak ] = useState(100)
@@ -50,6 +60,7 @@ const ChecklogPage = () => {
         let arrPin = await AsyncStorage.getItem('@lokasi-absensi')
         if(arrPin){
             arrPin = JSON.parse(arrPin)
+            console.log(arrPin);
             setChecklogPin(arrPin)
         }
     }
@@ -69,7 +80,7 @@ const ChecklogPage = () => {
                 route.navigate("Home")
             }
             // console.log(info);
-            setMyLocation(info)
+            setMyLocation(info.coords)
             setLocation({...location, latitude: info?.coords?.latitude, longitude: info?.coords?.longitude})
             
             let arr = checklogPin.map( m => {
@@ -221,8 +232,8 @@ const ChecklogPage = () => {
 
             const uuid = await AsyncStorage.getItem("@DEVICESID")
             const uriPhoto = Platform.OS === "android" ? photo.uri : photo.uri.replace("file://", "")
-            data.append("pin", user.karyawan.pin)
-            data.append("karyawan_id", user.karyawan.id)
+            data.append("pin", user?.karyawan?.pin || '')
+            data.append("karyawan_id", user?.karyawan?.id)
             data.append("device_id", uuid)
             data.append('photo', {
                 uri: uriPhoto,
@@ -271,7 +282,7 @@ const ChecklogPage = () => {
                     show: true, 
                     status: "error", 
                     title: "Peringatan", 
-                    subtitle: error.message || "Batal membuka kamera depan pada device anda...."
+                    subtitle: error?.response?.data?.diagnostic?.message || error.message
                 })
             )
             return
@@ -393,31 +404,38 @@ const ChecklogPage = () => {
                                 longitudeDelta: 0.002,
                             }}>
                             {
-                                Platform.OS === 'ios' &&
+                                
                                 checklogPin?.map( m => {
                                     return (
-                                        <Circle 
-                                            key={m.id}
-                                            strokeWidth={1}
-                                            strokeColor={"red"}
-                                            fillColor={"error.100"}
-                                            center={{latitude: m.latitude, longitude: m.longitude}}
-                                            radius={30}/>
+                                        <View key={m.id}>
+                                            <Circle 
+                                                strokeWidth={1}
+                                                strokeColor={"red"}
+                                                fillColor={"error.100"}
+                                                center={{latitude: m.latitude, longitude: m.longitude}}
+                                                radius={30}/>
+                                            <Marker 
+                                                title={`Titik Checklog ${m.nama}`}  
+                                                description={"Radius checklog untuk absensi"}  
+                                                coordinate={{...m, latitude: parseFloat(m.latitude), longitude: parseFloat(m.longitude)}}>
+                                                <Image 
+                                                    alt='Pin' 
+                                                    source={require('../../../assets/images/finger-mechine.png')} 
+                                                    style={os}/>
+                                            </Marker>
+                                        </View>
                                     )
                                 })
                             }
-                            {
-                                Platform.OS === 'ios' &&
-                                checklogPin?.map( m => {
-                                    return ( 
-                                        <Marker 
-                                            key={m.id} 
-                                            title={`Titik Checklog ${m.nama}`} 
-                                            description={"Radius checklog untuk absensi"} 
-                                            coordinate={{latitude: m.latitude, longitude: m.longitude}}/>
-                                    )
-                                })
-                            }
+                            <Marker 
+                                title={`Lokasi Saya...`} 
+                                description={"Radius checklog untuk absensi"} 
+                                coordinate={myLocation}>
+                                <Image 
+                                    alt='Pin' 
+                                    source={require('../../../assets/images/engineer-standing.png')} 
+                                    style={{height: 65, width: 20}}/>
+                            </Marker>
                         </MapView>
                     </Center>
                 </VStack>
@@ -427,3 +445,17 @@ const ChecklogPage = () => {
 }
 
 export default ChecklogPage
+
+
+// const styles = StyleSheet.create({
+//     pinFinger: () => {
+//         Platform.OS !== 'ios' ? { 
+//             height: 15, 
+//             width: 15 
+//         }:{
+//             height: 15, 
+//             width: 15 
+//         }
+//     }
+
+// })

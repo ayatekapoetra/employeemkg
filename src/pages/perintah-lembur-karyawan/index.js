@@ -27,8 +27,7 @@ const PerintahLemburPage = () => {
         createdby: !["developer", "administrator"].includes(user.usertype) ? user.id : null,
         dateStart: moment().startOf('month').format("YYYY-MM-DD"),
         dateEnd: moment().endOf('month').format("YYYY-MM-DD"),
-        karyawan_id: null,
-        status: "",
+        karyawan_id: null
     })
 
     useEffect(() => {

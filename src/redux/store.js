@@ -7,9 +7,22 @@ import alertReducer from './alertSlice'
 import fetchDataSlice from './fetchDataSlice'
 import showDataSlice from './showDataSlice'
 
+import fetchTimeSheetSlice from './fetchTimeSheet'
+import fetchPengajuanSlice from './fetchPengajuanSlice'
+import fetchPurchaseRequestSlice from './fetchPurchaseRequestSlice'
+
 import izinSakitSlice from './izinSakitSlice'
 import izinCutiSlice from './izinCutiSlice'
 import izinAlphaSlice from './izinAlphaSlice'
+
+import tugasSlice from './tugasSlice'
+import penyewaSlice from './penyewaSlice'
+import lokasiPitSlice from './lokasiPitSlice'
+import kegiatanPitSlice from './kegiatanPitSlice'
+import equipmentSlice from './equipmentSlice'
+import gudangSlice from './gudangSlice'
+import barangSlice from './barangSlice'
+import barangRackSlice from './barangRackSlice'
 
 export default configureStore({
     reducer: {
@@ -20,7 +33,18 @@ export default configureStore({
       dataCuti: izinCutiSlice,
       dataAlpha: izinAlphaSlice,
       fetchData: fetchDataSlice,
-      showData: showDataSlice
+      showData: showDataSlice,
+      tugas: tugasSlice,
+      penyewa: penyewaSlice,
+      pit: lokasiPitSlice,
+      kegiatan: kegiatanPitSlice,
+      equipment: equipmentSlice,
+      gudang: gudangSlice,
+      barang: barangSlice,
+      rack: barangRackSlice,
+      timesheet: fetchTimeSheetSlice,
+      pengajuan: fetchPengajuanSlice,
+      purchaseRequest: fetchPurchaseRequestSlice
     },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
   })

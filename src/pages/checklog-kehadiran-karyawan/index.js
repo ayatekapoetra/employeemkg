@@ -131,7 +131,7 @@ const ChecklogPage = () => {
 
     const selfyLogmasukHandle = async () => {
         setLoading(true)
-        if(jarak.jarak >= 30){
+        if(jarak.jarak >= 100){
             dispatch(
                 applyAlert({
                     show: true, 
@@ -213,7 +213,7 @@ const ChecklogPage = () => {
 
     const selfyLogpulangHandle = async () => {
         setLoading(true)
-        if(jarak.jarak >= 30){
+        if(jarak.jarak >= 100){
             dispatch(
                 applyAlert({
                     show: true, 
@@ -371,7 +371,7 @@ const ChecklogPage = () => {
                         </Text>
                     }
                     {
-                        jarak.jarak >= 10 && jarak.jarak <= 30 &&
+                        jarak.jarak >= 10 && jarak.jarak <= 100 &&
                         <Text 
                             fontSize={12} 
                             fontWeight={"300"} 
@@ -381,7 +381,7 @@ const ChecklogPage = () => {
                         </Text>
                     }
                     {
-                        jarak.jarak > 30 && 
+                        jarak.jarak > 100 && 
                         <Text 
                             fontSize={12} 
                             fontWeight={"300"} 
@@ -445,17 +445,3 @@ const ChecklogPage = () => {
 }
 
 export default ChecklogPage
-
-
-// const styles = StyleSheet.create({
-//     pinFinger: () => {
-//         Platform.OS !== 'ios' ? { 
-//             height: 15, 
-//             width: 15 
-//         }:{
-//             height: 15, 
-//             width: 15 
-//         }
-//     }
-
-// })

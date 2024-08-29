@@ -6,7 +6,6 @@ console.log(nanoid());
 export const showDataFetch = createAsyncThunk(
     'showData',
     async ( uri ) => {
-        console.log("URI RDX-----", uri);
         let resp = null
         try {
             resp = await apiFetch.get(uri)

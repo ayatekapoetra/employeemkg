@@ -8,6 +8,7 @@ import { getUniqueId } from 'react-native-device-info';
 import themeManager from '../../common/themeScheme';
 import appcolor from '../../common/colorMode';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import LoadingHauler from '../../components/LoadingHauler';
 
 const LoginPage = () => {
     const dispatch = useDispatch()
@@ -79,6 +80,14 @@ const LoginPage = () => {
 
         dispatch(login(userAuth))
         setErrors(error)
+    }
+
+    if (loading) {
+        return(
+            <VStack h={"full"} bg={colorScheme === 'dark'?"#2f313e":"#F5F5F5"}>
+                <LoadingHauler/>
+            </VStack>
+        )
     }
 
     return (

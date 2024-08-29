@@ -23,6 +23,7 @@ const BtnListApproval = ({mode, item}) => {
             const { data } = resp.data
             setState({...state, usertype: data.usertype, title: data.title, subtitle: data.subtitle})
         } catch (error) {
+            console.log(error);
             dispatch(applyAlert({
                 show: true,
                 status: 'error',
@@ -33,27 +34,37 @@ const BtnListApproval = ({mode, item}) => {
     }
 
     const navigateScreen = () => {
-        const permission = state.authorized === 'all'
-        if(permission){
-            if(state.uri){
-                if((state?.usertype).includes(user.usertype)){
-                    route.navigate(state.uri)
-                }else{
+        if(state.uri){
+            switch (state.authorized) {
+                case 'all':
+                    if((state?.usertype).includes(user.usertype)){
+                        route.navigate(state.uri)
+                    }else{
+                        route.navigate('unauthorized-screen', state.usertype)
+                    }
+                    break;
+
+                case 'segment':
+                    if((state?.usertype)?.includes(user.usertype)){
+                        route.navigate(state.uri)
+                    }else{
+                        route.navigate('unauthorized-screen', state.usertype)
+                    }
+                    break;
+
+                case 'user':
+                    if((state?.usertype).includes(user.id)){
+                        route.navigate(state.uri)
+                    }else{
+                        route.navigate('unauthorized-screen', state.usertype)
+                    }
+                    break;
+                default:
                     route.navigate('unauthorized-screen', state.usertype)
-                }
-            }else{
-                route.navigate('under-development-screen')
+                    break;
             }
         }else{
-            if(state.uri){
-                if((state?.usertype).includes(user.usertype)){
-                    route.navigate(state.uri)
-                }else{
-                    route.navigate('unauthorized-screen', state.usertype)
-                }
-            }else{
-                route.navigate('under-development-screen')
-            }
+            route.navigate('under-development-screen')
         }
     }
 

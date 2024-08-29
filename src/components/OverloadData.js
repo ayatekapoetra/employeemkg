@@ -5,7 +5,7 @@ import { VStack, Text, Image, Center } from 'native-base'
 import appcolor from '../common/colorMode'
 import { useSelector } from 'react-redux'
 
-const OverloadScreen = () => {
+const OverloadScreen = ( { limit } ) => {
     const mode = useSelector(state => state.themes.value)
     return (
         <AppScreen>
@@ -23,7 +23,7 @@ const OverloadScreen = () => {
                             fontFamily={'Abel-Regular'}
                             fontSize={'xl'}
                             color={appcolor.teks[mode][1]}>
-                            ditemukan lebih dari 10.000 rows data
+                            {`ditemukan lebih dari ${limit || '10.000'} rows data`}
                         </Text>
                         <Image 
                             alt='...' 
@@ -35,7 +35,7 @@ const OverloadScreen = () => {
                             textAlign={'center'}
                             fontFamily={"Poppins-Regular"}
                             color={appcolor.teks[mode][3]}>
-                            Gunakan filter untuk menentukan data yang lebig spesifik
+                            Gunakan filter untuk menentukan data yang lebih spesifik
                         </Text>
                     </Center>
                 </VStack>

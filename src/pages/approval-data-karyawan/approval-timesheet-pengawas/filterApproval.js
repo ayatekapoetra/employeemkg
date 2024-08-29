@@ -8,7 +8,7 @@ import KaryawanList from '../../../components/KaryawanList'
 import moment from 'moment'
 import DatePicker from 'react-native-date-picker'
 
-const FilterApprovalTimesheet = ( { openFilter, setOpenFilter, filterData, setFilterData } ) => {
+const FilterApprovalTimesheet = ( { applyFilter, openFilter, setOpenFilter, filterData, setFilterData } ) => {
     const mode = useSelector(state => state.themes.value)
     const { user } = useSelector( state => state.auth)
     const [ openKaryawan, setOpenKaryawan ] = useState(false)
@@ -253,7 +253,7 @@ const FilterApprovalTimesheet = ( { openFilter, setOpenFilter, filterData, setFi
                             <Text fontWeight={"bold"} color={"#FFFFFF"}>Reset</Text>
                         </HStack>
                     </Button>
-                    <Button onPress={() => setOpenFilter(!openFilter)} flex={1} bg={appcolor.teks[mode][6]}>
+                    <Button onPress={applyFilter} flex={1} bg={appcolor.teks[mode][6]}>
                         <HStack space={1} alignItems={"center"}>
                             <Like1 size="26" color="#FFFFFF" variant="Bulk"/>
                             <Text fontWeight={"bold"} color={"#FFFFFF"}>Terapkan Filter</Text>

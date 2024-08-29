@@ -8,34 +8,35 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useIsFocused } from '@react-navigation/native'
 import moment from 'moment'
 import FilterApprovalTimesheet from './filterApproval'
-import { getDataFetch } from '../../../redux/fetchDataSlice'
 import { FlatList } from 'react-native-gesture-handler'
 import NoData from '../../../components/NoData'
 import LoadingHauler from '../../../components/LoadingHauler'
 import ItemApprovalTimesheet from './renderItem'
 import OverloadScreen from '../../../components/OverloadData'
-import { Filter } from 'iconsax-react-native'
+import { getTimesheet } from '../../../redux/fetchTimeSheet'
 
 const ApprovalTimesheetPengawas = () => {
     const dispatch = useDispatch()
     const isFocused = useIsFocused()
     const mode = useSelector(state => state.themes.value)
     const { user } = useSelector( state => state.auth)
-    const { data, loading, error } = useSelector( state => state.fetchData)
+    const { data, loading, error } = useSelector( state => state.timesheet)
     const [ openFilter, setOpenFilter ] = useState(false)
     const [ filterData, setFilterData ] = useState({
-        pengawas_id: user.karyawan.id,
+        pengawas_id: user?.karyawan?.id,
         sts_approved: 'P',
-        dateStart: moment().format("YYYY-MM-DD"),
+        dateStart: moment().add(-3, 'days').format("YYYY-MM-DD"),
         dateEnd: moment().format("YYYY-MM-DD")
     })
 
+    // console.log('FILTER---', filterData);
+
     useEffect(() => {
         getDataApi(filterData)
-    }, [])
+    }, [isFocused])
 
     const getDataApi = async ( qstring = null) => {
-        dispatch(getDataFetch({uri: 'daily-monitoring', params: qstring}))
+        dispatch(getTimesheet(qstring))
     }
 
     const openFilterData = () => {
@@ -43,8 +44,13 @@ const ApprovalTimesheetPengawas = () => {
     }
 
     const onRefreshData = useCallback(() => {
-        getDataApi(filterData)
+        dispatch(getTimesheet(filterData))
     })
+
+    const applyFilterHandle = () => {
+        setOpenFilter(!openFilter)
+        getDataApi(filterData)
+    }
 
     if(loading){
         return (
@@ -67,6 +73,7 @@ const ApprovalTimesheetPengawas = () => {
                             openFilter={openFilter} 
                             setOpenFilter={setOpenFilter}
                             filterData={filterData}
+                            applyFilter={applyFilterHandle}
                             setFilterData={setFilterData}/>
                         :
                         <VStack flex={1}>
@@ -81,8 +88,8 @@ const ApprovalTimesheetPengawas = () => {
                                     data.length > 0 ?
                                     <>
                                         {
-                                            data.length > 10000 ?
-                                            <OverloadScreen/>
+                                            data.length > 100 ?
+                                            <OverloadScreen limit={100}/>
                                             :
                                             <FlatList
                                             data={data}

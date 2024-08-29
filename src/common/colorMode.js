@@ -7,6 +7,10 @@ const appcolor = {
         dark: "#697689", // gelap
         light: "#edecec" //terang
     },
+    header: {
+        dark: "#68778b", // gelap
+        light: "#edeaea" //terang
+    },
     btn: {
         dark: {
             active: "#373e48",

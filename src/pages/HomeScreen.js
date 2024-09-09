@@ -22,6 +22,7 @@ import { getEquipment } from '../redux/equipmentSlice';
 import { getGudang } from '../redux/gudangSlice';
 import { getBarang } from '../redux/barangSlice';
 import { getBarangRack } from '../redux/barangRackSlice';
+import { getEvent } from '../redux/eventSlice';
 
 const { width, height } = Dimensions.get("screen")
 
@@ -47,10 +48,11 @@ const HomeScreen = () => {
         dispatch(getPenyewa())
         dispatch(getLokasiPit())
         dispatch(getKegiatanPit())
+        dispatch(getBarangRack())
         dispatch(getEquipment())
         dispatch(getGudang())
         dispatch(getBarang())
-        dispatch(getBarangRack())
+        dispatch(getEvent())
     }
 
     const initialScheme = async () => {
@@ -175,7 +177,7 @@ const HomeScreen = () => {
                             </HStack>
                         </VStack>
                         <VStack space={5} mt={3} flex={1}>
-                            <HStack space={4} flex={1} justifyContent={"flex-start"}>
+                            <HStack space={4} flex={1} justifyContent={"space-around"}>
                                 <TouchableOpacity onPress={() => route.navigate("Perintah-Lembur")}>
                                     <VStack flex={1} h={"80px"} w={'75px'} alignItems={"center"} justifyContent={"center"} rounded={"md"}>
                                         <Image 
@@ -206,80 +208,18 @@ const HomeScreen = () => {
                                         <Text color={appcolor.teks[colorTheme][1]} mt={1} lineHeight={"xs"} fontFamily={"Abel-Regular"} textAlign={'center'} fontSize={12} fontWeight={300}>Penugasan Karyawan</Text>
                                     </VStack>
                                 </TouchableOpacity>
+                                <TouchableOpacity onPress={() => route.navigate("Daily-Event")}>
+                                    <VStack flex={1} h={"80px"} w={'75px'} alignItems={"center"} justifyContent={"center"} rounded={"md"}>
+                                        <Image 
+                                            alt='...' 
+                                            source={require('../../assets/images/standby1.png')} 
+                                            resizeMode="contain"
+                                            style={{width: 40, height: 40}}/>
+                                        <Text color={appcolor.teks[colorTheme][1]} mt={1} lineHeight={"xs"} fontFamily={"Abel-Regular"} textAlign={'center'} fontSize={12} fontWeight={300}>Standby Equipment</Text>
+                                    </VStack>
+                                </TouchableOpacity>
                             </HStack>
                         </VStack>
-
-                        {/* <VStack space={5} mt={3} flex={1}>
-                            <HStack space={4} flex={1} justifyContent={"space-around"}>
-                                <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Checklog-Absensi")}>
-                                    <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
-                                        <Image 
-                                            alt='...' 
-                                            source={require('../../assets/images/finger-mechine.png')} 
-                                            resizeMode="contain"
-                                            style={{width: 100, height: 100}}/>
-                                        <Text color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Checklog</Text>
-                                    </VStack>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate('Riwayat-Absensi')}>
-                                    <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
-                                        <Image 
-                                            alt='...' 
-                                            source={require('../../assets/images/calendar-bell.png')} 
-                                            resizeMode="contain"
-                                            style={{width: 100, height: 100}}/>
-                                        <Text color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Riwayat Bulanan</Text>
-                                    </VStack>
-                                </TouchableOpacity>
-                            </HStack>
-                            
-                            <HStack space={4} flex={1} justifyContent={"space-around"}>
-                                <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Permintaan")}>
-                                    <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
-                                        <Image 
-                                            alt='...' 
-                                            source={require('../../assets/images/schedules.png')} 
-                                            resizeMode="contain"
-                                            style={{width: 90, height: 90}}/>
-                                        <Text color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Request Absensi</Text>
-                                    </VStack>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Perintah-Lembur")}>
-                                    <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
-                                        <Image 
-                                            alt='...' 
-                                            source={require('../../assets/images/spl.png')} 
-                                            resizeMode="contain"
-                                            style={{width: "100%", height: 85}}/>
-                                        <Text color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Form Lembur</Text>
-                                    </VStack>
-                                </TouchableOpacity>
-                            </HStack>
-
-                            <HStack space={4} flex={1} justifyContent={"space-around"}>
-                                <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Absensi-Tulis")}>
-                                    <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
-                                        <Image 
-                                            alt='...' 
-                                            source={require('../../assets/images/absen-tulis.png')} 
-                                            resizeMode="contain"
-                                            style={{width: 90, height: 95}}/>
-                                        <Text color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Absensi Tulis</Text>
-                                    </VStack>
-                                </TouchableOpacity>
-                                
-                                <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Approval")}>
-                                    <VStack flex={1} h={"150px"} alignItems={"center"} justifyContent={"center"} rounded={"md"} borderWidth={1} borderColor={appcolor.line[colorTheme][2]} borderStyle={"dashed"}>
-                                        <Image 
-                                            alt='...' 
-                                            source={require('../../assets/images/approval-ico.png')} 
-                                            resizeMode="contain"
-                                            style={{width: "100%", height: 85, marginBottom: 10}}/>
-                                        <Text pt={1} textAlign={'center'} lineHeight={'xs'} color={appcolor.teks[colorTheme][2]} fontFamily={"Poppins-SemiBold"} fontSize={14} fontWeight={600}>Approval Pengawas</Text>
-                                    </VStack>
-                                </TouchableOpacity>
-                            </HStack>
-                        </VStack> */}
                         <VStack>
                             <Center mb={3} mt={8}>
                                 <Text 

@@ -31,6 +31,8 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>This app requires access to the music.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>This app requires access to the camera.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
@@ -39,8 +41,12 @@
 	<string>This app requires always access to the location.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app requires access to the location.</string>
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<string>This app requires access to the location.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app does not require access to the microphone.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Aplikasi akan mengakses photo library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app requires access to the photo library.</string>
 	<key>UIAppFonts</key>

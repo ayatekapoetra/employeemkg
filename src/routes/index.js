@@ -10,6 +10,9 @@ import { login } from '../redux/authSlice';
 import { PermissionsAndroid } from 'react-native';
 import LoadingHauler from '../components/LoadingHauler';
 
+import {requestMultiple, checkLocationAccuracy, PERMISSIONS, RESULTS} from 'react-native-permissions';
+
+
 const RootNavigation = () => {
     
     const dispatch = useDispatch()
@@ -78,6 +81,15 @@ const RootNavigation = () => {
           }
         }
     };
+
+    requestMultiple([PERMISSIONS.IOS.CAMERA, PERMISSIONS.IOS.LOCATION_ALWAYS]).then((statuses) => {
+      console.log('Camera', statuses[PERMISSIONS.IOS.CAMERA]);
+      console.log('Location', statuses[PERMISSIONS.IOS.LOCATION_ALWAYS]);
+    });
+
+    checkLocationAccuracy()
+    .then((accuracy) => console.log(`Location accuracy is: ${accuracy}`))
+    .catch(() => console.warn('Cannot check location accuracy'));
 
     if(loading){
         return(

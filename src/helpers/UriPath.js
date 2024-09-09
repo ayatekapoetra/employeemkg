@@ -1,5 +1,5 @@
 export const URIPATH = {
-    apiuri: "http://192.168.1.13:3002/api/",
+    apiuri: "http://192.168.1.3:3002/api/",
     // apiphoto: "http://192.168.1.13:3002/",
     // apiuri: "http://localhost:3002/api/",
     // apiphoto: "http://localhost:3002/",

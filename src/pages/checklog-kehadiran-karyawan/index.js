@@ -4,7 +4,7 @@ import { TouchableOpacity, Dimensions, Platform, StyleSheet } from 'react-native
 import { VStack, Text, Center, HStack, View, Image } from 'native-base'
 import { useDispatch, useSelector } from 'react-redux'
 import { Scan } from 'iconsax-react-native'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import MapView, { Circle, Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import { launchCamera } from 'react-native-image-picker'
 import { getDistance } from 'geolib'
@@ -14,7 +14,6 @@ import HeaderScreen from '../../components/HeaderScreen'
 import appcolor from '../../common/colorMode'
 import AppAlertDevice from '../../components/AppAlertDevice'
 import lokasiAbsensi from '../../../assets/json/lokasiAbsen.json'
-import AlertCustom from '../../components/AlertCustom'
 import { applyAlert } from '../../redux/alertSlice'
 import apiFetch from '../../helpers/ApiFetch'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -43,6 +42,7 @@ const ChecklogPage = () => {
     const [ jarak, setJarak ] = useState(100)
     const [ currentClock, setCurrentClock ] = useState(moment().format("HH:mm:ss"))
     const [ myLocation, setMyLocation ] = useState(null)
+    const [ fakeGPS, setFakeGPS ] = useState(false)
     const [ loading, setLoading ] = useState(false)
     const [ isLogmasuk, setLogmasuk ] = useState(true)
     const [ isLogpulang, setLogpulang ] = useState(true)
@@ -67,19 +67,6 @@ const ChecklogPage = () => {
 
     useEffect(() => {
         Geolocation.getCurrentPosition(info => {
-            if(info.mocked){
-                dispatch(
-                    applyAlert({
-                        show: true, 
-                        status: "warning", 
-                        title: "Peringatan", 
-                        subtitle: "Anda menggunakan lokasi samaran, segeralah bertaubat..."
-                    })
-                )
-
-                route.navigate("Home")
-            }
-            // console.log(info);
             setMyLocation(info.coords)
             setLocation({...location, latitude: info?.coords?.latitude, longitude: info?.coords?.longitude})
             
@@ -97,6 +84,18 @@ const ChecklogPage = () => {
             }).sort((a, b) => {return a.jarak - b.jarak})
                 
             setJarak(arr[0])
+            
+            if(info.mocked){
+                setFakeGPS(true)
+                dispatch(
+                    applyAlert({
+                        show: true, 
+                        status: "warning", 
+                        title: "Peringatan", 
+                        subtitle: "Anda menggunakan lokasi samaran, segeralah bertaubat..."
+                    })
+                )
+            }
         });
     }, [myLocation])
 
@@ -147,53 +146,67 @@ const ChecklogPage = () => {
         try {
             var data = new FormData()
             const result = await launchCamera({cameraType: "front"});
-            const [ photo ] = result.assets
+            if(result.assets){
 
-            const uuid = await AsyncStorage.getItem("@DEVICESID")
-            const uriPhoto = Platform.OS === "android" ? photo.uri : photo.uri.replace("file://", "")
-            
-            data.append("pin", user.karyawan?.pin || '')
-            data.append("karyawan_id", user.karyawan?.id || '')
-            data.append("device_id", uuid)
-            data.append('photo', {
-                uri: uriPhoto,
-                name: photo.fileName,
-                type: photo.type
-            });
-            
-            setLogmasuk(false)
-            const resp = await apiFetch.post("mobile/check-in-mobile/karyawan", data, {
-                headers: {
-                  'Content-Type': 'multipart/form-data',
-                  "Cache-Control": "no-cache",
+                const [ photo ] = result.assets
+    
+                const uuid = await AsyncStorage.getItem("@DEVICESID")
+                const uriPhoto = Platform.OS === "android" ? photo.uri : photo.uri.replace("file://", "")
+                
+                data.append("pin", user.karyawan?.pin || '')
+                data.append("karyawan_id", user.karyawan?.id || '')
+                data.append("device_id", uuid)
+                data.append('photo', {
+                    uri: uriPhoto,
+                    name: photo.fileName,
+                    type: photo.type
+                });
+                
+                setLogmasuk(false)
+                const resp = await apiFetch.post("mobile/check-in-mobile/karyawan", data, {
+                    headers: {
+                      'Content-Type': 'multipart/form-data',
+                      "Cache-Control": "no-cache",
+                    }
+                })
+    
+                // console.log(resp);
+    
+                if(resp.data.diagnostic.error){
+                    setLogmasuk(true)
+                    setLoading(false)
+                    dispatch(
+                        applyAlert({
+                            show: true, 
+                            status: "error", 
+                            title: "Peringatan", 
+                            subtitle: "Anda gagal melakukan checklog...."
+                        })
+                    )
+                    return
                 }
-            })
-
-            console.log(resp);
-
-            if(resp.data.diagnostic.error){
-                setLogmasuk(true)
+    
+                setLoading(false)
+                dispatch(
+                    applyAlert({
+                        show: true, 
+                        status: "success", 
+                        title: "Success", 
+                        subtitle: `Anda berhasil melakukan checklog masuk pada pukul ${moment().format("HH:mm")}`
+                    })
+                )
+            }else{
                 setLoading(false)
                 dispatch(
                     applyAlert({
                         show: true, 
                         status: "error", 
                         title: "Peringatan", 
-                        subtitle: "Anda gagal melakukan checklog...."
+                        subtitle: "Anda gagal mengambil photo selfy..."
                     })
                 )
                 return
             }
-
-            setLoading(false)
-            dispatch(
-                applyAlert({
-                    show: true, 
-                    status: "success", 
-                    title: "Success", 
-                    subtitle: `Anda berhasil melakukan checklog masuk pada pukul ${moment().format("HH:mm")}`
-                })
-            )
             
         } catch (error) {
             console.log(error);
@@ -228,50 +241,65 @@ const ChecklogPage = () => {
         try {
             var data = new FormData()
             const result = await launchCamera({cameraType: "front"});
-            const [ photo ] = result.assets
-
-            const uuid = await AsyncStorage.getItem("@DEVICESID")
-            const uriPhoto = Platform.OS === "android" ? photo.uri : photo.uri.replace("file://", "")
-            data.append("pin", user?.karyawan?.pin || '')
-            data.append("karyawan_id", user?.karyawan?.id)
-            data.append("device_id", uuid)
-            data.append('photo', {
-                uri: uriPhoto,
-                name: photo.fileName,
-                type: photo.type
-            });
             
-            setLogpulang(false)
-            const resp = await apiFetch.post("mobile/check-out-mobile/karyawan", data, {
-                headers: {
-                  'Content-Type': 'multipart/form-data',
-                  "Cache-Control": "no-cache",
-                }
-            })
+            if(result.assets){
 
-            if(resp.data.diagnostic.error){
-                setLogpulang(true)
+                const [ photo ] = result.assets
+    
+                const uuid = await AsyncStorage.getItem("@DEVICESID")
+                const uriPhoto = Platform.OS === "android" ? photo.uri : photo.uri.replace("file://", "")
+                data.append("pin", user?.karyawan?.pin || '')
+                data.append("karyawan_id", user?.karyawan?.id)
+                data.append("device_id", uuid)
+                data.append('photo', {
+                    uri: uriPhoto,
+                    name: photo.fileName,
+                    type: photo.type
+                });
+                
+                setLogpulang(false)
+                const resp = await apiFetch.post("mobile/check-out-mobile/karyawan", data, {
+                    headers: {
+                      'Content-Type': 'multipart/form-data',
+                      "Cache-Control": "no-cache",
+                    }
+                })
+    
+                if(resp.data.diagnostic.error){
+                    setLogpulang(true)
+                    setLoading(false)
+                    dispatch(
+                        applyAlert({
+                            show: true, 
+                            status: "error", 
+                            title: "Peringatan", 
+                            subtitle: "Anda gagal melakukan checklog...."
+                        })
+                    )
+                    return
+                }
+    
+                setLoading(false)
+                dispatch(
+                    applyAlert({
+                        show: true, 
+                        status: "success", 
+                        title: "Success", 
+                        subtitle: `Anda berhasil melakukan checklog pulang pada pukul ${moment().format("HH:mm")}`
+                    })
+                )
+            }else{
                 setLoading(false)
                 dispatch(
                     applyAlert({
                         show: true, 
                         status: "error", 
                         title: "Peringatan", 
-                        subtitle: "Anda gagal melakukan checklog...."
+                        subtitle: "Anda gagal mengambil photo selfy..."
                     })
                 )
                 return
             }
-
-            setLoading(false)
-            dispatch(
-                applyAlert({
-                    show: true, 
-                    status: "success", 
-                    title: "Success", 
-                    subtitle: `Anda berhasil melakukan checklog pulang pada pukul ${moment().format("HH:mm")}`
-                })
-            )
             
         } catch (error) {
             console.log(error);
@@ -307,58 +335,61 @@ const ChecklogPage = () => {
                         {currentClock}
                     </Text>
                 </Center>
-                <HStack mx={3} alignItems={"center"} justifyContent={"space-around"}>
-                    {
-                        isLogmasuk ?
-                        <TouchableOpacity onPress={selfyLogmasukHandle}>
-                            <HStack p={2} space={1} alignItems={"center"} bg={"#d1fae5"} rounded={"md"} shadow={2}>
-                                <Scan size="32" color={appcolor.teks[mode][4]} variant="Bulk"/>
-                                <Text 
-                                    fontWeight={"600"}
-                                    fontFamily={"Poppins-SemiBold"}>
-                                    Checklog Masuk
-                                </Text>
-                            </HStack>
-                        </TouchableOpacity>
-                        :
-                        <TouchableOpacity onPress={riwayatAbsensiHandle}>
-                            <HStack maxW={"170px"} p={2} space={1} alignItems={"center"} bg={"muted.100"} rounded={"md"} shadow={2}>
-                                <Scan size="32" color={appcolor.teks[mode][2]} variant="Bulk"/>
-                                <Text 
-                                    fontWeight={"600"}
-                                    fontFamily={"Poppins-SemiBold"}
-                                    color={appcolor.teks[mode][2]}>
-                                    Riwayat Masuk
-                                </Text>
-                            </HStack>
-                        </TouchableOpacity>
-                    }
-                    {
-                        isLogpulang ?
-                        <TouchableOpacity onPress={selfyLogpulangHandle}>
-                            <HStack p={2} space={1} alignItems={"center"} bg={"#fecdd3"} rounded={"md"} shadow={2}>
-                                <Scan size="32" color={appcolor.teks[mode][5]} variant="Bulk"/>
-                                <Text 
-                                    fontWeight={"600"}
-                                    fontFamily={"Poppins-SemiBold"}>
-                                    Checklog Pulang
-                                </Text>
-                            </HStack>
-                        </TouchableOpacity>
-                        :
-                        <TouchableOpacity onPress={riwayatAbsensiHandle}>
-                            <HStack maxW={"170px"} p={2} space={1} alignItems={"center"} bg={"muted.100"} rounded={"md"} shadow={2}>
-                                <Scan size="32" color={appcolor.teks[mode][2]} variant="Bulk"/>
-                                <Text 
-                                    fontWeight={"600"}
-                                    fontFamily={"Poppins-SemiBold"}
-                                    color={appcolor.teks[mode][2]}>
-                                    Riwayat Pulang
-                                </Text>
-                            </HStack>
-                        </TouchableOpacity>
-                    }
-                </HStack>
+                {
+                    !fakeGPS &&
+                    <HStack space={2} mx={3} alignItems={"center"} justifyContent={"space-around"}>
+                        {
+                            isLogmasuk ?
+                            <TouchableOpacity onPress={selfyLogmasukHandle} style={{flex: 1}}>
+                                <HStack p={2} space={1} alignItems={"center"} bg={"#d1fae5"} rounded={"md"} shadow={2}>
+                                    <Scan size="32" color={appcolor.teks[mode][4]} variant="Bulk"/>
+                                    <Text 
+                                        fontWeight={'semibold'}
+                                        fontFamily={"Dosis-SemiBold"}>
+                                        Checklog Masuk
+                                    </Text>
+                                </HStack>
+                            </TouchableOpacity>
+                            :
+                            <TouchableOpacity onPress={riwayatAbsensiHandle}>
+                                <HStack maxW={"170px"} p={2} space={1} alignItems={"center"} bg={"muted.100"} rounded={"md"} shadow={2}>
+                                    <Scan size="32" color={appcolor.teks[mode][2]} variant="Bulk"/>
+                                    <Text 
+                                        fontWeight={"600"}
+                                        fontFamily={"Poppins-SemiBold"}
+                                        color={appcolor.teks[mode][2]}>
+                                        Riwayat Masuk
+                                    </Text>
+                                </HStack>
+                            </TouchableOpacity>
+                        }
+                        {
+                            isLogpulang ?
+                            <TouchableOpacity onPress={selfyLogpulangHandle} style={{flex: 1}}>
+                                <HStack p={2} space={1} alignItems={"center"} bg={"#fecdd3"} rounded={"md"} shadow={2}>
+                                    <Scan size="32" color={appcolor.teks[mode][5]} variant="Bulk"/>
+                                    <Text 
+                                        fontWeight={'semibold'}
+                                        fontFamily={"Dosis-SemiBold"}>
+                                        Checklog Pulang
+                                    </Text>
+                                </HStack>
+                            </TouchableOpacity>
+                            :
+                            <TouchableOpacity onPress={riwayatAbsensiHandle}>
+                                <HStack maxW={"170px"} p={2} space={1} alignItems={"center"} bg={"muted.100"} rounded={"md"} shadow={2}>
+                                    <Scan size="32" color={appcolor.teks[mode][2]} variant="Bulk"/>
+                                    <Text 
+                                        fontWeight={"600"}
+                                        fontFamily={"Poppins-SemiBold"}
+                                        color={appcolor.teks[mode][2]}>
+                                        Riwayat Pulang
+                                    </Text>
+                                </HStack>
+                            </TouchableOpacity>
+                        }
+                    </HStack>
+                }
                 <VStack my={2} justifyContent={"center"} alignItems={"center"}>
                     {
                         jarak.jarak < 10 &&
@@ -413,7 +444,7 @@ const ChecklogPage = () => {
                                                 strokeColor={"red"}
                                                 fillColor={"error.100"}
                                                 center={{latitude: m.latitude, longitude: m.longitude}}
-                                                radius={30}/>
+                                                radius={100}/>
                                             <Marker 
                                                 title={`Titik Checklog ${m.nama}`}  
                                                 description={"Radius checklog untuk absensi"}  

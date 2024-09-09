@@ -19,8 +19,11 @@ const ShowPurchaseRequest = () => {
     const dispatch = useDispatch()
     const mode = useSelector(state => state.themes.value)
     const [ state, setState ] = useState(params)
-    const [ openConfirm, setOpenConfirm] = useState(false)
+    const [ openConfirmRollback, setOpenConfirmRollback] = useState(false)
+    const [ openConfirmDestroy, setOpenConfirmDestroy] = useState(false)
     const [ itemsGrp, setItemsGrp ] = useState(params.items)
+
+    console.log(params);
 
     useEffect(() => {
         getDataShow()
@@ -74,7 +77,7 @@ const ShowPurchaseRequest = () => {
                     show: true,
                     status: "success",
                     title: "Success Approve Request",
-                    subtitle: "Berhasil menyetujui request urder\nData akan dikirim purchasing order..."
+                    subtitle: "Berhasil menyetujui request order\nData akan dikirim purchasing order..."
                 }))
 
                 route.goBack()
@@ -85,7 +88,31 @@ const ShowPurchaseRequest = () => {
                 show: true,
                 status: "error",
                 title: "Err Approve Request",
-                subtitle: "Gagal menyetujui request urder\nData akan dikirim purchasing order..."
+                subtitle: "Gagal menyetujui request order\nData akan dikirim purchasing order..."
+            }))
+        }
+    }
+
+    const removeDataHandle = async () => {
+        try {
+            const resp = await apiFetch.post('purchasing-request/'+params.id+'/destroy')
+            if(resp.status === 201){
+                dispatch(applyAlert({
+                    show: true,
+                    status: "success",
+                    title: "Success Delete Request",
+                    subtitle: "Berhasil menghapus request order\nData tidak akan ditampilkan lagi..."
+                }))
+
+                route.goBack()
+            }
+        } catch (error) {
+            console.log(error);
+            dispatch(applyAlert({
+                show: true,
+                status: "error",
+                title: "Err Approve Request",
+                subtitle: "Gagal menyetujui request order\nStatus data masih aktif..."
             }))
         }
     }
@@ -258,7 +285,7 @@ const ShowPurchaseRequest = () => {
                     {
                         state.status == 'approved' &&
                         <HStack space={2}>
-                            <Button onPress={() => setOpenConfirm(true)} flex={1} colorScheme={'error'}>
+                            <Button onPress={() => setOpenConfirmRollback(true)} flex={1} colorScheme={'error'}>
                                 <Text 
                                     color={'#FFF'} 
                                     fontFamily={'Poppins-Regular'} 
@@ -276,15 +303,42 @@ const ShowPurchaseRequest = () => {
                             </Button>
                         </HStack>
                     }
+                    {
+                        state.status == 'active' &&
+                        <HStack space={2}>
+                            <Button onPress={() => setOpenConfirmDestroy(true)} flex={1} colorScheme={'error'}>
+                                <Text 
+                                    color={'#FFF'} 
+                                    fontFamily={'Poppins-Regular'} 
+                                    fontWeight={'bold'}>
+                                    Hapus Permintaan
+                                </Text>
+                            </Button>
+                        </HStack>
+                    }
                 </VStack>
 
-                <AlertConfirmation 
-                    isOpen={openConfirm}
-                    txtConfirm={'Rollback'}
-                    title={"Rollback Permintaan"}
-                    subtitle={"Apakah anda yakin akan rollback purchase request ini ?"}
-                    onClose={() => setOpenConfirm(false)} 
-                    onAction={rollbackDataHandle}/>
+                {
+                    openConfirmRollback &&
+                    <AlertConfirmation 
+                        isOpen={openConfirmRollback}
+                        txtConfirm={'Rollback'}
+                        title={"Rollback Permintaan"}
+                        subtitle={"Apakah anda yakin akan rollback purchase request ini ?"}
+                        onClose={() => setOpenConfirmRollback(false)} 
+                        onAction={rollbackDataHandle}/>
+                }
+
+                {
+                    openConfirmDestroy &&
+                    <AlertConfirmation 
+                        isOpen={openConfirmDestroy}
+                        txtConfirm={'Delete'}
+                        title={"Hapus Permintaan"}
+                        subtitle={"Apakah anda yakin akan menghapus purchase request ini ?"}
+                        onClose={() => setOpenConfirmDestroy(false)} 
+                        onAction={removeDataHandle}/>
+                }
             </VStack>
         </AppScreen>
     )

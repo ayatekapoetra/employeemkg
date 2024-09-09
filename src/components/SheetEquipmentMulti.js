@@ -1,6 +1,6 @@
 import { FlatList, TextInput, Dimensions, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
-import { Actionsheet, HStack, Image, Text, VStack } from 'native-base'
+import { Actionsheet, Button, HStack, Image, Text, VStack } from 'native-base'
 import { useSelector } from 'react-redux'
 import appcolor from '../common/colorMode'
 import { SearchStatus, TickSquare } from 'iconsax-react-native'
@@ -26,13 +26,27 @@ const SheetEquipmentMulti = ( { isOpen, onClose, onSelected } ) => {
         onSelected(array.filter( f => f.selected))
     }
 
+    const onSelectAll = () => {
+        var array = state.map( m => ({...m, selected: !m.selected}))
+        setState(array)
+        onSelected(array)
+    }
+
 
     return (
         <Actionsheet isOpen={isOpen} onClose={onClose}>
             <Actionsheet.Content style={{height: height * .81}}>
-                <HStack p={2} mb={3} space={2} w={'full'} borderWidth={1} borderColor={'#000'} rounded={'md'}>
-                    <SearchStatus size={22} variant="Broken" color='#000'/>
-                    <TextInput onChangeText={searchDataHandle} autoCapitalize="words" style={{flex: 1}}/>
+                <HStack space={2} w={'full'}>
+                    <HStack flex={3} p={2} mb={3} space={2} borderWidth={1} borderColor={'#000'} rounded={'md'}>
+                        <SearchStatus size={22} variant="Broken" color='#000'/>
+                        <TextInput onChangeText={searchDataHandle} autoCapitalize="words" style={{flex: 1}}/>
+                    </HStack>
+                    <TouchableOpacity onPress={onSelectAll}>
+                        <VStack py={1} px={3} bg={'darkBlue.600'} alignItems={'center'} rounded={'md'}>
+                            <Text color={appcolor.teks[mode][1]} fontFamily={'Dosis'} fontWeight={'bold'} lineHeight={'xs'}>Pilih</Text>
+                            <Text color={appcolor.teks[mode][1]} fontFamily={'Dosis'} fontWeight={'bold'} lineHeight={'xs'}>Semua</Text>
+                        </VStack>
+                    </TouchableOpacity>
                 </HStack>
                 <FlatList 
                     data={state} 
@@ -57,7 +71,6 @@ const SheetEquipmentMulti = ( { isOpen, onClose, onSelected } ) => {
 export default SheetEquipmentMulti
 
 const RenderItemComponent = ( { item, pickDataOption } ) => {
-    const mode = useSelector(state => state.themes.value)
 
     switch (item.tipe) {
         case 'dumptruck':

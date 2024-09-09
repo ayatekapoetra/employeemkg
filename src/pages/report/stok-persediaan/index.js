@@ -17,7 +17,7 @@ const ReportStokPersediaanScreen = () => {
     const [ showFilter, setShowFilter ] = useState(false)
     const [ state, setState ] = useState([])
     const [ qstring, setQstring ] = useState({
-        gudang_id: 1,
+        gudang_id: null,
         rack_id: null,
         barang: [],
         barang_id: []
@@ -60,8 +60,6 @@ const ReportStokPersediaanScreen = () => {
             setRefresing(false)
         }
     }
-
-    console.log(qstring);
 
     if(refresing){
         return(

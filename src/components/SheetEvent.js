@@ -1,21 +1,20 @@
 import { FlatList, TextInput, Dimensions } from 'react-native'
-import React, { useMemo, useState } from 'react'
-import { Actionsheet, HStack, Text, VStack } from 'native-base'
+import React, { useState } from 'react'
+import { Actionsheet, Center, Divider, HStack, Input, Text, VStack } from 'native-base'
 import { useSelector } from 'react-redux'
 import appcolor from '../common/colorMode'
 import { SearchStatus } from 'iconsax-react-native'
 
 const { height } = Dimensions.get('screen')
 
-const SheetRack = ( { gudang, isOpen, onClose, onSelected } ) => {
-    const rack = useSelector( state => state.rack.data)
-    const arrayRack = useMemo(() => rack?.map( m => ({...m, visible: true})))
-    const [ state, setState ] = useState( gudang ? arrayRack.filter( f => f.gudang_id === gudang.id):arrayRack)
+const SheetEvent = ( { isOpen, onClose, onSelected } ) => {
+    const event = useSelector( state => state.event.data)
+    const [ state, setState ] = useState(event?.map( m => ({...m, visible: true})))
     const mode = useSelector(state => state.themes.value)
 
     const searchDataHandle = (teks) => {
         if(teks){
-            setState(state.map(m => ((`/${m.nama}/i`).includes(teks) || (`/${m.kode}/i`).includes(teks)) ? {...m, visible: true} : {...m, visible: false}))
+            setState(state.map(m => (`/${m.nama}/i`).includes(teks) ? {...m, visible: true} : {...m, visible: false}))
         }else{
             setState(state?.map( m => ({...m, visible: true})))
         }
@@ -24,7 +23,7 @@ const SheetRack = ( { gudang, isOpen, onClose, onSelected } ) => {
 
     return (
         <Actionsheet isOpen={isOpen} onClose={onClose}>
-            <Actionsheet.Content style={{height: height * .8}}>
+            <Actionsheet.Content style={{height: height * .6}}>
                 <HStack p={2} mb={3} space={2} w={'full'} borderWidth={1} borderColor={'#000'} rounded={'md'}>
                     <SearchStatus size={22} variant="Broken" color='#000'/>
                     <TextInput onChangeText={searchDataHandle} style={{flex: 1}}/>
@@ -49,7 +48,7 @@ const SheetRack = ( { gudang, isOpen, onClose, onSelected } ) => {
     )
 }
 
-export default SheetRack
+export default SheetEvent
 
 const RenderItemComponent = ( { item, onSelected } ) => {
     if(item.visible){
@@ -66,22 +65,12 @@ const RenderItemComponent = ( { item, onSelected } ) => {
                     borderColor={'#DDD'}>
                     <VStack>
                         <Text 
-                            fontWeight={'bold'}
-                            fontFamily={'Quicksand'}>
-                            {item.kode}
-                        </Text>
-                        <Text 
                             fontSize={20} 
                             lineHeight={'xs'}
                             fontFamily={'Abel-Regular'}>
                             {item.nama}
                         </Text>
-                        <Text 
-                            fontSize={20} 
-                            lineHeight={'xs'}
-                            fontFamily={'Teko-Regular'}>
-                            {item.gudang.nama}
-                        </Text>
+                        <Text fontFamily={'Quicksand'}>{item.narasi}</Text>
                     </VStack>
                 </Actionsheet.Item>
             </HStack>

@@ -149,7 +149,7 @@ const RenderComponentItem = ( { data, mode } ) => {
                                 <TextInput 
                                     multiline 
                                     onChangeText={setDataDetailTugas}
-                                    style={{flex: 1, padding: 10}}/>
+                                    style={{flex: 1, padding: 10, alignItems: 'flex-start', justifyContent: 'flex-start'}}/>
                             </HStack>
                         </VStack>
                     </VStack>

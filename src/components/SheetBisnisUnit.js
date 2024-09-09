@@ -1,5 +1,5 @@
 import { FlatList, TextInput, Dimensions } from 'react-native'
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Actionsheet, HStack, Image, Text, VStack } from 'native-base'
 import { useSelector } from 'react-redux'
 import appcolor from '../common/colorMode'
@@ -9,8 +9,11 @@ const { height } = Dimensions.get('screen')
 const SheetBisnisUnit = ( { isOpen, onClose, onSelected } ) => {
     const mode = useSelector(state => state.themes.value)
     const { user } = useSelector(state => state.auth)
-    const [ data, setData ] = useState(user.arrBisnis.map( m => m.bisnis) || [])
-    console.log('arrBisnis---', user.arrBisnis);
+    // const [ data, setData ] = useState(user.arrBisnis.map( m => m.bisnis) || [])
+
+    const data = useMemo(() => user.arrBisnis.map( m => m.bisnis) || [])
+
+    console.log(data);
 
     return (
         <Actionsheet isOpen={isOpen} onClose={onClose}>

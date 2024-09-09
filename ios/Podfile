@@ -1,12 +1,35 @@
 # Resolve react_native_pods.rb with node to allow for hoisting
-require Pod::Executable.execute_command('node', ['-p',
-  'require.resolve(
-    "react-native/scripts/react_native_pods.rb",
-    {paths: [process.argv[1]]},
-  )', __dir__]).strip
+# require Pod::Executable.execute_command('node', ['-p',
+#   'require.resolve(
+#     "react-native/scripts/react_native_pods.rb",
+#     {paths: [process.argv[1]]},
+#   )', __dir__]).strip
+
+def node_require(script)
+  # Resolve script with node to allow for hoisting
+  require Pod::Executable.execute_command('node', ['-p',
+    "require.resolve(
+      '#{script}',
+      {paths: [process.argv[1]]},
+    )", __dir__]).strip
+end
+
+node_require('react-native/scripts/react_native_pods.rb')
+node_require('react-native-permissions/scripts/setup.rb')
+
+  setup_permissions([
+    'Camera',
+    'LocationAccuracy',
+    'LocationAlways',
+    'LocationWhenInUse',
+    'Microphone',
+    'PhotoLibrary',
+  ])
 
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
+
+require_relative '../node_modules/react-native-permissions/scripts/setup'
 
 # If you are using a `react-native-flipper` your iOS build will fail when `NO_FLIPPER=1` is set.
 # because `react-native-flipper` depends on (FlipperKit,...) that will be excluded
@@ -25,13 +48,21 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
+
 target 'employeemkg' do
   config = use_native_modules!
 
   rn_maps_path = '../node_modules/react-native-maps'
   pod 'react-native-google-maps', :path => rn_maps_path
-  # pod 'react-native-google-maps', :path => '../node_modules/react-native-maps'
-  # pod 'react-native-geolocation', path: '../node_modules/@react-native-community/geolocation'
+  pod 'react-native-google-maps', :path => '../node_modules/react-native-maps'
+  pod 'react-native-geolocation', path: '../node_modules/@react-native-community/geolocation'
+  # pod 'Permission-Camera', :path => "#{permissions_path}/Camera.podspec"
+  # pod 'Permission-LocationAlways', :path => "#{permissions_path}/LocationAlways.podspec"
+  # pod 'Permission-LocationWhenInUse', :path => "#{permissions_path}/LocationWhenInUse.podspec"
+  # pod 'Permission-MediaLibrary', :path => "#{permissions_path}/MediaLibrary.podspec"
+  # pod 'Permission-Microphone', :path => "#{permissions_path}/Microphone.podspec"
+  # pod 'Permission-Notifications', :path => "#{permissions_path}/Notifications.podspec"
+  # pod 'Permission-PhotoLibrary', :path => "#{permissions_path}/PhotoLibrary.podspec"
 
   use_react_native!(
     :path => config[:reactNativePath],
@@ -58,3 +89,5 @@ target 'employeemkg' do
     )
   end
 end
+
+

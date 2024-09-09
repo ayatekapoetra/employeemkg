@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import appcolor from '../common/colorMode'
 import { SearchStatus, TickSquare } from 'iconsax-react-native'
 import { getBarang } from '../redux/barangSlice'
+import { URIPATH } from '../helpers/UriPath'
 
 const { height, width } = Dimensions.get('screen')
 
@@ -66,7 +67,7 @@ const SheetBarangMulti = ( { isOpen, onClose, onSelected } ) => {
 export default SheetBarangMulti
 
 const RenderItemComponent = ( { item, pickDataOption } ) => {
-    const baseimage = "https://offices.makkuragatama.id/"
+    const baseimage = URIPATH.apiphoto
 
     if(item.visible){
         return(

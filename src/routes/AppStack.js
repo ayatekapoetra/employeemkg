@@ -41,6 +41,7 @@ import InternalMemo from '../pages/setting/internalMemo';
 import GagalKirim from '../pages/setting/gagalKirim';
 import UnderDevelopmentScreen from '../components/UnderDevelopment';
 import AuthorizedBlockScreen from '../components/AuthorizedBlock';
+import LingkupKerja from '../pages/setting/lingkupKerja';
 
 // APPROVAL
 import ApprovalChecklogHarian from '../pages/approval-data-karyawan/approval-checklog-kehadiran';
@@ -65,10 +66,17 @@ import ShowDelegasiTugasScreen from '../pages/delegasi-tugas/showDelegasiTugas';
 import CreateDelegasiTugasScreen from '../pages/delegasi-tugas/createDelegasiTugas';
 import TugasEquipmentDetail from '../pages/delegasi-tugas/tugasEquipmentDetail';
 
+// STATUS EQUIPMENT
+import DailyEvent from '../pages/daily-event';
+import CreateDailyEvent from '../pages/daily-event/create';
+import ShowDailyEvent from '../pages/daily-event/show';
+
 // REPORT
 import ReportScreen from '../pages/report';
 import ReportMaintenanceScreen from '../pages/report/equipment-services';
 import ReportStokPersediaanScreen from '../pages/report/stok-persediaan';
+import ReportEquipmentStandBy from '../pages/report/equipment-standby';
+import ReportEquipmentStandByDetails from '../pages/report/equipment-standby/details';
 
 import { applyAlert } from '../redux/alertSlice';
 
@@ -134,6 +142,7 @@ export default function AppStack() {
             <Stack.Screen name="Keamanan-Akun" component={UbahPassword} options={{headerShown: false}}/>
             <Stack.Screen name="notifikasi-screen" component={NotificationApps} options={{headerShown: false}}/>
             <Stack.Screen name="internal-memo-screen" component={InternalMemo} options={{headerShown: false}}/>
+            <Stack.Screen name="lingkup-kerja-screen" component={LingkupKerja} options={{headerShown: false}}/>
             <Stack.Screen name="unsending-screen" component={GagalKirim} options={{headerShown: false}}/>
             <Stack.Screen name="unauthorized-screen" component={AuthorizedBlockScreen} options={{headerShown: false}}/>
             <Stack.Screen name="under-development-screen" component={UnderDevelopmentScreen} options={{headerShown: false}}/>
@@ -160,9 +169,17 @@ export default function AppStack() {
             <Stack.Screen name="show-delegasi-tugas" component={ShowDelegasiTugasScreen} options={{headerShown: false}}/>
             <Stack.Screen name="create-delegasi-tugas" component={CreateDelegasiTugasScreen} options={{headerShown: false}}/>
             <Stack.Screen name="create-equipment-tugas-detail" component={TugasEquipmentDetail} options={{headerShown: false}}/>
+
+            {/* STATUS EQUIPMENT */}
+            <Stack.Screen name="Daily-Event" component={DailyEvent} options={{headerShown: false}}/>
+            <Stack.Screen name="create-daily-event" component={CreateDailyEvent} options={{headerShown: false}}/>
+            <Stack.Screen name="show-daily-event" component={ShowDailyEvent} options={{headerShown: false}}/>
+
             {/* REPORT */}
             <Stack.Screen name="report-maintenances-equipment" component={ReportMaintenanceScreen} options={{headerShown: false}}/>
             <Stack.Screen name="report-stok-persediaan" component={ReportStokPersediaanScreen} options={{headerShown: false}}/>
+            <Stack.Screen name="report-standby-equipment" component={ReportEquipmentStandBy} options={{headerShown: false}}/>
+            <Stack.Screen name="report-standby-equipment-detail" component={ReportEquipmentStandByDetails} options={{headerShown: false}}/>
         </Stack.Navigator>
     );
 }

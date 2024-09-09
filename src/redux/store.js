@@ -10,6 +10,7 @@ import showDataSlice from './showDataSlice'
 import fetchTimeSheetSlice from './fetchTimeSheet'
 import fetchPengajuanSlice from './fetchPengajuanSlice'
 import fetchPurchaseRequestSlice from './fetchPurchaseRequestSlice'
+import fetchDailyEventSlice from './fetchDailyEventSlice'
 
 import izinSakitSlice from './izinSakitSlice'
 import izinCutiSlice from './izinCutiSlice'
@@ -23,6 +24,7 @@ import equipmentSlice from './equipmentSlice'
 import gudangSlice from './gudangSlice'
 import barangSlice from './barangSlice'
 import barangRackSlice from './barangRackSlice'
+import eventSlice from './eventSlice'
 
 export default configureStore({
     reducer: {
@@ -42,9 +44,11 @@ export default configureStore({
       gudang: gudangSlice,
       barang: barangSlice,
       rack: barangRackSlice,
+      event: eventSlice,
       timesheet: fetchTimeSheetSlice,
       pengajuan: fetchPengajuanSlice,
-      purchaseRequest: fetchPurchaseRequestSlice
+      purchaseRequest: fetchPurchaseRequestSlice,
+      dailyEvent: fetchDailyEventSlice
     },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
   })

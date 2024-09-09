@@ -2,7 +2,7 @@ import { TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import AppScreen from '../../components/AppScreen'
 import { HStack, VStack, Text, Divider, useNativeBase, Center } from 'native-base'
-import { ArrowRight2, ColorSwatch, MonitorMobbile, Convert, DirectNotification, Logout, Profile, Scan, ShieldSecurity, Stickynote } from 'iconsax-react-native'
+import { ArrowRight2, ColorSwatch, MonitorMobbile, Convert, DirectNotification, Logout, Profile, Scan, ShieldSecurity, Stickynote, House2 } from 'iconsax-react-native'
 import { applyTheme } from '../../redux/themeSlice'
 import { useDispatch, useSelector } from 'react-redux'
 import { login } from '../../redux/authSlice'
@@ -28,6 +28,7 @@ const SettingPage = () => {
     }
 
     const actionHandle = (val) => {
+        console.log(val);
         try {
             if(val.access){
                 if(val.access.includes(user.usertype)){
@@ -67,7 +68,7 @@ const SettingPage = () => {
             <VStack h={"full"}>
                 <HeaderScreen title={"Pengaturan & Informasi"} onThemes={true} onNotification={true}/>
                 <Divider/>
-                <VStack flex={1}>
+                <VStack flex={2}>
                     {
                         array.map( item => {
                             return (
@@ -182,13 +183,15 @@ const array = [
         uri: "Reset-User-Devices",
         grpIcon: <MonitorMobbile size="28" color="#787b83" variant="Bulk"/>
     },
-    // {
-    //     key: 7, 
-    //     title: "Ganti Thema", 
-    //     icon: "palette",
-    //     uri: "",
-    //     grpIcon: <ColorSwatch size="28" color="#787b83" variant="Bulk"/>
-    // },
+    {
+        key: 7, 
+        title: "Ubah Lingkup Kerja", 
+        icon: "palette",
+        access: '',
+        uri: "lingkup-kerja-screen",
+        grpIcon: <House2 size="28" color="#787b83" variant="Bulk"/>
+    },
+    
     // {
     //     key: 8, 
     //     title: "Keluar", 

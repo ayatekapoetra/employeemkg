@@ -194,8 +194,8 @@ const RenderComponentList = ( { item, mode, route } ) => {
                     fontSize={12}
                     lineHeight={'xs'}
                     fontFamily={'Abel-Regular'} 
-                    color={appcolor.teks[mode][6]}>
-                    { moment(item.date_ops).fromNow() }
+                    color={appcolor.teks[mode][1]}>
+                    { moment(item.date_ops, 'YYYYMMDDHHmm').fromNow() }
                 </Text>
             </VStack>
         </TouchableOpacity>

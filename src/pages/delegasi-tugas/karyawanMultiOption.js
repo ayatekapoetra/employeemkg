@@ -57,7 +57,11 @@ const KaryawanMultiOption = ({isoprdrv, state, setState}) => {
 
     const filterDataKaryawan = (teks) => {
         if(teks){
-            let resultData = karyawan.map( m => (`/${m.nama}/g`).includes(teks) ? {...m, visible: true}:{...m, visible: false})
+            // keyword search data
+            var patten = (m) => {
+                return (`/${m.nama}/g`).includes(teks) || (`/${m.section}/g`).includes(teks) || (`/${m.phone}/g`).includes(teks)
+            }
+            let resultData = karyawan.map( m => patten(m) ? {...m, visible: true}:{...m, visible: false})
             setKaryawan(resultData)
         }else{
             setKaryawan(karyawan.map( m => ({...m, visible: true})))
@@ -77,6 +81,8 @@ const KaryawanMultiOption = ({isoprdrv, state, setState}) => {
                 <SearchNormal1 size="22" color={appcolor.ico[mode][5]} variant="Outline"/>
                 <HStack px={2} flex={1}>
                     <TextInput 
+                        placeholder='Nama, Section atau Handphone'
+                        placeholderTextColor={mode!='dark'?'#ddd':'#c4c4c4'}
                         onChangeText={(teks) => filterDataKaryawan(teks)}
                         style={{flex: 1, height: 30, fontFamily: 'Poppins-SemiBold', color: appcolor.teks[mode][1]}}/>
                 </HStack>

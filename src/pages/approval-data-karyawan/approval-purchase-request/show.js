@@ -1,17 +1,19 @@
-import { TouchableOpacity } from 'react-native'
+import { ScrollView, TouchableOpacity, Dimensions } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import AppScreen from '../../../components/AppScreen'
-import { VStack, Text, HStack, Image, Divider, Badge, Stack, FlatList, Button } from 'native-base'
+import { VStack, Text, HStack, Image, Divider, Badge, Stack, FlatList, Button, View } from 'native-base'
 import HeaderScreen from '../../../components/HeaderScreen'
 import appcolor from '../../../common/colorMode'
 import { useDispatch, useSelector } from 'react-redux'
-import { Bag, BrushBig, Calendar1, MoneySend, TruckTick } from 'iconsax-react-native'
+import { Bag, BrushBig, Calendar1, MoneySend, TruckTick, UserSquare } from 'iconsax-react-native'
 import moment from 'moment'
 import _ from 'underscore'
 import apiFetch from '../../../helpers/ApiFetch'
 import { applyAlert } from '../../../redux/alertSlice'
 import AlertConfirmation from '../../../components/AlertConfirmation'
+
+const { width } = Dimensions.get('screen')
 
 const ShowPurchaseRequest = () => {
     const { params } = useRoute()
@@ -23,7 +25,6 @@ const ShowPurchaseRequest = () => {
     const [ openConfirmDestroy, setOpenConfirmDestroy] = useState(false)
     const [ itemsGrp, setItemsGrp ] = useState(params.items)
 
-    console.log(params);
 
     useEffect(() => {
         getDataShow()
@@ -33,6 +34,7 @@ const ShowPurchaseRequest = () => {
         try {
             const resp = await apiFetch('purchasing-request/'+params.id+'/show')
             const { data } = resp.data
+            console.log("RESP---", data);
             setState(data)
             setItemsGrp(data.items)
         } catch (error) {
@@ -128,6 +130,8 @@ const ShowPurchaseRequest = () => {
             var badgePrioritas = <Badge h={6} w={6} p={0} colorScheme={'info'} rounded={'full'}>P3</Badge>
             break;
     }
+
+    console.log('state', state);
     return (
         <AppScreen>
             <VStack h={'full'}>
@@ -227,61 +231,66 @@ const ShowPurchaseRequest = () => {
                             </HStack>
                         </VStack>
                     </VStack>
-                    <VStack flex={1}>
-                        {
-                            itemsGrp.map((m,i) => {
-                                return(
-                                    <VStack mb={5} flex={1} key={i}>
-                                        <HStack my={2} space={2}>
-                                            <VStack>
-                                                <TouchableOpacity onPress={() => visiblePemasok(m)}>
-                                                    <HStack 
-                                                        w={7} h={7} 
-                                                        rounded={'full'} 
-                                                        borderWidth={1} 
-                                                        justifyContent={'center'}
-                                                        alignItems={'center'}
-                                                        borderColor={appcolor.line[mode][2]}>
-                                                        <Text color={appcolor.teks[mode][1]}>
-                                                            { i + 1 }
+                    <ScrollView>
+                        <VStack flex={1}>
+                            {
+                                itemsGrp.map((m,i) => {
+                                    return(
+                                        <VStack mb={5} flex={1} key={i}>
+                                            <HStack my={2} space={2}>
+                                                <VStack>
+                                                    <TouchableOpacity onPress={() => visiblePemasok(m)}>
+                                                        <HStack 
+                                                            w={7} h={7} 
+                                                            rounded={'full'} 
+                                                            borderWidth={1} 
+                                                            justifyContent={'center'}
+                                                            alignItems={'center'}
+                                                            borderColor={appcolor.line[mode][2]}>
+                                                            <Text color={appcolor.teks[mode][1]}>
+                                                                { i + 1 }
+                                                            </Text>
+                                                        </HStack>
+                                                    </TouchableOpacity>
+                                                    <Stack ml={'14px'} w={'1px'} bg={'#ddd'} flex={1}/>
+                                                </VStack>
+                                                <VStack flex={1}>
+                                                    <HStack space={1} justifyContent={'space-between'} alignItems={'flex-start'}>
+                                                        <Text 
+                                                            flex={1}
+                                                            fontSize={18}
+                                                            lineHeight={'xs'}
+                                                            fontWeight={'semibold'}
+                                                            fontFamily={'Dosis-Regular'}
+                                                            color={appcolor.teks[mode][1]}>
+                                                            {m.nm_pemasok}
+                                                        </Text>
+                                                        <Text 
+                                                            fontFamily={'Dosis'}
+                                                            fontWeight={'semibold'}
+                                                            color={appcolor.teks[mode][2]}>
+                                                            Rp. {m.totharga_ppn_rp}
                                                         </Text>
                                                     </HStack>
-                                                </TouchableOpacity>
-                                                <Stack ml={'14px'} w={'1px'} bg={'#ddd'} flex={1}/>
-                                            </VStack>
-                                            <VStack flex={1}>
-                                                <HStack space={1} justifyContent={'space-between'} alignItems={'flex-start'}>
-                                                    <Text 
-                                                        flex={1}
-                                                        fontSize={18}
-                                                        lineHeight={'xs'}
-                                                        fontWeight={'semibold'}
-                                                        fontFamily={'Dosis-Regular'}
-                                                        color={appcolor.teks[mode][1]}>
-                                                        {m.nm_pemasok}
-                                                    </Text>
-                                                    <Text 
-                                                        fontFamily={'Dosis'}
-                                                        fontWeight={'semibold'}
-                                                        color={appcolor.teks[mode][2]}>
-                                                        Rp. {m.totharga_ppn_rp}
-                                                    </Text>
-                                                </HStack>
-                                                {
-                                                    m.visible &&
-                                                    <FlatList 
-                                                        data={m.items} 
-                                                        keyExtractor={i => i.id} 
-                                                        showsVerticalScrollIndicator={false}
-                                                        renderItem={({ item }) => <RenderComponentItem item={item} mode={mode} route={route}/>}/>
-                                                }
-                                            </VStack>
-                                        </HStack>
-                                    </VStack>
-                                )
-                            })
-                        }
-                    </VStack>
+                                                    {
+                                                        m.visible &&
+                                                        <>
+                                                            {
+                                                                m.items?.length > 0 &&
+                                                                m.items.map( item => {
+                                                                    return <RenderComponentItem key={item.id} item={item} mode={mode} route={route}/>
+                                                                })
+                                                            }
+                                                        </>
+                                                    }
+                                                </VStack>
+                                            </HStack>
+                                        </VStack>
+                                    )
+                                })
+                            }
+                        </VStack>
+                    </ScrollView>
                     {
                         state.status == 'approved' &&
                         <HStack space={2}>
@@ -354,6 +363,7 @@ const RenderComponentItem = ( { item, mode, route } ) => {
 
     return(
         <TouchableOpacity onPress={routingDetailHandle}>
+            
             <VStack 
                 my={2} 
                 py={1} 
@@ -362,14 +372,27 @@ const RenderComponentItem = ( { item, mode, route } ) => {
                 borderWidth={1} 
                 borderColor={appcolor.line[mode][2]} 
                 borderStyle={'dashed'} rounded={'md'}>
-                <VStack>
-                    <Text 
-                        fontSize={14}
-                        fontWeight={'semibold'}
-                        fontFamily={'Abel-Regular'}
-                        color={appcolor.teks[mode][2]}>
-                        Nama Barang :
-                    </Text>
+                <VStack mt={3}>
+                    <HStack justifyContent={'space-between'}>
+                        <Text 
+                            fontSize={14}
+                            fontWeight={'semibold'}
+                            fontFamily={'Abel-Regular'}
+                            color={appcolor.teks[mode][2]}>
+                            Nama Barang :
+                        </Text>
+                        {
+                            item.userApprove ?
+                            <View px={3} zIndex={99} h={'20px'} bg={'amber.400'} rounded={'full'}>
+                                <Text fontFamily={'Poppins'} color={'#FFF'}>approved</Text>
+                            </View>
+                            :
+                            <View px={3} zIndex={99} h={'20px'} bg={'success.500'} rounded={'full'}>
+                                <Text fontFamily={'Poppins'} color={'#FFF'}>waiting</Text>
+                            </View>
+                        }
+
+                    </HStack>
                     <VStack py={1}>
                         <HStack px={2} space={2}>
                             <BrushBig size="22" color={appcolor.ico[mode][1]} variant="Bulk"/>
@@ -455,6 +478,88 @@ const RenderComponentItem = ( { item, mode, route } ) => {
                                     color={appcolor.teks[mode][1]}>
                                     { item.equipment?.manufaktur } 
                                 </Text>
+                            </HStack>
+                        </VStack>
+                    </VStack>
+                }
+
+                {
+                    item.userValidate &&
+                    <VStack borderTopWidth={.5} borderTopColor={appcolor.line[mode][1]} rounded={'md'}>
+                        <Text 
+                            fontSize={14}
+                            fontWeight={'semibold'}
+                            fontFamily={'Abel-Regular'}
+                            color={appcolor.teks[mode][2]}>
+                            Validated By :
+                        </Text>
+                        <VStack px={2} py={1}>
+                            <HStack space={2} alignItems={'center'}>
+                                <UserSquare size="32" color={appcolor.teks[mode][3]} variant="Bulk"/>
+                                <VStack flex={1}>
+                                    <Text 
+                                        flex={1}
+                                        lineHeight={'xs'}
+                                        fontSize={18}
+                                        fontWeight={'semibold'}
+                                        fontFamily={'Quicksand-Regular'}
+                                        color={appcolor.teks[mode][1]}>
+                                        { item.userValidate?.nama_lengkap }
+                                    </Text>
+                                    {
+                                        item.date_validated &&
+                                        <Text 
+                                            flex={1}
+                                            lineHeight={'xs'}
+                                            fontSize={12}
+                                            fontFamily={'Abel-Regular'}
+                                            color={appcolor.teks[mode][1]}>
+                                            { moment(item.date_validated).format('dddd, DD MMMM YYYY') } 
+                                        </Text>
+                                    }
+
+                                </VStack>
+                            </HStack>
+                        </VStack>
+                    </VStack>
+                }
+
+                {
+                    item.userApprove &&
+                    <VStack borderTopWidth={.5} borderTopColor={appcolor.line[mode][1]} rounded={'md'}>
+                        <Text 
+                            fontSize={14}
+                            fontWeight={'semibold'}
+                            fontFamily={'Abel-Regular'}
+                            color={appcolor.teks[mode][2]}>
+                            Approved By :
+                        </Text>
+                        <VStack px={2} py={1}>
+                            <HStack space={2} alignItems={'center'}>
+                                <UserSquare size="32" color={appcolor.teks[mode][4]} variant="Bulk"/>
+                                <VStack flex={1}>
+                                    <Text 
+                                        flex={1}
+                                        lineHeight={'xs'}
+                                        fontSize={18}
+                                        fontWeight={'semibold'}
+                                        fontFamily={'Quicksand-Regular'}
+                                        color={appcolor.teks[mode][1]}>
+                                        { item.userApprove?.nama_lengkap||'???' }
+                                    </Text>
+                                    {
+                                        item.date_validated &&
+                                        <Text 
+                                            flex={1}
+                                            lineHeight={'xs'}
+                                            fontSize={12}
+                                            fontFamily={'Abel-Regular'}
+                                            color={appcolor.teks[mode][1]}>
+                                            { moment(item.date_approved).format('dddd, DD MMMM YYYY') } 
+                                        </Text>
+                                    }
+
+                                </VStack>
                             </HStack>
                         </VStack>
                     </VStack>

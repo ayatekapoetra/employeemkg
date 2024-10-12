@@ -17,14 +17,14 @@ end
 node_require('react-native/scripts/react_native_pods.rb')
 node_require('react-native-permissions/scripts/setup.rb')
 
-  setup_permissions([
-    'Camera',
-    'LocationAccuracy',
-    'LocationAlways',
-    'LocationWhenInUse',
-    'Microphone',
-    'PhotoLibrary',
-  ])
+  # setup_permissions([
+  #   'Camera',
+  #   'LocationAccuracy',
+  #   'LocationAlways',
+  #   'LocationWhenInUse',
+  #   'Microphone',
+  #   'PhotoLibrary',
+  # ])
 
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
@@ -53,6 +53,8 @@ target 'employeemkg' do
   config = use_native_modules!
 
   rn_maps_path = '../node_modules/react-native-maps'
+  # permissions_path = '../node_modules/react-native-permissions/ios'
+
   pod 'react-native-google-maps', :path => rn_maps_path
   pod 'react-native-google-maps', :path => '../node_modules/react-native-maps'
   pod 'react-native-geolocation', path: '../node_modules/@react-native-community/geolocation'

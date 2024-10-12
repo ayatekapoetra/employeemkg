@@ -1,4 +1,10 @@
-import { configureStore } from '@reduxjs/toolkit'
+import { 
+  configureStore,
+  createSerializableStateInvariantMiddleware,
+  isPlain,
+  Tuple,
+} from '@reduxjs/toolkit'
+import { Iterable } from 'immutable'
 import logger from 'redux-logger'
 
 import themeReducer from './themeSlice'
@@ -25,6 +31,25 @@ import gudangSlice from './gudangSlice'
 import barangSlice from './barangSlice'
 import barangRackSlice from './barangRackSlice'
 import eventSlice from './eventSlice'
+import pemasokSlice from './pemasokSlice'
+
+import docNewRequestSlice from './docNewRequestSlice'
+import docCheckRequestSlice from './docCheckRequestSlice'
+import docWaitOrderSlice from './docWaitOrderSlice'
+import docVerifyOrderSlice from './docVerifyOrderSlice'
+import docWaitPaymentSlice from './docWaitPaymentSlice'
+import docWaitPartSlice from './docWaitPartSlice'
+
+// Augment middleware to consider Immutable.JS iterables serializable
+// const isSerializable = (value) => Iterable.isIterable(value) || isPlain(value)
+
+// const getEntries = (value) =>
+//   Iterable.isIterable(value) ? value.entries() : Object.entries(value)
+
+// const serializableMiddleware = createSerializableStateInvariantMiddleware({
+//   isSerializable,
+//   getEntries,
+// })
 
 export default configureStore({
     reducer: {
@@ -41,6 +66,7 @@ export default configureStore({
       pit: lokasiPitSlice,
       kegiatan: kegiatanPitSlice,
       equipment: equipmentSlice,
+      pemasok: pemasokSlice,
       gudang: gudangSlice,
       barang: barangSlice,
       rack: barangRackSlice,
@@ -48,7 +74,15 @@ export default configureStore({
       timesheet: fetchTimeSheetSlice,
       pengajuan: fetchPengajuanSlice,
       purchaseRequest: fetchPurchaseRequestSlice,
-      dailyEvent: fetchDailyEventSlice
+      dailyEvent: fetchDailyEventSlice,
+      newRequest: docNewRequestSlice,
+      checkRequest: docCheckRequestSlice,
+      waitOrder: docWaitOrderSlice,
+      verifyOrder: docVerifyOrderSlice,
+      waitPay: docWaitPaymentSlice,
+      waitPart: docWaitPartSlice
     },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
+    // middleware: () => new Tuple(serializableMiddleware),
+    // middleware: () => new Tuple(logger),
   })

@@ -2,7 +2,7 @@ import { TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import AppScreen from '../../components/AppScreen'
 import { HStack, VStack, Text, Divider, useNativeBase, Center } from 'native-base'
-import { ArrowRight2, ColorSwatch, MonitorMobbile, Convert, DirectNotification, Logout, Profile, Scan, ShieldSecurity, Stickynote, House2 } from 'iconsax-react-native'
+import { ArrowRight2, ColorSwatch, MonitorMobbile, Convert, DirectNotification, Logout, Profile, Scan, ShieldSecurity, Stickynote, House2, Civic } from 'iconsax-react-native'
 import { applyTheme } from '../../redux/themeSlice'
 import { useDispatch, useSelector } from 'react-redux'
 import { login } from '../../redux/authSlice'
@@ -191,13 +191,12 @@ const array = [
         uri: "lingkup-kerja-screen",
         grpIcon: <House2 size="28" color="#787b83" variant="Bulk"/>
     },
-    
-    // {
-    //     key: 8, 
-    //     title: "Keluar", 
-    //     icon: "power-off",
-    //     access: '',
-    //     uri: "#logout",
-    //     grpIcon: <Logout size="28" color="#787b83" variant="Bulk"/>
-    // },
+    {
+        key: 8, 
+        title: "Izin Aplikasi", 
+        icon: "power-off",
+        access: '',
+        uri: "izin-aplikasi-screen",
+        grpIcon: <Civic size="28" color="#787b83" variant="Bulk"/>
+    },
 ]

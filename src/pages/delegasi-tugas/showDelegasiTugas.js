@@ -254,11 +254,14 @@ const ShowDelegasiTugasScreen = () => {
                             <VStack>
                                 <VStack minH={'150px'} py={2} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
                                     <Text 
-                                        fontFamily={'Poppins-Regular'}
+                                        fontWeight={'semibold'}
+                                        fontFamily={'Poppins-SemiBold'}
                                         color={appcolor.teks[mode][1]}>
                                         Narasi Tugas :
                                     </Text>
                                     <Text 
+                                        fontSize={18}
+                                        textAlign={'justify'}
                                         fontFamily={'Abel-Regular'}
                                         color={appcolor.teks[mode][2]}>
                                         {state.narasitask}

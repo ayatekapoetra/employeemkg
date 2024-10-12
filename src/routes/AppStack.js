@@ -42,6 +42,7 @@ import GagalKirim from '../pages/setting/gagalKirim';
 import UnderDevelopmentScreen from '../components/UnderDevelopment';
 import AuthorizedBlockScreen from '../components/AuthorizedBlock';
 import LingkupKerja from '../pages/setting/lingkupKerja';
+import IzinAplikasi from '../pages/setting/izinAplikasi';
 
 // APPROVAL
 import ApprovalChecklogHarian from '../pages/approval-data-karyawan/approval-checklog-kehadiran';
@@ -77,6 +78,8 @@ import ReportMaintenanceScreen from '../pages/report/equipment-services';
 import ReportStokPersediaanScreen from '../pages/report/stok-persediaan';
 import ReportEquipmentStandBy from '../pages/report/equipment-standby';
 import ReportEquipmentStandByDetails from '../pages/report/equipment-standby/details';
+import PurchaseMonitoring from '../pages/report/purchasing';
+import ShippingMonitoring from '../pages/report/shipping-order';
 
 import { applyAlert } from '../redux/alertSlice';
 
@@ -146,6 +149,7 @@ export default function AppStack() {
             <Stack.Screen name="unsending-screen" component={GagalKirim} options={{headerShown: false}}/>
             <Stack.Screen name="unauthorized-screen" component={AuthorizedBlockScreen} options={{headerShown: false}}/>
             <Stack.Screen name="under-development-screen" component={UnderDevelopmentScreen} options={{headerShown: false}}/>
+            <Stack.Screen name="izin-aplikasi-screen" component={IzinAplikasi} options={{headerShown: false}}/>
 
             {/* APPROVAL */}
             <Stack.Screen name="approval-checklog-harian" component={ApprovalChecklogHarian} options={{headerShown: false}}/>
@@ -180,6 +184,8 @@ export default function AppStack() {
             <Stack.Screen name="report-stok-persediaan" component={ReportStokPersediaanScreen} options={{headerShown: false}}/>
             <Stack.Screen name="report-standby-equipment" component={ReportEquipmentStandBy} options={{headerShown: false}}/>
             <Stack.Screen name="report-standby-equipment-detail" component={ReportEquipmentStandByDetails} options={{headerShown: false}}/>
+            <Stack.Screen name="report-purchasing-order" component={PurchaseMonitoring} options={{headerShown: false}}/>
+            <Stack.Screen name="report-shipping-order" component={ShippingMonitoring} options={{headerShown: false}}/>
         </Stack.Navigator>
     );
 }

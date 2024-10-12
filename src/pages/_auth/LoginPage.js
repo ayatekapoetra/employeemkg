@@ -194,7 +194,7 @@ const LoginPage = () => {
                     </Button>
                 </VStack>
             </VStack>
-            <Image zIndex={1} alt='...' source={require('../../../assets/images/background.png')} style={{width: "100%", height: 120}}/>
+            <Image zIndex={1} alt='...' source={require('../../../assets/images/background-footer.png')} style={{width: "100%", height: 120}}/>
         </VStack>
     )
 }

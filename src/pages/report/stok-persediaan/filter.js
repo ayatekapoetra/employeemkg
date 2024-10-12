@@ -67,45 +67,6 @@ const FilterStokPersediaan = ( { onApplyFilter, onResetFilter, qstring, setQstri
     return (
         <VStack px={4} mt={3} flex={1}>
             <VStack flex={1}>
-                {/* <HStack mb={3} space={2}>
-                    <VStack p={2} borderWidth={1} flex={1} borderColor={appcolor.line[mode][2]} borderStyle={'dashed'} rounded={'md'}>
-                        <TouchableOpacity onPress={() => setOpen({...isOpen, bisnis: true, barang: false})}>
-                            <HStack mb={2} justifyContent={'space-between'} alignItems={'center'}>
-                                <HStack flex={1} space={2} alignItems={'center'}>
-                                    <House size="42" color={appcolor.ico[mode][1]} variant="Bulk"/>
-                                    <VStack flex={1}>
-                                        <Text 
-                                            fontSize={16}
-                                            fontFamily={'Abel-Regular'}
-                                            color={appcolor.teks[mode][2]}>
-                                            Unit Bisnis :
-                                        </Text>
-                                        <Text 
-                                            fontSize={20}
-                                            lineHeight={'xs'}
-                                            fontFamily={'Poppins-Regular'}
-                                            color={appcolor.teks[mode][2]}>
-                                            {qstring?.bisnis?.name || user.nm_bisnis}
-                                        </Text>
-                                    </VStack>
-                                </HStack>
-                                {
-                                    qstring?.bisnis &&
-                                    <TouchableOpacity onPress={clearBisnisHandle}>
-                                        <CloseCircle size="25" color={appcolor.teks[mode][5]} variant="Bulk"/>
-                                    </TouchableOpacity>
-                                }
-                            </HStack>
-                        </TouchableOpacity>
-                    </VStack>
-                </HStack>
-                {
-                    isOpen.bisnis &&
-                    <SheetBisnisUnit 
-                        isOpen={isOpen.bisnis} 
-                        onClose={() => setOpen({...isOpen, gudang: false, rack: false, barang: false, bisnis: false })}
-                        onSelected={onSelectedBisnis}/>
-                } */}
                 <HStack mb={3} space={2}>
                     <VStack p={2} borderWidth={1} flex={1} borderColor={appcolor.line[mode][2]} borderStyle={'dashed'} rounded={'md'}>
                         <TouchableOpacity onPress={() => setOpen({...isOpen, gudang: true, barang: false})}>

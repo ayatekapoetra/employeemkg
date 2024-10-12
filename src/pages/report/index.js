@@ -79,7 +79,7 @@ const ReportScreen = () => {
                                 // shadow={'2'}
                                 borderStyle={'dotted'} 
                                 borderColor={appcolor.line[mode][2]}>
-                                <Image resizeMode="contain" source={require('../../../assets/images/rep-standby.png')} alt='...' style={{ width: 70, height: 50 }}/>
+                                <Image resizeMode="contain" source={require('../../../assets/images/rep-standby1.png')} alt='...' style={{ width: 90, height: 55 }}/>
                                 <Text 
                                     textAlign={'center'} 
                                     lineHeight={'xs'}
@@ -91,7 +91,7 @@ const ReportScreen = () => {
                         </TouchableOpacity>
                     </HStack>
                     <HStack mt={3} space={3} h={'100px'} justifyContent={'flex-start'} alignItems={'center'}>
-                        <TouchableOpacity style={{flex: 1}}>
+                        <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate('report-purchasing-order')}>
                             <VStack 
                                 py={2} 
                                 px={3} 
@@ -103,17 +103,17 @@ const ReportScreen = () => {
                                 // shadow={'2'}
                                 borderStyle={'dotted'} 
                                 borderColor={appcolor.line[mode][2]}>
-                                <Image resizeMode="contain" source={require('../../../assets/images/keranjang.png')} alt='...' style={{ width: 50, height: 50 }}/>
+                                <Image resizeMode="cover" source={require('../../../assets/images/warehouse.png')} alt='...' style={{ width: 55, height: 50 }}/>
                                 <Text 
                                     textAlign={'center'} 
                                     lineHeight={'xs'}
                                     fontFamily={'Abel-Regular'} 
                                     color={appcolor.teks[mode][2]}>
-                                    Report Purchasing
+                                    Purchase Monitoring
                                 </Text>
                             </VStack>
                         </TouchableOpacity>
-                        <TouchableOpacity style={{flex: 1}}>
+                        <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate('report-shipping-order')}>
                             <VStack 
                                 py={2} 
                                 px={3} 
@@ -125,13 +125,13 @@ const ReportScreen = () => {
                                 // shadow={'2'}
                                 borderStyle={'dotted'} 
                                 borderColor={appcolor.line[mode][2]}>
-                                <Image resizeMode="contain" source={require('../../../assets/images/service-car.png')} alt='...' style={{ width: 50, height: 50 }}/>
+                                <Image resizeMode="contain" source={require('../../../assets/images/delmon.png')} alt='...' style={{ width: 50, height: 50 }}/>
                                 <Text 
                                     textAlign={'center'} 
                                     lineHeight={'xs'}
                                     fontFamily={'Abel-Regular'} 
                                     color={appcolor.teks[mode][2]}>
-                                    Schedule Maintenances
+                                    Shipping Monitoring
                                 </Text>
                             </VStack>
                         </TouchableOpacity>

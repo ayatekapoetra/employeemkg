@@ -71,11 +71,20 @@ const TugasEquipmentDetail = () => {
         route.goBack()
     }
 
+    console.log(params);
+
     return (
         <AppScreen>
             <VStack h={"full"}>
                 <HeaderScreen title={params.nama} onThemes={true} onFilter={null} onNotification={true}/>
                 <VStack px={3} flex={1}>
+                    <Text 
+                        textAlign={'right'} 
+                        fontWeight={'semibold'}
+                        fontFamily={'Poppins'}
+                        color={appcolor.teks[mode][1]}>
+                        {params.section}
+                    </Text>
                     <HStack alignItems={'center'} justifyContent={'space-between'} p={2} borderWidth={.5} borderColor={appcolor.line[mode][1]} rounded={'md'}>
                         <TouchableOpacity onPress={() => setOpenEquipment(!openEquipment)} style={{flex: 1}}>
                             <VStack>

@@ -150,7 +150,7 @@ const ApprovalPurchaseRequest = () => {
 export default ApprovalPurchaseRequest
 
 const RenderItemComponent = ( { item, mode, route } ) => {
-
+    
     const routingDetailHandle = () => {
         route.navigate('approval-purchase-request-details', item)
     }
@@ -182,7 +182,7 @@ const RenderItemComponent = ( { item, mode, route } ) => {
                         <Text 
                             fontFamily={'Abel-Regular'}
                             color={appcolor.teks[mode][2]}>
-                            { moment(item.trx_date).format('MMMM') }
+                            { moment(item.date_ro).format('MMMM') }
                         </Text>
                         <Text 
                             mt={-3}
@@ -190,12 +190,12 @@ const RenderItemComponent = ( { item, mode, route } ) => {
                             fontWeight={'black'}
                             fontFamily={'Dosis'}
                             color={appcolor.teks[mode][1]}>
-                            { moment(item.trx_date).format('DD') }
+                            { moment(item.date_ro).format('DD') }
                         </Text>
                         <Text 
                             mt={-2}
                             color={appcolor.teks[mode][2]}>
-                            { moment(item.trx_date).format('YYYY') }
+                            { moment(item.date_ro).format('YYYY') }
                         </Text>
                     </Center>
                     <VStack flex={1}>

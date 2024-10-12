@@ -384,11 +384,11 @@ const RenderComponentItem = ( { item, mode, route } ) => {
                         {
                             item.userApprove ?
                             <View px={3} zIndex={99} h={'20px'} bg={'amber.400'} rounded={'full'}>
-                                <Text fontFamily={'Poppins'} color={'#FFF'}>approved</Text>
+                                <Text fontWeight={'semibold'} fontFamily={'Poppins'} color={'#FFF'}>approved</Text>
                             </View>
                             :
                             <View px={3} zIndex={99} h={'20px'} bg={'success.500'} rounded={'full'}>
-                                <Text fontFamily={'Poppins'} color={'#FFF'}>waiting</Text>
+                                <Text fontWeight={'semibold'} fontFamily={'Poppins'} color={'#FFF'}>waiting</Text>
                             </View>
                         }
 

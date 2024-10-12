@@ -147,7 +147,6 @@ const ApprovalPengajuanDana = () => {
 export default ApprovalPengajuanDana
 
 const RenderItemComponent = ( { item, mode, route } ) => {
-
     switch (item.status) {
         case 'approval':
             var badgeStatus = <BadgeAlt rounded={"full"} type={"success"} colorScheme={"success.200"} title={"approval"}/>

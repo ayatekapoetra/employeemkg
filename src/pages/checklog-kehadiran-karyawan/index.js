@@ -424,50 +424,53 @@ const ChecklogPage = () => {
                 </VStack>
                 <VStack flex={1} bg={"amber.100"}>
                     <Center flex={1}>
-                        <MapView
-                            provider={PROVIDER_GOOGLE} // remove if not using Google Maps
-                            style={{width: width, height: "100%"}}
-                            showsMyLocationButton={true}
-                            showsUserLocation={true}
-                            region={{
-                                ...location,
-                                latitudeDelta: 0.002,
-                                longitudeDelta: 0.002,
-                            }}>
-                            {
-                                
-                                checklogPin?.map( m => {
-                                    return (
-                                        <View key={m.id}>
-                                            <Circle 
-                                                strokeWidth={1}
-                                                strokeColor={"red"}
-                                                fillColor={"error.100"}
-                                                center={{latitude: m.latitude, longitude: m.longitude}}
-                                                radius={100}/>
-                                            <Marker 
-                                                title={`Titik Checklog ${m.nama}`}  
-                                                description={"Radius checklog untuk absensi"}  
-                                                coordinate={{...m, latitude: parseFloat(m.latitude), longitude: parseFloat(m.longitude)}}>
-                                                <Image 
-                                                    alt='Pin' 
-                                                    source={require('../../../assets/images/finger-mechine.png')} 
-                                                    style={os}/>
-                                            </Marker>
-                                        </View>
-                                    )
-                                })
-                            }
-                            <Marker 
-                                title={`Lokasi Saya...`} 
-                                description={"Radius checklog untuk absensi"} 
-                                coordinate={myLocation}>
-                                <Image 
-                                    alt='Pin' 
-                                    source={require('../../../assets/images/engineer-standing.png')} 
-                                    style={{height: 65, width: 20}}/>
-                            </Marker>
-                        </MapView>
+                        {
+                            myLocation &&
+                            <MapView
+                                provider={PROVIDER_GOOGLE} // remove if not using Google Maps
+                                style={{width: width, height: "100%"}}
+                                showsMyLocationButton={true}
+                                showsUserLocation={true}
+                                region={{
+                                    ...location,
+                                    latitudeDelta: 0.002,
+                                    longitudeDelta: 0.002,
+                                }}>
+                                {
+                                    
+                                    checklogPin?.map( m => {
+                                        return (
+                                            <View key={m.id}>
+                                                <Circle 
+                                                    strokeWidth={1}
+                                                    strokeColor={"red"}
+                                                    fillColor={"error.100"}
+                                                    center={{latitude: m.latitude, longitude: m.longitude}}
+                                                    radius={100}/>
+                                                <Marker 
+                                                    title={`Titik Checklog ${m.nama}`}  
+                                                    description={"Radius checklog untuk absensi"}  
+                                                    coordinate={{...m, latitude: parseFloat(m.latitude), longitude: parseFloat(m.longitude)}}>
+                                                    <Image 
+                                                        alt='Pin' 
+                                                        source={require('../../../assets/images/finger-mechine.png')} 
+                                                        style={os}/>
+                                                </Marker>
+                                            </View>
+                                        )
+                                    })
+                                }
+                                <Marker 
+                                    title={`Lokasi Saya...`} 
+                                    description={"Radius checklog untuk absensi"} 
+                                    coordinate={myLocation}>
+                                    <Image 
+                                        alt='Pin' 
+                                        source={require('../../../assets/images/engineer-standing.png')} 
+                                        style={{height: 65, width: 20}}/>
+                                </Marker>
+                            </MapView>
+                        }
                     </Center>
                 </VStack>
             </VStack>

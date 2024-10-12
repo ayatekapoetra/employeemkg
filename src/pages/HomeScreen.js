@@ -23,6 +23,7 @@ import { getGudang } from '../redux/gudangSlice';
 import { getBarang } from '../redux/barangSlice';
 import { getBarangRack } from '../redux/barangRackSlice';
 import { getEvent } from '../redux/eventSlice';
+import { getPemasok } from '../redux/pemasokSlice';
 
 const { width, height } = Dimensions.get("screen")
 
@@ -53,6 +54,7 @@ const HomeScreen = () => {
         dispatch(getGudang())
         dispatch(getBarang())
         dispatch(getEvent())
+        dispatch(getPemasok())
     }
 
     const initialScheme = async () => {

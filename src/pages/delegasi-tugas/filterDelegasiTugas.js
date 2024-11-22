@@ -1,4 +1,4 @@
-import { TouchableOpacity, View } from 'react-native'
+import { TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
 import { VStack, Text, HStack, Button, PresenceTransition } from 'native-base'
 import appcolor from '../../common/colorMode'

@@ -7,6 +7,8 @@ import {
 import { Iterable } from 'immutable'
 import logger from 'redux-logger'
 
+import workspaceSlice from './workspaceSlice'
+
 import themeReducer from './themeSlice'
 import authReducer from './authSlice'
 import alertReducer from './alertSlice'
@@ -17,6 +19,8 @@ import fetchTimeSheetSlice from './fetchTimeSheet'
 import fetchPengajuanSlice from './fetchPengajuanSlice'
 import fetchPurchaseRequestSlice from './fetchPurchaseRequestSlice'
 import fetchDailyEventSlice from './fetchDailyEventSlice'
+import fetchPenugasanSlice from './fetchPenugasanSlice'
+import fetchPenugasanCountSlice from './fetchPenugasanCountSlice'
 
 import izinSakitSlice from './izinSakitSlice'
 import izinCutiSlice from './izinCutiSlice'
@@ -32,6 +36,7 @@ import barangSlice from './barangSlice'
 import barangRackSlice from './barangRackSlice'
 import eventSlice from './eventSlice'
 import pemasokSlice from './pemasokSlice'
+import karyawanSlice from './karyawanSlice'
 
 import docNewRequestSlice from './docNewRequestSlice'
 import docCheckRequestSlice from './docCheckRequestSlice'
@@ -55,6 +60,7 @@ export default configureStore({
     reducer: {
       themes: themeReducer,
       auth: authReducer,
+      workspaces: workspaceSlice,
       myalert: alertReducer,
       dataSakit: izinSakitSlice,
       dataCuti: izinCutiSlice,
@@ -62,6 +68,7 @@ export default configureStore({
       fetchData: fetchDataSlice,
       showData: showDataSlice,
       tugas: tugasSlice,
+      karyawan: karyawanSlice,
       penyewa: penyewaSlice,
       pit: lokasiPitSlice,
       kegiatan: kegiatanPitSlice,
@@ -75,6 +82,8 @@ export default configureStore({
       pengajuan: fetchPengajuanSlice,
       purchaseRequest: fetchPurchaseRequestSlice,
       dailyEvent: fetchDailyEventSlice,
+      penugasan: fetchPenugasanSlice,
+      penugasanCount: fetchPenugasanCountSlice, //
       newRequest: docNewRequestSlice,
       checkRequest: docCheckRequestSlice,
       waitOrder: docWaitOrderSlice,

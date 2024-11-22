@@ -17,7 +17,7 @@ const LoadingHauler = () => {
                     fontSize={"xl"}
                     fontWeight={"semibold"}
                     fontFamily={"Quicksand-Semibold"}
-                    color={appcolor.teks[mode][1]}>
+                    color={appcolor.teks[mode][2]}>
                     Mohon tunggu sejenak
                 </Text>
                 <Text 
@@ -25,7 +25,7 @@ const LoadingHauler = () => {
                     fontWeight={"light"}
                     textAlign={"center"}
                     fontFamily={"Poppins-Regular"}
-                    color={appcolor.teks[mode][1]}>
+                    color={appcolor.teks[mode][2]}>
                     Sistem sedang melakukan prosesing data...
                 </Text>
             </Center>

@@ -34,7 +34,7 @@ const RiwayatChecklogHarianPage = () => {
         setLoading(true)
         try {
             const resp = await apiFetch.get("mobile/checklog", {params: objString})
-            // console.log('XXXX', resp);
+            console.log('XXXX', resp);
             setData(resp.data.data)
             setLoading(false)
         } catch (error) {

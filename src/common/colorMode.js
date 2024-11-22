@@ -30,6 +30,7 @@ const appcolor = {
             4: "#09cd02", //success
             5: "#ef4444", //error
             6: "#01a8d7", //primary
+            7: "#38bdf8", //primary light
         },
         light: {
             1: "#2f313e",
@@ -38,6 +39,7 @@ const appcolor = {
             4: "#15803d", //success
             5: "#dc2626", //error
             6: "#0180c7", //primary
+            6: "#0284c7", //primary light
         }
     },
     line: {

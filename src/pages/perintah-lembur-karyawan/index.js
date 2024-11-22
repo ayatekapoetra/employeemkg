@@ -74,7 +74,6 @@ const PerintahLemburPage = () => {
         )
     }
 
-    console.log(dataFilter);
     return (
         <AppScreen>
             <VStack h={"full"}>

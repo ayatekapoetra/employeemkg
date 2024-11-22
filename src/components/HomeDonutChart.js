@@ -46,16 +46,23 @@ const HomeDonutChart = () => {
                 sectionAutoFocus
                 radius={75}
                 innerRadius={50}
-                innerCircleColor={'#2f313e'}
+                innerCircleColor={mode=='dark'?'#2f313e':'#F5F5F5'}
                 centerLabelComponent={() => {
                 return (
-                    <View style={{justifyContent: 'center', alignItems: 'center'}}>
-                    <Text
-                        style={{fontSize: 22, color: 'white', fontWeight: 'bold'}}>
-                        { data[0].value }%
-                    </Text>
-                    <Text style={{fontSize: 14, color: 'white'}}>Kehadiran</Text>
-                    </View>
+                    <VStack justifyContent={'center'} alignItems={'center'}>
+                        <Text
+                            color={appcolor.teks[mode][1]}
+                            fontSize={'2xl'}
+                            fontFamily={'Dosis'}
+                            fontWeight={'bold'}>
+                            { data[0].value }%
+                        </Text>
+                        <Text 
+                            color={appcolor.teks[mode][2]}
+                            fontSize={'sm'}>
+                            Kehadiran
+                        </Text>
+                    </VStack>
                 )}}/>
             <VStack space={2}>
                 {

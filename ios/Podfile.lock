@@ -976,6 +976,10 @@ PODS:
     - React-debug
   - react-native-date-picker (5.0.2):
     - React-Core
+  - react-native-document-picker (9.3.1):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
   - react-native-geolocation (3.2.1):
     - glog
     - RCT-Folly (= 2022.05.16.00)
@@ -1159,7 +1163,9 @@ PODS:
     - React-jsi (= 0.73.2)
     - React-logger (= 0.73.2)
     - React-perflogger (= 0.73.2)
-  - RNCAsyncStorage (1.23.1):
+  - RNCAsyncStorage (2.0.0):
+    - React-Core
+  - RNCClipboard (1.15.0):
     - React-Core
   - RNCMaskedView (0.3.1):
     - React-Core
@@ -1235,6 +1241,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - react-native-date-picker (from `../node_modules/react-native-date-picker`)
+  - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - "react-native-geolocation (from `../node_modules/@react-native-community/geolocation`)"
   - react-native-google-maps (from `../node_modules/react-native-maps`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
@@ -1261,6 +1268,7 @@ DEPENDENCIES:
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
+  - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
@@ -1348,6 +1356,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   react-native-date-picker:
     :path: "../node_modules/react-native-date-picker"
+  react-native-document-picker:
+    :path: "../node_modules/react-native-document-picker"
   react-native-geolocation:
     :path: "../node_modules/@react-native-community/geolocation"
   react-native-google-maps:
@@ -1400,6 +1410,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
+  RNCClipboard:
+    :path: "../node_modules/@react-native-clipboard/clipboard"
   RNCMaskedView:
     :path: "../node_modules/@react-native-masked-view/masked-view"
   RNDeviceInfo:
@@ -1460,6 +1472,7 @@ SPEC CHECKSUMS:
   React-logger: 66b168e2b2bee57bd8ce9e69f739d805732a5570
   React-Mapbuffer: 9ee041e1d7be96da6d76a251f92e72b711c651d6
   react-native-date-picker: 90687f1dbd374ff0265dca99d949998364c22fa9
+  react-native-document-picker: cbc63d9c5deb5a698744cd9072e238414fd82328
   react-native-geolocation: 0ac6e11c1097d61b3836ab570c48c2bebb052604
   react-native-google-maps: 94df984b1647973baffe17c0b7b52828d6b69d94
   react-native-image-picker: 994a97b28e7f2c2197e21801569bb19f6e494e38
@@ -1485,11 +1498,12 @@ SPEC CHECKSUMS:
   React-runtimescheduler: df8945a656356ff10f58f65a70820478bfcf33ad
   React-utils: f5bc61e7ea3325c0732ae2d755f4441940163b85
   ReactCommon: 45b5d4f784e869c44a6f5a8fad5b114ca8f78c53
-  RNCAsyncStorage: 826b603ae9c0f88b5ac4e956801f755109fa4d5c
+  RNCAsyncStorage: d35c79ffba52c1013013e16b1fc295aec2feabb6
+  RNCClipboard: 69ab8e51324d5b351f6ba72bbdb72478087a2c64
   RNCMaskedView: 090213d32d8b3bb83a4dcb7d12c18f0152591906
   RNDeviceInfo: 42aadf1282ffa0a88dc38a504a7be145eb010dfa
   RNGestureHandler: 727b656d5a3fa247aac2c8cc70b8757356066451
-  RNPermissions: 8360d4eb2bfaad9c11f75ebad0e0fcb646cb4928
+  RNPermissions: 294531ede5a64d1528463e88fffef05675842042
   RNScreens: 77fc79e66b726ee45b091486b348418ee1d792ab
   RNSVG: 43b64ed39c14ce830d840903774154ca0c1f27ec
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17

@@ -7,7 +7,7 @@ import { SearchStatus } from 'iconsax-react-native'
 
 const { height } = Dimensions.get('screen')
 
-const SheetEquipment = ( { isOpen, onClose, onSelected } ) => {
+const SheetEquipment = ( { reff, isOpen, onClose, onSelected } ) => {
     const equipment = useSelector( state => state.equipment.data)
     const [ state, setState ] = useState(equipment?.map( m => ({...m, visible: true})))
     const mode = useSelector(state => state.themes.value)
@@ -24,14 +24,22 @@ const SheetEquipment = ( { isOpen, onClose, onSelected } ) => {
     return (
         <Actionsheet isOpen={isOpen} onClose={onClose}>
             <Actionsheet.Content style={{height: height * .8}}>
-                <HStack p={2} mb={3} space={2} w={'full'} borderWidth={1} borderColor={'#000'} rounded={'md'}>
+                <HStack 
+                    p={2} 
+                    mb={3} 
+                    space={2} 
+                    w={'full'} 
+                    borderWidth={1} 
+                    borderColor={'#000'} 
+                    alignItems={'center'}
+                    rounded={'md'}>
                     <SearchStatus size={22} variant="Broken" color='#000'/>
-                    <TextInput onChangeText={searchDataHandle} autoCapitalize="words" style={{flex: 1}}/>
+                    <TextInput onChangeText={searchDataHandle} autoCapitalize="words" style={{flex: 1, color: '#000'}}/>
                 </HStack>
                 <FlatList 
                     data={state} 
                     keyExtractor={i => i.id}
-                    renderItem={( { item } ) => <RenderItemComponent item={item} onSelected={onSelected}/>}/>
+                    renderItem={( { item } ) => <RenderItemComponent reff={reff} item={item} onSelected={onSelected}/>}/>
                 <Actionsheet.Item 
                     p={0} 
                     m={0} 
@@ -50,7 +58,7 @@ const SheetEquipment = ( { isOpen, onClose, onSelected } ) => {
 
 export default SheetEquipment
 
-const RenderItemComponent = ( { item, onSelected } ) => {
+const RenderItemComponent = ( { reff, item, onSelected } ) => {
     switch (item.tipe) {
         case 'dumptruck':
             var equipmentIcon = <Image source={require('../../assets/images/dumptruck.png')} alt='Alat' style={{height: 40, width: 50}}/>
@@ -73,7 +81,7 @@ const RenderItemComponent = ( { item, onSelected } ) => {
                     p={2} 
                     mx={0} 
                     my={1} 
-                    onPress={() => onSelected(item)} 
+                    onPress={() => onSelected(item, reff)} 
                     rounded={'md'}
                     justifyContent={'center'} 
                     borderWidth={1}

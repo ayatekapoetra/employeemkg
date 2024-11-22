@@ -24,9 +24,17 @@ const SheetKegiatanEquipment = ( { isOpen, onClose, onSelected } ) => {
     return (
         <Actionsheet isOpen={isOpen} onClose={onClose}>
             <Actionsheet.Content style={{height: height * .8}}>
-                <HStack p={2} mb={3} space={2} w={'full'} borderWidth={1} borderColor={'#000'} rounded={'md'}>
+                <HStack 
+                    p={2} 
+                    mb={3} 
+                    space={2} 
+                    w={'full'} 
+                    borderWidth={1} 
+                    borderColor={'#000'} 
+                    alignItems={'center'}
+                    rounded={'md'}>
                     <SearchStatus size={22} variant="Broken" color='#000'/>
-                    <TextInput onChangeText={searchDataHandle} autoCapitalize="words" style={{flex: 1}}/>
+                    <TextInput onChangeText={searchDataHandle} autoCapitalize="words" style={{flex: 1, color: '#000'}}/>
                 </HStack>
                 <FlatList 
                     data={state} 

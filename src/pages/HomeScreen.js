@@ -24,6 +24,8 @@ import { getBarang } from '../redux/barangSlice';
 import { getBarangRack } from '../redux/barangRackSlice';
 import { getEvent } from '../redux/eventSlice';
 import { getPemasok } from '../redux/pemasokSlice';
+import { getKaryawan } from '../redux/karyawanSlice';
+import { SecurityUser } from 'iconsax-react-native';
 
 const { width, height } = Dimensions.get("screen")
 
@@ -46,6 +48,7 @@ const HomeScreen = () => {
     }, [])
 
     const initDataRedux = () => {
+        dispatch(getKaryawan())
         dispatch(getPenyewa())
         dispatch(getLokasiPit())
         dispatch(getKegiatanPit())
@@ -110,27 +113,34 @@ const HomeScreen = () => {
                         
                         <VStack>
                             <ImageBackground source={require('../../assets/images/bg-home.png')} resizeMode="cover" style={{height: 200, width: 'auto'}}>
-                            {
-                                user?.karyawan?.nama ?
-                                <Text 
-                                    fontSize={20} 
-                                    fontFamily={"Quicksand-SemiBold"} 
-                                    fontWeight={700} 
-                                    color={colorTheme != 'dark'?"#2f313e":"#F5F5F5"}>
-                                    { user?.karyawan?.nama }
-                                </Text>
-                                :
-                                <Text color={appcolor.teks[colorTheme][3]}>
-                                    - data anda tidak terhubung dengan data karyawan -
-                                </Text>
-                            }
-                            <Text 
-                                fontSize={16} 
-                                fontFamily={"Quicksand-Light"} 
-                                fontWeight={300} 
-                                color={colorTheme != 'dark'?"#2f313e":"#F5F5F5"}>
-                                { user?.usertype }
-                            </Text>
+                            <HStack space={1}>
+                                <SecurityUser size="32" color={appcolor.teks[colorTheme][3]} variant='Bulk'/>
+                                <VStack>
+                                    {
+                                        user?.karyawan?.nama ?
+                                        <Text 
+                                            fontSize={20} 
+                                            lineHeight={'xs'}
+                                            fontFamily={"Quicksand-SemiBold"} 
+                                            fontWeight={700} 
+                                            color={colorTheme != 'dark'?"#2f313e":"#F5F5F5"}>
+                                            { user?.karyawan?.nama }
+                                        </Text>
+                                        :
+                                        <Text lineHeight={'xs'} color={appcolor.teks[colorTheme][3]}>
+                                            - data anda tidak terhubung dengan data karyawan -
+                                        </Text>
+                                    }
+                                    <Text 
+                                        fontSize={16} 
+                                        fontFamily={"Quicksand-Light"} 
+                                        fontWeight={300} 
+                                        lineHeight={'xs'}
+                                        color={colorTheme != 'dark'?"#2f313e":"#F5F5F5"}>
+                                        { user?.usertype }
+                                    </Text>
+                                </VStack>
+                            </HStack>
                             </ImageBackground>
                         </VStack>
                         <VStack space={5} mt={3} flex={1}>
@@ -200,7 +210,8 @@ const HomeScreen = () => {
                                         <Text color={appcolor.teks[colorTheme][1]} mt={1} lineHeight={"xs"} fontFamily={"Abel-Regular"} textAlign={'center'} fontSize={12} fontWeight={300}>Approval Pengawas</Text>
                                     </VStack>
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => route.navigate("Delegasi-Tugas")}>
+                                <TouchableOpacity onPress={() => route.navigate("Penugasan-Kerja")}>
+                                {/* <TouchableOpacity onPress={() => route.navigate("Delegasi-Tugas")}> */}
                                     <VStack flex={1} h={"80px"} w={'75px'} alignItems={"center"} justifyContent={"center"} rounded={"md"}>
                                         <Image 
                                             alt='...' 

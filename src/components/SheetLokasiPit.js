@@ -24,9 +24,20 @@ const SheetLokasiPit = ( { isOpen, onClose, onSelected } ) => {
     return (
         <Actionsheet isOpen={isOpen} onClose={onClose}>
             <Actionsheet.Content style={{height: height * .8}}>
-                <HStack p={2} space={2} w={'full'} mb={3} borderWidth={1} borderColor={'#000'} rounded={'md'}>
+                <HStack 
+                    p={2} 
+                    space={2} 
+                    w={'full'} 
+                    mb={3} 
+                    borderWidth={1} 
+                    borderColor={'#000'} 
+                    alignItems={'center'}
+                    rounded={'md'}>
                     <SearchStatus size={22} variant="Broken" color='#000'/>
-                    <TextInput onChangeText={searchDataHandle} style={{flex: 1}}/>
+                    <TextInput 
+                        placeholder='Cari Lokasi Kerja/Pit !!!'
+                        onChangeText={searchDataHandle} 
+                        style={{flex: 1, height: 40, color: "#000"}}/>
                 </HStack>
                 <FlatList 
                     data={state} 
@@ -65,7 +76,17 @@ const RenderItemComponent = ( { item, onSelected } ) => {
                     borderWidth={1}
                     borderColor={'#DDD'}
                     onPress={() => onSelected(item)}>
-                    <Text fontFamily={'Poppins-SemiBold'} fontWeight={'semibold'} fontSize={18}>{item.nama}</Text>
+                    <HStack space={2} justifyContent={'space-between'} alignItems={'center'}>
+                        <Center h={'12'} w={'12'} bg={'amber.300'} rounded={'lg'}>
+                            <Text fontFamily={'Quicksand'} fontWeight={'semibold'} fontSize={18}>{item.type}</Text>
+                        </Center>
+                        <VStack>
+                            <Text fontFamily={'Poppins-SemiBold'} fontWeight={'semibold'} fontSize={18}>{item.nama}</Text>
+                            <Text fontFamily={'Poppins'} fontWeight={'light'} fontSize={14}>
+                                {item.initbisnis||'???'} - {item.initcabang||'???'}
+                            </Text>
+                        </VStack>
+                    </HStack>
                 </Actionsheet.Item>
             </HStack>
         )

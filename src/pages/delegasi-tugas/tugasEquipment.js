@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { VStack, Text, HStack, Image, Center } from 'native-base'
 import { useDispatch, useSelector } from 'react-redux'
 import appcolor from '../../common/colorMode'
-import { Activity, Additem, AlignVertically, Android, ArrowSquareDown, ArrowSquareRight, Flag, MenuBoard, SmartCar, TagRight, TruckFast, TruckTime, Watch } from 'iconsax-react-native'
+import { Additem, Flag, TagRight } from 'iconsax-react-native'
 import { applyTugas } from '../../redux/tugasSlice'
 import IllustrationTaskEquipment from '../../components/IllustrationTaskEquipment'
 import { useNavigation } from '@react-navigation/native'
@@ -63,7 +63,7 @@ const RenderComponentItem = ( { data, mode } ) => {
         setOpenEquipment(false)
     }
 
-    console.log('data.item', data.items);
+    // console.log('data.item', data.items);
 
     return (
         <VStack py={3} flex={1}>

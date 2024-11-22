@@ -76,16 +76,19 @@ const KaryawanMultiOption = ({isoprdrv, state, setState}) => {
                 borderWidth={.5} 
                 borderColor={appcolor.line[mode][2]}
                 alignItems={'center'}
-                justifyContent={'flex-start'}
                 rounded={'md'}>
                 <SearchNormal1 size="22" color={appcolor.ico[mode][5]} variant="Outline"/>
-                <HStack px={2} flex={1}>
-                    <TextInput 
-                        placeholder='Nama, Section atau Handphone'
-                        placeholderTextColor={mode!='dark'?'#ddd':'#c4c4c4'}
-                        onChangeText={(teks) => filterDataKaryawan(teks)}
-                        style={{flex: 1, height: 30, fontFamily: 'Poppins-SemiBold', color: appcolor.teks[mode][1]}}/>
-                </HStack>
+                <TextInput 
+                    placeholder='Nama, Section atau Handphone'
+                    placeholderTextColor={mode=='dark'?'#ddd':'#c4c4c4'}
+                    onChangeText={(teks) => filterDataKaryawan(teks)}
+                    style={{
+                        flex: 1, 
+                        height: 50, 
+                        alignItems: "center", 
+                        fontFamily: 'Poppins-SemiBold', 
+                        fontSize: 16, 
+                        color: appcolor.teks[mode][1]}}/>
             </HStack>
             <VStack mt={3}>
                 {

@@ -65,68 +65,10 @@ const ShowAbsensiDetails = () => {
         getDataFetch()
     }
 
-    // const verifyHandle = async () => {
-    //     setLoading(true)
-    //     try {
-    //         const resp = await apiFetch.post(`/mobile/check-out-mobile/${params.id}/verify`, data)
-    //         if(resp.status === 201){
-    //             getDataFetch()
-    //         }else{
-    //             alert('Error...')
-    //         }
-    //         setLoading(false)
-    //     } catch (error) {
-    //         alert(error.response?.data?.diagnostic?.message || 'Error...')
-    //         setLoading(false)
-    //         console.log(error);
-    //     }
-    //     setMasuk(false)
-    //     setPulang(false)
-    // }
+    console.log(data);
+    console.log(`${URIPATH.apiphoto}${data.photo_in}`);
+    
 
-    // const approvalHandle = async () => {
-    //     setLoading(true)
-    //     try {
-    //         const resp = await apiFetch.post(`/mobile/check-out-mobile/${params.id}/approve`, {...data, approve_sts: "A", kehadiran_sts: "H"})
-    //         if(resp.status === 201){
-    //             route.goBack()
-    //         }else{
-    //             alert('Error...')
-    //         }
-    //         setLoading(false)
-    //     } catch (error) {
-    //         setLoading(false)
-    //         console.log(error);
-    //     }
-    //     setMasuk(false)
-    //     setPulang(false)
-    // }
-
-    // const rejectHandle = () => {
-    //     setOpenSheet(true)
-    // }
-
-    // const changeStatusKehadiran = async (sts) => {
-    //     setLoading(true)
-    //     setOpenSheet(false)
-    //     setData({...data, kehadiran_sts: sts})
-
-    //     try {
-    //         const resp = await apiFetch.post(`/mobile/check-out-mobile/${params.id}/approve`, {...data, kehadiran_sts: sts})
-    //         if(resp.status === 201){
-    //             route.goBack()
-    //         }else{
-    //             setLoading(false)
-    //             alert('Error...')
-    //         }
-    //     } catch (error) {
-    //         setLoading(false)
-    //         alert(error?.response?.data?.diagnostic?.message || "Error...")
-    //         console.log(error);
-    //     }
-    // }
-
-    // console.log(params);
     if(loading){
         return (
             <AppScreen>

@@ -14,8 +14,9 @@ import SettingPage from '../pages/setting'
 import RiwayatAbsensiBulananPage from '../pages/riwayat-kehadiran-bulanan'
 import RiwayatChecklogHarianPage from '../pages/riwayat-checklog-harian'
 import ShowAbsensiDetails from '../pages/riwayat-checklog-harian/showAbsensi'
-import PenugasanKuPage from '../pages/penugasanku';
+// import PenugasanKuPage from '../pages/penugasanku/xxx_index';
 
+import PenugasanKuPage from '../pages/penugasanku';
 import ChecklogPage from '../pages/checklog-kehadiran-karyawan'
 import RiwayatAbsensiToday from '../pages/checklog-kehadiran-karyawan/riwayatToday'
 import PermintaanPage from '../pages/permintaan-absensi-karyawan'
@@ -67,6 +68,17 @@ import ShowDelegasiTugasScreen from '../pages/delegasi-tugas/showDelegasiTugas';
 import CreateDelegasiTugasScreen from '../pages/delegasi-tugas/createDelegasiTugas';
 import TugasEquipmentDetail from '../pages/delegasi-tugas/tugasEquipmentDetail';
 
+// PENUGASAN BARU KARYAWAN
+import PenugasanKaryawan from '../pages/penugasan-karyawan';
+import CreatePenugasan from '../pages/penugasan-karyawan/create';
+import CreateTugasEquipment from '../pages/penugasan-karyawan/createTugasEquipment';
+import ShowTugasEquipment from '../pages/penugasan-karyawan/showTugasEquipment';
+import CreateTugasKaryawan from '../pages/penugasan-karyawan/createTugasKaryawan';
+import ShowTugasKaryawan from '../pages/penugasan-karyawan/showTugasKaryawan';
+
+// TUGASKU
+import ShowTugasKu from '../pages/penugasanku/show';
+
 // STATUS EQUIPMENT
 import DailyEvent from '../pages/daily-event';
 import CreateDailyEvent from '../pages/daily-event/create';
@@ -82,6 +94,9 @@ import PurchaseMonitoring from '../pages/report/purchasing';
 import ShippingMonitoring from '../pages/report/shipping-order';
 
 import { applyAlert } from '../redux/alertSlice';
+import { getPenugasan } from '../redux/fetchPenugasanSlice';
+import { Badge, Box, Center, HStack, Text } from 'native-base';
+import { countPenugasan } from '../redux/fetchPenugasanCountSlice';
 
 
 const Stack = createStackNavigator();
@@ -169,6 +184,16 @@ export default function AppStack() {
             <Stack.Screen name="approval-purchase-request-item-details" component={ShowPurchaseRequestItem} options={{headerShown: false}}/>
 
             {/* PENUGASAN KARYAWAN */}
+            <Stack.Screen name="Penugasan-Kerja" component={PenugasanKaryawan} options={{headerShown: false}}/>
+            <Stack.Screen name="create-penugasan-kerja" component={CreatePenugasan} options={{headerShown: false}}/>
+            <Stack.Screen name="create-penugasan-equipment" component={CreateTugasEquipment} options={{headerShown: false}}/>
+            <Stack.Screen name="show-penugasan-equipment" component={ShowTugasEquipment} options={{headerShown: false}}/>
+            <Stack.Screen name="create-penugasan-karyawan" component={CreateTugasKaryawan} options={{headerShown: false}}/>
+            <Stack.Screen name="show-penugasan-karyawan" component={ShowTugasKaryawan} options={{headerShown: false}}/>
+
+            {/* TUGASKU */}
+            <Stack.Screen name="show-tugasku" component={ShowTugasKu} options={{headerShown: false}}/>
+
             <Stack.Screen name="Delegasi-Tugas" component={DelegasiTugasScreen} options={{headerShown: false}}/>
             <Stack.Screen name="show-delegasi-tugas" component={ShowDelegasiTugasScreen} options={{headerShown: false}}/>
             <Stack.Screen name="create-delegasi-tugas" component={CreateDelegasiTugasScreen} options={{headerShown: false}}/>
@@ -192,7 +217,14 @@ export default function AppStack() {
 
 const HomeTab = createBottomTabNavigator();
 function HomeInitialTab () {
+    const dispatch = useDispatch()
     const theme = useSelector(state => state.themes)
+    const { data } = useSelector(state => state.penugasanCount)
+
+    useEffect(() => {
+        dispatch(countPenugasan())
+    }, [])
+
     return (
         <HomeTab.Navigator initialRouteName="home-tab">
             <HomeTab.Screen 
@@ -213,7 +245,26 @@ function HomeInitialTab () {
                     headerShown: false,
                     tabBarActiveTintColor: '#f09d27',
                     tabBarStyle: {backgroundColor: theme.value === "dark"?"#2f313e":"#F5F5F5"},
-                    tabBarIcon: ({ color, focused }) => (<Trello size="32" variant={focused ? 'Bulk':'Broken'} color={theme.value === "dark"?"#9a8f90":"#b31e02"} />)
+                    tabBarIcon: ({ color, focused }) => {
+                        const isBadge = data > 0
+                        return(
+                            <HStack position={'relative'}>
+                                {
+                                    isBadge &&
+                                    <Center 
+                                        h={3} 
+                                        w={3} 
+                                        top={0} 
+                                        right={-3} 
+                                        zIndex={99} 
+                                        bg={'red.500'} 
+                                        position={'absolute'} 
+                                        rounded={'full'}/>
+                                }
+                                <Trello size="32" variant={focused ? 'Bulk':'Broken'} color={theme.value === "dark"?"#9a8f90":"#b31e02"} />
+                            </HStack>
+                        )
+                    }
                 }}/>
             <HomeTab.Screen 
                 name="home-tab" 

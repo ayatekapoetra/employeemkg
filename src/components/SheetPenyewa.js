@@ -24,9 +24,20 @@ const SheetPenyewa = ( { isOpen, onClose, onSelected } ) => {
     return (
         <Actionsheet isOpen={isOpen} onClose={onClose}>
             <Actionsheet.Content style={{height: height * .8}}>
-                <HStack p={2} mb={3} space={2} w={'full'} borderWidth={1} borderColor={'#000'} rounded={'md'}>
+                <HStack 
+                    p={2} 
+                    mb={3} 
+                    space={2} 
+                    w={'full'} 
+                    borderWidth={1} 
+                    borderColor={'#000'} 
+                    alignItems={'center'}
+                    rounded={'md'}>
                     <SearchStatus size={22} variant="Broken" color='#000'/>
-                    <TextInput onChangeText={searchDataHandle} style={{flex: 1}}/>
+                    <TextInput 
+                        placeholder='Cari Penyewa !!!'
+                        onChangeText={searchDataHandle} 
+                        style={{flex: 1, height: 40, color: '#000'}}/>
                 </HStack>
                 <FlatList 
                     data={state} 
@@ -63,7 +74,10 @@ const RenderItemComponent = ( { item, onSelected } ) => {
                     justifyContent={'center'} 
                     borderWidth={1}
                     borderColor={'#DDD'}>
-                    {item.nama}
+                    <VStack>
+                        <Text fontWeight={'bold'}>{item.nama}</Text>
+                        <Text fontFamily={'Dosis'} fontWeight={'light'}>{item.bisnis?.name}</Text>
+                    </VStack>
                 </Actionsheet.Item>
             </HStack>
         )

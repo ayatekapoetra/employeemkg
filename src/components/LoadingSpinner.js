@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 
 const { height } = Dimensions.get("screen")
 
-const LoadingSpinner = () => {
+const LoadingSpinner = ( { title, subtitle, color } ) => {
     const mode = useSelector(state => state.themes).value
     return (
         <VStack h={"full"} mx={5}>
@@ -17,16 +17,16 @@ const LoadingSpinner = () => {
                     fontSize={"xl"}
                     fontWeight={"semibold"}
                     fontFamily={"Quicksand-Semibold"}
-                    color={appcolor.teks[mode][1]}>
-                    Mohon tunggu sejenak
+                    color={color?color:appcolor.teks[mode][1]}>
+                    { title || 'Mohon tunggu sejenak' }
                 </Text>
                 <Text 
                     fontSize={"md"}
                     fontWeight={"light"}
                     textAlign={"center"}
                     fontFamily={"Poppins-Regular"}
-                    color={appcolor.teks[mode][1]}>
-                    Sistem sedang melakukan prosesing data...
+                    color={color?color:appcolor.teks[mode][1]}>
+                    { subtitle || "Sistem sedang melakukan prosesing data..." }
                 </Text>
             </Center>
         </VStack>

@@ -169,7 +169,6 @@ const CreateFormCuti = () => {
                             open={openDateStart}
                             date={new Date()}
                             theme={mode != "dark"?"light":"dark"}
-                            maximumDate={new Date(moment().format("YYYY-MM-DD"))}
                             onConfirm={(date) => {
                                 var start = moment(date)
                                 var finish = moment(data.cuti_end)
@@ -218,7 +217,6 @@ const CreateFormCuti = () => {
                             open={openDateEnd}
                             date={new Date()}
                             theme={mode != "dark"?"light":"dark"}
-                            minimumDate={new Date(moment(data.cuti_start).format("YYYY-MM-DD"))}
                             onConfirm={(date) => {
                                 var start = moment(data.cuti_start)
                                 var finish = moment(date)
@@ -268,7 +266,6 @@ const CreateFormCuti = () => {
                             open={openDateWork}
                             date={new Date()}
                             theme={mode != "dark"?"light":"dark"}
-                            minimumDate={new Date(moment(data.work_start).format("YYYY-MM-DD"))}
                             onConfirm={(date) => {
                                 setData({...data, work_start: date})
                             }}

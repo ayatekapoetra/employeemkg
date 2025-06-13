@@ -27,7 +27,7 @@ const ShowTugasKu = () => {
     const [ openAlasan, setOpenAlasan ] = useState(false)
     const [activeReff, setActiveReff] = useState(null)
     const [refresh, setRefresh] = useState(false)
-    const [ state, setState] = useState(params)
+    const [ state, setState] = useState({...params, durasi: ""})
 
     useMemo(async () => {
         setRefresh(true)
@@ -226,8 +226,6 @@ const ShowTugasKu = () => {
         var iconFile = <Image resizeMode='cover' alt='icon' source={MYIMAGEBG.engeneerIllustration} style={{width: 80, height: 100}}/>
     }
 
-    console.log(state);
-
     if(refresh){
         <AppScreen>
             <VStack h={'full'}>
@@ -249,12 +247,10 @@ const ShowTugasKu = () => {
                     onClose={() => setOpenConfirm(false)} 
                     onAction={openAlasanHandle}/>
                 <VStack px={3} flex={1}>
-
                     <ScrollView 
                         refreshControl={<RefreshControl refreshing={refresh} onRefresh={onRefreshHandle} />}
                         showsVerticalScrollIndicator={false}>
                         <VStack flex={1}>
-                            {/*  */}
                             <HStack space={2}>
                                 <TouchableOpacity onPress={linkAttachmentHandle}>
                                     <Center maxH={'175px'} borderWidth={1} borderColor={appcolor.line[mode][1]} rounded={'lg'}>
@@ -471,6 +467,7 @@ const ShowTugasKu = () => {
                             }
                         </VStack>
                     </ScrollView>
+                    <>
                     {
                         state.status == 'active' &&
                         <HStack space={2}>
@@ -501,33 +498,34 @@ const ShowTugasKu = () => {
                             </Button>
                         </HStack>
                     }
-
                     {
-                        state.durasi &&
+                        state?.durasi &&
                         <HStack my={2} w={'full'} p={2} mt={3} bg={'muted.300'} alignItems={'center'} justifyContent={'space-between'} rounded={'sm'}>
                             <VStack w={'4/5'}>
                                 <Text
                                     lineHeight={'xs'}
                                     fontWeight={'bold'}
                                     fontFamily={'Poppins'}>
-                                    Selamat...
+                                    {'Selamat...'}
                                 </Text>
                                 <Text
                                     lineHeight={'xs'}
                                     fontFamily={'Poppins'}>
-                                    Tugas diselesaikan dalam waktu
+                                    {'Tugas diselesaikan dalam waktu'}
                                 </Text>
                             </VStack>
+
                             <Text w={'1/5'} 
                                 fontSize={20}
                                 textAlign={'center'}
                                 lineHeight={'xs'}
                                 fontWeight={'bold'}
                                 fontFamily={'Dosis'}>
-                                {state.durasi}
+                                {state?.durasi || ''}
                             </Text>
                         </HStack>
                     }
+                    </>
                 </VStack>
                 {
                     openAlasan &&

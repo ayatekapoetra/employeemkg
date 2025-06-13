@@ -1,5 +1,5 @@
 import { TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { HStack, VStack, Text, Image, Center, Badge } from 'native-base'
 import moment from 'moment'
 import appcolor from '../../../common/colorMode'
@@ -9,17 +9,20 @@ import { useNavigation } from '@react-navigation/native'
 const ItemApprovalTimesheet = ( { mode, data } ) => {
     const route = useNavigation()
     const [ selisihDate, setSelisihDate ] = useState(0)
+    const [ diff, setDiff ] = useState('???')
 
-    if (data.endtime && data.starttime) {
-        var diff = (moment(data.endtime).diff(moment(data.starttime), 'minute') / 60)?.toFixed(1)
-    }else{
-        var diff = '???'
-    }
+    useEffect(() => {
+        if (data.endtime && data.starttime) {
+            var tmp = (moment(data.endtime).diff(moment(data.starttime), 'minute') / 60)?.toFixed(1)
+            setDiff(tmp > 0 ? tmp : `(${Math.abs(tmp)})`)
+        }
+    
+        if(moment(data?.endtime).diff(moment(data.starttime), 'd') > 0){
+            var selisihhari = moment(data?.endtime).diff(moment(data.starttime), 'd')
+            setSelisihDate(selisihhari)
+        }
 
-    if(moment(data?.endtime).diff(moment(data.starttime), 'd') > 0){
-        var selisihhari = moment(data?.endtime).diff(moment(data.starttime), 'd')
-        setSelisihDate(selisihhari)
-    }
+    }, [])
 
     const navigateScreen = () => {
         route.navigate('approval-timesheet-pengawas-details', data)
@@ -87,7 +90,7 @@ const ItemApprovalTimesheet = ( { mode, data } ) => {
                                 { data?.bbm } Liter
                             </Text>
                         </HStack>
-                        <HStack pr={4} space={10} justifyContent={'flex-start'}>
+                        <HStack pr={4} space={4} justifyContent={'flex-start'}>
                             <HStack space={1}>
                                 <Clock size="20" color={appcolor.teks[mode][4]} variant="Bulk"/>
                                 <Text 
@@ -109,7 +112,7 @@ const ItemApprovalTimesheet = ( { mode, data } ) => {
                                 </Text>
                             </HStack>
                         </HStack>
-                        <HStack pr={4} space={9} justifyContent={'flex-start'}>
+                        <HStack pr={4} space={4} justifyContent={'flex-start'}>
                             <HStack space={1}>
                                 <Clock size="20" color={appcolor.teks[mode][5]} variant="Bulk"/>
                                 <HStack space={1}>

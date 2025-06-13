@@ -2,7 +2,7 @@ import { TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import AppScreen from '../../components/AppScreen'
 import { HStack, VStack, Text, Divider, useNativeBase, Center } from 'native-base'
-import { ArrowRight2, ColorSwatch, MonitorMobbile, Convert, DirectNotification, Logout, Profile, Scan, ShieldSecurity, Stickynote, House2, Civic } from 'iconsax-react-native'
+import { ArrowRight2, ColorSwatch, MonitorMobbile, Convert, DirectNotification, Logout, Profile, Scan, ShieldSecurity, Stickynote, House2, Civic, Calendar2 } from 'iconsax-react-native'
 import { applyTheme } from '../../redux/themeSlice'
 import { useDispatch, useSelector } from 'react-redux'
 import { login } from '../../redux/authSlice'
@@ -68,7 +68,7 @@ const SettingPage = () => {
             <VStack h={"full"}>
                 <HeaderScreen title={"Pengaturan & Informasi"} onThemes={true} onNotification={true}/>
                 <Divider/>
-                <VStack flex={2}>
+                <VStack flex={1}>
                     {
                         array.map( item => {
                             return (
@@ -95,16 +95,16 @@ const SettingPage = () => {
                         })
                     }
                 </VStack>
-                <VStack flex={1}>
-                    <Center flex={1}>
-                        <Text fontWeight={300} fontFamily={"Poppins-Regular"} color={appcolor.teks[mode][1]}>
-                            Mobile Attendances Aplication
-                        </Text>
-                        <Text fontWeight={700} fontFamily={"Poppins-Regular"} color={appcolor.teks[mode][1]}>
-                            Makkuraga Group
-                        </Text>
-                        <Text fontFamily={"Poppins-Regular"} color={appcolor.teks[mode][2]}>version 1.0.1</Text>
-                    </Center>
+                <Center mb={5}>
+                    <Text fontWeight={300} fontFamily={"Poppins-Regular"} color={appcolor.teks[mode][1]}>
+                        Mobile Attendances Aplication
+                    </Text>
+                    <Text fontWeight={700} fontFamily={"Poppins-Regular"} color={appcolor.teks[mode][1]}>
+                        Makkuraga Group
+                    </Text>
+                    <Text fontFamily={"Poppins-Regular"} color={appcolor.teks[mode][2]}>version 1.0.1</Text>
+                </Center>
+                <VStack>
                     <TouchableOpacity onPress={onUserLogout}>
                         <HStack 
                             p={3}
@@ -125,7 +125,6 @@ const SettingPage = () => {
                             <ArrowRight2 size="12" color="#FFF" variant="Outline"/>
                         </HStack>
                     </TouchableOpacity>
-                
                 </VStack>
             </VStack>
         </AppScreen>
@@ -161,6 +160,14 @@ const array = [
     },
     {
         key: 4, 
+        title: "Absensi Bulanan", 
+        icon: "bell",
+        access: '',
+        uri: "riwayat-absensi-screen",
+        grpIcon: <Calendar2 size="28" color="#787b83" variant="Bulk"/>
+    },
+    {
+        key: 5, 
         title: "Internal Memo", 
         icon: "bullhorn",
         access: '',
@@ -168,7 +175,7 @@ const array = [
         grpIcon: <Stickynote size="28" color="#787b83" variant="Bulk"/>
     },
     {
-        key: 5, 
+        key: 6, 
         title: "Gagal Kirim", 
         icon: "satellite-dish",
         access: '',
@@ -176,7 +183,7 @@ const array = [
         grpIcon: <Convert size="28" color="#787b83" variant="Bulk"/>
     },
     {
-        key: 6, 
+        key: 7, 
         title: "Reset UUID Devices", 
         icon: "clock-rotate-left",
         access: ["developer", "administartor", "hrd"],
@@ -184,7 +191,7 @@ const array = [
         grpIcon: <MonitorMobbile size="28" color="#787b83" variant="Bulk"/>
     },
     {
-        key: 7, 
+        key: 8, 
         title: "Ubah Lingkup Kerja", 
         icon: "palette",
         access: '',
@@ -192,7 +199,7 @@ const array = [
         grpIcon: <House2 size="28" color="#787b83" variant="Bulk"/>
     },
     {
-        key: 8, 
+        key: 9, 
         title: "Izin Aplikasi", 
         icon: "power-off",
         access: '',

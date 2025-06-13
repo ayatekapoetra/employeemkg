@@ -2,19 +2,34 @@ import React, { useEffect, useState } from 'react'
 import AppScreen from '../../components/AppScreen'
 import { VStack, Text, HStack } from 'native-base'
 import HeaderScreen from '../../components/HeaderScreen'
-import { Camera, FolderOpen, GalleryFavorite, Map, Map1, Microphone2 } from 'iconsax-react-native'
+import { Camera, DirectboxReceive, FolderOpen, GalleryFavorite, Map, Map1, Microphone2 } from 'iconsax-react-native'
 import appcolor from '../../common/colorMode'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import PermissionApps from '../../common/permissionApps'
+import { TouchableOpacity } from 'react-native'
+import { getKaryawan } from '../../redux/karyawanSlice'
+import { getPenyewa } from '../../redux/penyewaSlice'
+import { getLokasiPit } from '../../redux/lokasiPitSlice'
+import { getKegiatanPit } from '../../redux/kegiatanPitSlice'
+import { getBarangRack } from '../../redux/barangRackSlice'
+import { getEquipment } from '../../redux/equipmentSlice'
+import { getGudang } from '../../redux/gudangSlice'
+import { getBarang } from '../../redux/barangSlice'
+import { getEvent } from '../../redux/eventSlice'
+import { getPemasok } from '../../redux/pemasokSlice'
+import { getOption } from '../../redux/sysOptionSlice'
+import { getRoles } from '../../redux/roleOperationSlice'
 
 const IzinAplikasi = () => {
     PermissionApps()
+    const dispatch = useDispatch()
     const mode = useSelector(state => state.themes.value)
     const [ izin, setIzin ] = useState(null)
 
     useEffect(() => {
+        
         requestPermissionDevices()
     }, [])
 
@@ -28,13 +43,74 @@ const IzinAplikasi = () => {
             alert(error)
         }
     }
-    // console.log('-----------', izin);
 
+    const initDataRedux = async () => {
+        const arrayKey = [
+            '@pemasok', 
+            '@equipment',
+            '@karyawan',
+            '@penyewa', 
+            '@gudang',
+            '@lokasi-absensi', 
+            '@lokasi-pit', 
+            '@kegiatan-pit',
+            '@option',
+            '@rack',
+            '@event',
+        ]
+        
+        try {
+            await AsyncStorage.multiRemove(arrayKey)
+            dispatch(getKaryawan())
+            dispatch(getPenyewa())
+            dispatch(getLokasiPit())
+            dispatch(getKegiatanPit())
+            dispatch(getBarangRack())
+            dispatch(getEquipment())
+            dispatch(getGudang())
+            dispatch(getBarang())
+            dispatch(getEvent())
+            dispatch(getPemasok())
+            dispatch(getOption())
+            dispatch(getRoles())
+          } catch(e) {
+            console.log(e);
+            alert('Err refresh data local...')
+        }
+    }
 
     return (
         <AppScreen>
             <VStack h={'full'}>
                 <HeaderScreen title={"Izin Aplikasi"} onBack={true} onThemes={true} onNotification={true}/>
+                <TouchableOpacity onPress={() => initDataRedux()}>
+                    <HStack 
+                        mx={3}
+                        py={3} 
+                        space={2} 
+                        bg={'blueGray.100'}
+                        rounded={'md'}
+                        alignItems={'center'}>
+                        <DirectboxReceive size="52" color="#787b83" variant="Bulk"/>
+                        <VStack flex={1}>
+                            <HStack alignItems={'center'} justifyContent={'space-between'}>
+                                <Text 
+                                    fontSize={18}
+                                    fontWeight={'bold'}
+                                    fontFamily={'Quicksand-Regular'}
+                                    color={appcolor.teks[mode][5]}>
+                                    LocalStorages
+                                </Text>
+                            </HStack>
+                            <Text 
+                                lineHeight={'xs'}
+                                fontFamily={'Abel-Regular'}
+                                color={appcolor.teks[mode][6]}>
+                                Klik disini untuk melakukan pembaharuan data local pada handphone anda
+                            </Text>
+                        </VStack>
+                    </HStack>
+                </TouchableOpacity>
                 <VStack px={3} flex={1}>
                     <HStack 
                         py={3} 
@@ -229,6 +305,7 @@ const IzinAplikasi = () => {
                         </VStack>
                     </HStack>
                 </VStack>
+                
             </VStack>
         </AppScreen>
     )

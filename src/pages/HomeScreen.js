@@ -25,9 +25,10 @@ import { getBarangRack } from '../redux/barangRackSlice';
 import { getEvent } from '../redux/eventSlice';
 import { getPemasok } from '../redux/pemasokSlice';
 import { getKaryawan } from '../redux/karyawanSlice';
-import { SecurityUser } from 'iconsax-react-native';
+import { getOption } from '../redux/sysOptionSlice';
+import { getRoles } from '../redux/roleOperationSlice';
 
-const { width, height } = Dimensions.get("screen")
+import { SecurityUser } from 'iconsax-react-native';
 
 const HomeScreen = () => {
     const route = useNavigation()
@@ -58,6 +59,8 @@ const HomeScreen = () => {
         dispatch(getBarang())
         dispatch(getEvent())
         dispatch(getPemasok())
+        dispatch(getOption())
+        dispatch(getRoles())
     }
 
     const initialScheme = async () => {
@@ -149,21 +152,22 @@ const HomeScreen = () => {
                                     <VStack flex={1} h={"80px"} w={'75px'} alignItems={"center"} justifyContent={"center"} rounded={"md"}>
                                         <Image 
                                             alt='...' 
-                                            source={require('../../assets/images/finger-2.png')} 
-                                            // source={require('../../assets/images/finger-mechine.png')} 
+                                            source={require('../../assets/images/mesin-finger.png')} 
                                             resizeMode="stretch"
-                                            style={{width: 50, height: 55}}/>
+                                            style={{width: 40, height: 40}}/>
                                         <Text color={appcolor.teks[colorTheme][1]} mt={1} lineHeight={"xs"} fontFamily={"Abel-Regular"} textAlign={'center'} fontSize={12} fontWeight={300}>Checklog</Text>
                                     </VStack>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Riwayat-Absensi")}>
+                                <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("penggantian-ban")}>
                                     <VStack flex={1} h={"80px"} w={'75px'} alignItems={"center"} justifyContent={"center"} rounded={"md"}>
                                         <Image 
                                             alt='...' 
-                                            source={require('../../assets/images/calendar-bell-2.png')} 
+                                            source={require('../../assets/images/ban02-ico.png')} 
                                             resizeMode="stretch"
                                             style={{width: 40, height: 40}}/>
-                                        <Text color={appcolor.teks[colorTheme][1]} mt={1} lineHeight={"xs"} fontFamily={"Abel-Regular"} textAlign={'center'} fontSize={12} fontWeight={300}>Kehadiran Bulanan</Text>
+                                        <Text color={appcolor.teks[colorTheme][1]} mt={1} lineHeight={"xs"} fontFamily={"Abel-Regular"} textAlign={'center'} fontSize={12} fontWeight={300}>
+                                            {`Tire Usage\nForm`}
+                                        </Text>
                                     </VStack>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={{flex: 1}} onPress={() => route.navigate("Permintaan")}>

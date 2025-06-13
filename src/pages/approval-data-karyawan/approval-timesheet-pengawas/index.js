@@ -29,8 +29,6 @@ const ApprovalTimesheetPengawas = () => {
         dateEnd: moment().format("YYYY-MM-DD")
     })
 
-    // console.log('FILTER---', filterData);
-
     useEffect(() => {
         getDataApi(filterData)
     }, [isFocused])
@@ -83,7 +81,7 @@ const ApprovalTimesheetPengawas = () => {
                                     <Text onPress={null} color={appcolor.teks[mode][2]}>Total {(data.length)?.toLocaleString('ID')} rows</Text>
                                 </HStack>
                             </TouchableOpacity>
-                            <VStack mt={2} px={3}>
+                            {/* <VStack mt={2} px={3}>
                                 {
                                     data.length > 0 ?
                                     <>
@@ -92,13 +90,26 @@ const ApprovalTimesheetPengawas = () => {
                                             <OverloadScreen limit={100}/>
                                             :
                                             <FlatList
-                                            data={data}
-                                            showsVerticalScrollIndicator={false}
-                                            refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefreshData} />}
-                                            renderItem={({item}) => <ItemApprovalTimesheet data={item} mode={mode}/>}
-                                            keyExtractor={item => item.id}/>
+                                                data={data}
+                                                showsVerticalScrollIndicator={false}
+                                                refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefreshData} />}
+                                                renderItem={({item}) => <ItemApprovalTimesheet data={item} mode={mode}/>}
+                                                keyExtractor={item => item.id}/>
                                         }
                                     </>
+                                    :
+                                    <NoData title={'Data tidak ditemukan...'} subtitle={'Gunakan filter untuk memilih\ndata yang spesifik'} onRefresh={onRefreshData}/>
+                                }
+                            </VStack> */}
+                            <VStack mt={2} px={3}>
+                                {
+                                    data.length > 0 ?
+                                    <FlatList
+                                        data={data||[]}
+                                        showsVerticalScrollIndicator={false}
+                                        refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefreshData} />}
+                                        renderItem={({item}) => <ItemApprovalTimesheet data={item} mode={mode}/>}
+                                        keyExtractor={item => item.id}/>
                                     :
                                     <NoData title={'Data tidak ditemukan...'} subtitle={'Gunakan filter untuk memilih\ndata yang spesifik'} onRefresh={onRefreshData}/>
                                 }

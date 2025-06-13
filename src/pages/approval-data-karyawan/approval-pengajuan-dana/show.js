@@ -12,7 +12,7 @@ import apiFetch from '../../../helpers/ApiFetch'
 import { applyAlert } from '../../../redux/alertSlice'
 import AlertConfirmation from '../../../components/AlertConfirmation'
 
-const baseuri = 'https://offices.makkuragatama.id/';
+const baseuri = 'https://cdn.makkuragatama.id';
 
 const ShowApprovalPengajuanDana = () => {
     const route = useNavigation()
@@ -102,8 +102,6 @@ const ShowApprovalPengajuanDana = () => {
             }))
         }
     }
-
-    console.log(params);
 
     return (
         <AppScreen>
@@ -489,8 +487,8 @@ const ShowApprovalPengajuanDana = () => {
                                             return(
                                                 <TouchableOpacity key={m.id} onPress={() => openLampiranFoto(m.url)} style={{marginRight: 10}}>
                                                     <Center mb={2} p={1} borderWidth={1} borderColor={appcolor.line[mode][1]} rounded={'md'}>
-                                                        <HStack h={'80px'} w={'80px'}>
-                                                            <Image resizeMode='contain' source={{uri: baseuri + m.url}} alt={'photo-error'} style={{width: 80, height: 80}}/>
+                                                        <HStack h={'100px'} w={'100px'}>
+                                                            <Image resizeMode='cover' source={{uri: baseuri + m.url}} alt={'photo-error'} rounded={'md'} style={{width: 120, height: 'auto'}}/>
                                                         </HStack>
                                                         <Text fontFamily={'Farsan-Regular'} color={appcolor.teks[mode][2]}>lihat photo</Text>
                                                     </Center>

@@ -6,7 +6,7 @@ import AppScreen from '../../components/AppScreen'
 import { Button, HStack, VStack, Text, Image, FlatList, Center } from 'native-base'
 import { MYIMAGEBG } from '../../../assets/images'
 import HeaderScreen from '../../components/HeaderScreen'
-import { AlignVertically, Android, ArrowRight2, Calendar1, Trash, TruckTime, Watch, WristClock } from 'iconsax-react-native'
+import { AlignVertically, Android, ArrowRight2, Calendar1, Courthouse, Trash, TruckTime, Watch, WristClock } from 'iconsax-react-native'
 import appcolor from '../../common/colorMode'
 import { useDispatch, useSelector } from 'react-redux'
 import DatePicker from 'react-native-date-picker'
@@ -20,6 +20,8 @@ import apiFetch from '../../helpers/ApiFetch'
 import LoadingHauler from '../../components/LoadingHauler'
 import { applyAlert } from '../../redux/alertSlice'
 import { useNavigation } from '@react-navigation/native'
+import SheetCabangRoles from '../../components/SheetCabangRoles'
+import useGroupingActions from '../../hook/OpsRoles'
 
 
 
@@ -27,9 +29,11 @@ const CreateTugasEquipment = () => {
     const route = useNavigation()
     const dispatch = useDispatch()
     const mode = useSelector(state => state.themes.value)
+    const { grouping, ungrouping } = useGroupingActions()
     const [itemreff, setItemreff] = useState(null)
     const [refresh, setRefresh] = useState(false)
     const [ layerOpt, setLayerOpt ] = useState({
+        cabang: false,
         date_task: false,
         penyewa: false,
         shift: false,
@@ -42,6 +46,7 @@ const CreateTugasEquipment = () => {
     })
     const [ state, setState ] = useState({
         date_task: new Date(),
+        cabang: null,
         penyewa: null,
         shift: null,
         lokasi: null,
@@ -49,6 +54,7 @@ const CreateTugasEquipment = () => {
         finish_time: null,
         items: []
     })
+    
 
     const tambahItemHandle = () => {
         let iditem = nanoid()
@@ -156,7 +162,6 @@ const CreateTugasEquipment = () => {
             })
         }
 
-        console.log(data);
         setRefresh(true)
         try {
             const resp = await apiFetch.post('penugasan-equipment', data)
@@ -191,20 +196,24 @@ const CreateTugasEquipment = () => {
         
     }
 
+    const onSelectedCabangRole = (obj) => {
+        grouping('cabang', obj)
+        setState({...state, cabang: {id: obj.key, nama: obj.cabang}})
+        setLayerOpt({...layerOpt, cabang: false})
+    }
+
     const onSelectedPenyewa = (obj) => {
-        // console.log(obj);
+        // grouping('lokasi', obj)
         setState({...state, penyewa: obj})
         setLayerOpt({...layerOpt, penyewa: false})
     }
 
     const onSelectedShift = (obj) => {
-        // console.log(obj);
         setState({...state, shift: obj})
         setLayerOpt({...layerOpt, shift: false})
     }
 
     const onSelectedLokasi = (obj) => {
-        // console.log(obj);
         setState({...state, lokasi: obj})
         setLayerOpt({...layerOpt, lokasi: false})
     }
@@ -244,158 +253,159 @@ const CreateTugasEquipment = () => {
                 <HeaderScreen title={"Penugasan Kerja Equipment"} onBack={true} onThemes={true} onNotification={true}/>
                 <VStack px={3} flex={1}>
                     <VStack flex={1}>
-                        {/* <ScrollView showsVerticalScrollIndicator={false}> */}
-                            <TouchableOpacity onPress={() => openLayerOption('date_task')}>
-                                <HStack py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
-                                    <Calendar1 size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
+                        <TouchableOpacity onPress={() => openLayerOption('date_task')}>
+                            <HStack py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
+                                <Calendar1 size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
+                                <VStack flex={1}>
+                                    <Text 
+                                        lineHeight={'xs'}
+                                        color={appcolor.teks[mode][1]}
+                                        fontFamily={'Abel-Regular'}>
+                                        Tanggal Penugasan :
+                                    </Text>
+                                    <Text 
+                                        fontSize={16}
+                                        lineHeight={'xs'}
+                                        color={appcolor.teks[mode][1]}
+                                        fontFamily={'Poppins'}>
+                                        { moment(state.date_task).format('dddd, DD MMMM YYYY') }
+                                    </Text>
+                                </VStack>
+                                <ArrowRight2 size="15" color={appcolor.teks[mode][2]} variant="Outline"/>
+                            </HStack>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => openLayerOption('penyewa')}>
+                            <HStack py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
+                                <Android size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
+                                <VStack flex={1}>
+                                    <Text 
+                                        lineHeight={'xs'}
+                                        color={appcolor.teks[mode][1]}
+                                        fontFamily={'Abel-Regular'}>
+                                        Penyewa :
+                                    </Text>
+                                    <Text 
+                                        fontSize={16}
+                                        lineHeight={'xs'}
+                                        color={appcolor.teks[mode][1]}
+                                        fontFamily={'Poppins'}>
+                                        { state?.penyewa?.nama || '???' }
+                                    </Text>
+                                </VStack>
+                                <ArrowRight2 size="15" color={appcolor.teks[mode][2]} variant="Outline"/>
+                            </HStack>
+                        </TouchableOpacity>
+                        <HStack space={5}>
+                            <TouchableOpacity onPress={() => openLayerOption('shift')} style={{flex: 1}}>
+                                <HStack h={'70px'} py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
+                                    <Watch size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
                                     <VStack flex={1}>
                                         <Text 
                                             lineHeight={'xs'}
                                             color={appcolor.teks[mode][1]}
                                             fontFamily={'Abel-Regular'}>
-                                            Tanggal Penugasan :
+                                            Shift Kerja :
                                         </Text>
                                         <Text 
                                             fontSize={16}
                                             lineHeight={'xs'}
                                             color={appcolor.teks[mode][1]}
                                             fontFamily={'Poppins'}>
-                                            { moment(state.date_task).format('dddd, DD MMMM YYYY') }
+                                            { state?.shift?.nama || '???' }
                                         </Text>
                                     </VStack>
-                                    <ArrowRight2 size="15" color={appcolor.teks[mode][2]} variant="Outline"/>
                                 </HStack>
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={() => openLayerOption('penyewa')}>
-                                <HStack py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
-                                    <Android size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
+                            <TouchableOpacity onPress={() => openLayerOption('lokasi')} style={{flex: 1, flexWrap: 'nowrap'}}>
+                                <HStack h={'70px'} py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
+                                    <AlignVertically size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
                                     <VStack flex={1}>
                                         <Text 
                                             lineHeight={'xs'}
                                             color={appcolor.teks[mode][1]}
                                             fontFamily={'Abel-Regular'}>
-                                            Penyewa :
+                                            Lokasi Kerja :
                                         </Text>
                                         <Text 
                                             fontSize={16}
                                             lineHeight={'xs'}
                                             color={appcolor.teks[mode][1]}
                                             fontFamily={'Poppins'}>
-                                            { state?.penyewa?.nama || '???' }
+                                            { state?.lokasi?.nama || '???' }
                                         </Text>
                                     </VStack>
-                                    <ArrowRight2 size="15" color={appcolor.teks[mode][2]} variant="Outline"/>
                                 </HStack>
                             </TouchableOpacity>
-                            <HStack space={5}>
-                                <TouchableOpacity onPress={() => openLayerOption('shift')} style={{flex: 1}}>
-                                    <HStack h={'70px'} py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
-                                        <Watch size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
-                                        <VStack flex={1}>
+                        </HStack>
+                        <HStack space={5}>
+                            <TouchableOpacity onPress={() => openLayerOption('start_time')} style={{flex: 1}}>
+                                <HStack h={'70px'}  py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
+                                    <WristClock size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
+                                    <VStack flex={1}>
+                                        <Text 
+                                            lineHeight={'xs'}
+                                            color={appcolor.teks[mode][1]}
+                                            fontFamily={'Abel-Regular'}>
+                                            Mulai Kerja :
+                                        </Text>
+                                        <Text 
+                                            ml={1}
+                                            lineHeight={'xs'}
+                                            fontSize={22}
+                                            color={appcolor.teks[mode][1]}
+                                            fontWeight={'semibold'}
+                                            fontFamily={'Dosis'}>
+                                            { state?.start_time ? moment(state?.start_time).format('HH:mm'):'???' }
+                                        </Text>
+                                        {
+                                            state?.start_time &&
                                             <Text 
                                                 lineHeight={'xs'}
-                                                color={appcolor.teks[mode][1]}
-                                                fontFamily={'Abel-Regular'}>
-                                                Shift Kerja :
+                                                fontFamily={'Farsan-Regular'}
+                                                color={appcolor.teks[mode][1]}>
+                                                { moment(state?.start_time).format('ddd, DD MMM YYYY') }
                                             </Text>
-                                            <Text 
-                                                fontSize={16}
-                                                lineHeight={'xs'}
-                                                color={appcolor.teks[mode][1]}
-                                                fontFamily={'Poppins'}>
-                                                { state?.shift?.nama || '???' }
-                                            </Text>
-                                        </VStack>
-                                    </HStack>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => openLayerOption('lokasi')} style={{flex: 1, flexWrap: 'nowrap'}}>
-                                    <HStack h={'70px'} py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
-                                        <AlignVertically size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
-                                        <VStack flex={1}>
-                                            <Text 
-                                                lineHeight={'xs'}
-                                                color={appcolor.teks[mode][1]}
-                                                fontFamily={'Abel-Regular'}>
-                                                Lokasi Kerja :
-                                            </Text>
-                                            <Text 
-                                                fontSize={16}
-                                                lineHeight={'xs'}
-                                                color={appcolor.teks[mode][1]}
-                                                fontFamily={'Poppins'}>
-                                                { state?.lokasi?.nama || '???' }
-                                            </Text>
-                                        </VStack>
-                                    </HStack>
-                                </TouchableOpacity>
-                            </HStack>
-                            <HStack space={5}>
-                                <TouchableOpacity onPress={() => openLayerOption('start_time')} style={{flex: 1}}>
-                                    <HStack h={'70px'}  py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
-                                        <WristClock size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
-                                        <VStack flex={1}>
+                                        }
+                                    </VStack>
+                                </HStack>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => openLayerOption('finish_time')} style={{flex: 1}}>
+                                <HStack h={'70px'} py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
+                                    <WristClock size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
+                                    <VStack flex={1}>
+                                        <Text 
+                                            lineHeight={'xs'}
+                                            color={appcolor.teks[mode][1]}
+                                            fontFamily={'Abel-Regular'}>
+                                            Finish Kerja :
+                                        </Text>
+                                        <Text 
+                                            ml={1}
+                                            lineHeight={'xs'}
+                                            fontSize={22}
+                                            color={appcolor.teks[mode][1]}
+                                            fontWeight={'semibold'}
+                                            fontFamily={'Dosis'}>
+                                            { state?.finish_time ? moment(state?.finish_time).format('HH:mm'):'???' }
+                                        </Text>
+                                        {
+                                            state?.finish_time &&
                                             <Text 
                                                 lineHeight={'xs'}
-                                                color={appcolor.teks[mode][1]}
-                                                fontFamily={'Abel-Regular'}>
-                                                Mulai Kerja :
+                                                fontFamily={'Farsan-Regular'}
+                                                color={appcolor.teks[mode][1]}>
+                                                { moment(state?.finish_time).format('ddd, DD MMM YYYY') }
                                             </Text>
-                                            <Text 
-                                                ml={1}
-                                                lineHeight={'xs'}
-                                                fontSize={22}
-                                                color={appcolor.teks[mode][1]}
-                                                fontWeight={'semibold'}
-                                                fontFamily={'Dosis'}>
-                                                { state?.start_time ? moment(state?.start_time).format('HH:mm'):'???' }
-                                            </Text>
-                                            {
-                                                state?.start_time &&
-                                                <Text 
-                                                    lineHeight={'xs'}
-                                                    fontFamily={'Farsan-Regular'}
-                                                    color={appcolor.teks[mode][1]}>
-                                                    { moment(state?.start_time).format('ddd, DD MMM YYYY') }
-                                                </Text>
-                                            }
-                                        </VStack>
-                                    </HStack>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => openLayerOption('finish_time')} style={{flex: 1}}>
-                                    <HStack h={'70px'} py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
-                                        <WristClock size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
-                                        <VStack flex={1}>
-                                            <Text 
-                                                lineHeight={'xs'}
-                                                color={appcolor.teks[mode][1]}
-                                                fontFamily={'Abel-Regular'}>
-                                                Finish Kerja :
-                                            </Text>
-                                            <Text 
-                                                ml={1}
-                                                lineHeight={'xs'}
-                                                fontSize={22}
-                                                color={appcolor.teks[mode][1]}
-                                                fontWeight={'semibold'}
-                                                fontFamily={'Dosis'}>
-                                                { state?.finish_time ? moment(state?.finish_time).format('HH:mm'):'???' }
-                                            </Text>
-                                            {
-                                                state?.finish_time &&
-                                                <Text 
-                                                    lineHeight={'xs'}
-                                                    fontFamily={'Farsan-Regular'}
-                                                    color={appcolor.teks[mode][1]}>
-                                                    { moment(state?.finish_time).format('ddd, DD MMM YYYY') }
-                                                </Text>
-                                            }
-                                        </VStack>
-                                    </HStack>
-                                </TouchableOpacity>
-                            </HStack>
+                                        }
+                                    </VStack>
+                                </HStack>
+                            </TouchableOpacity>
+                        </HStack>
 
-                            {/* DETAIL PENUGASAN */}
-                            <VStack mt={2} flex={1}>
+                        {/* DETAIL PENUGASAN */}
+                        <VStack mt={2} flex={1}>
+                            {
+                                state.items.length > 0 ?
                                 <FlatList 
                                     data={state.items}
                                     renderItem={ ( { item } ) => {
@@ -494,9 +504,19 @@ const CreateTugasEquipment = () => {
                                         )
                                     } }
                                     keyExtractor={ i => i.id}/>
-                                
-                            </VStack>
-                        {/* </ScrollView> */}
+                                :
+                                <Center mx={8} flex={1}>
+                                    <Text 
+                                        textAlign={'center'}
+                                        fontFamily={'Abel-Regular'}
+                                        color={appcolor.teks[mode][3]}>
+                                        Tambahkan item kegiatan kerja, equipment dan operator/driver
+                                        dengan klik tombol tambah yang ada disebelah kanan bawah layar
+                                    </Text>
+                                </Center>
+                            }
+                            
+                        </VStack>
                     </VStack>
                     <HStack space={2}>
                         <Button 
@@ -564,6 +584,13 @@ const CreateTugasEquipment = () => {
                     />
                 }
                 {
+                    layerOpt.cabang &&
+                    <SheetCabangRoles 
+                        isOpen={layerOpt.cabang} 
+                        onClose={() => openLayerOption('cabang')} 
+                        onSelected={onSelectedCabangRole}/>
+                }
+                {
                     layerOpt.penyewa &&
                     <SheetPenyewa 
                         isOpen={layerOpt.penyewa} 
@@ -588,6 +615,7 @@ const CreateTugasEquipment = () => {
                     layerOpt.equipment &&
                     <SheetEquipment 
                         reff={itemreff}
+                        // clueKey={null}
                         isOpen={layerOpt.equipment} 
                         onClose={() => openLayerOption('equipment')} 
                         onSelected={onSelectedEquipment}/>

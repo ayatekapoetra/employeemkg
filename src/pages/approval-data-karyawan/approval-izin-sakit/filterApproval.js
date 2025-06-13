@@ -83,7 +83,10 @@ const FilterApprovalIzinSakit = ( { openFilter, setOpenFilter, filterData, setFi
                             </Text>
                         </HStack>
                     </TouchableOpacity>
-                    <CloseCircle onPress={removeFilterKaryawan} size="32" color={appcolor.teks[mode][5]} variant="Bulk"/>
+                    {
+                        filterData.karyawan?.nama &&
+                        <CloseCircle onPress={removeFilterKaryawan} size="32" color={appcolor.teks[mode][5]} variant="Bulk"/>
+                    }
                 </HStack>
                 {
                     openKaryawan &&

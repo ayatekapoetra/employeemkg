@@ -6,11 +6,15 @@ import appcolor from '../common/colorMode'
 import { SearchStatus } from 'iconsax-react-native'
 import apiFetch from '../helpers/ApiFetch'
 import LoadingHauler from './LoadingHauler'
+import LoadingSpinner from './LoadingSpinner'
 
 const { height } = Dimensions.get('screen')
+const keysToSearch = ["nama", "section", "phone"]; // Key dinamis
 
 const SheetKaryawan = ( { isoperator, isOpen, onClose, onSelected } ) => {
     const [ karyawan, setKaryawan ] = useState([])
+    const [ loading, setLoading ] = useState(false)
+    const [ keyword, setKeyword ] = useState('')
     const mode = useSelector(state => state.themes.value)
 
     useEffect(() => {
@@ -48,33 +52,58 @@ const SheetKaryawan = ( { isoperator, isOpen, onClose, onSelected } ) => {
     }
 
     const searchDataHandle = (teks) => {
+        setKeyword(teks)
         if(teks){
-            // keyword search data
-            var patten = (m) => {
-                return (`/${m.nama}/g`).includes(teks) || (`/${m.section}/g`).includes(teks) || (`/${m.phone}/g`).includes(teks)
-            }
-            let resultData = karyawan.map( m => patten(m) ? {...m, visible: true}:{...m, visible: false})
-            setKaryawan(resultData)
+            setLoading(true)
+            const regex = new RegExp(teks, "i");
+            const array = karyawan.map(m => keysToSearch.some(key => regex.test(m[key]?.toString() || "")) ? {...m, visible: true} : {...m, visible: false})
+            setTimeout(() => {
+                setKaryawan(array)
+                setLoading(false)
+            }, 3000);
         }else{
             setKaryawan(karyawan.map( m => ({...m, visible: true})))
+            setLoading(false)
         }
     }
+    
 
     return (
         <Actionsheet isOpen={isOpen} onClose={onClose}>
             <Actionsheet.Content style={{height: height * .8}}>
-                <HStack 
-                    p={2} 
-                    mb={3} 
-                    space={2} 
-                    w={'full'} 
-                    borderWidth={1} 
-                    borderColor={'#000'} 
-                    alignItems={'center'}
-                    rounded={'md'}>
-                    <SearchStatus size={22} variant="Broken" color='#000'/>
-                    <TextInput onChangeText={searchDataHandle} autoCapitalize="words" style={{flex: 1, color: '#000'}}/>
-                </HStack>
+                <VStack mb={3}>
+                    <HStack 
+                        p={2} 
+                        space={2} 
+                        w={'full'} 
+                        borderWidth={1} 
+                        borderColor={'#000'} 
+                        alignItems={'center'}
+                        rounded={'md'}>
+                        <SearchStatus size={22} variant="Broken" color='#000'/>
+                        <TextInput onChangeText={(teks) => searchDataHandle(teks)} autoCapitalize="words" style={{flex: 1, color: '#000'}}/>
+                    </HStack>
+                    {
+                       !loading &&
+                        <>
+                            {
+                                karyawan && karyawan.filter(f => f.visible).length > 0 ?
+                                <Text textAlign={'right'} fontFamily={'Abel-Regular'}>
+                                    {karyawan.filter(f => f.visible).length} data ditemukan
+                                </Text>
+                                :
+                                <Text textAlign={'right'} fontFamily={'Abel-Regular'} color={'error.500'}>tidak ada data ditemukan...</Text>
+                            }
+                        </>
+                    }
+                </VStack>
+                {
+                    loading &&
+                    <LoadingSpinner 
+                        title={"Mohon Menunggu..."} 
+                        subtitle={`System sedang mencari data yang !!!\nMengandung karakter\n"${keyword}"`} 
+                        color={'#000'}/>
+                }
                 {
                     karyawan.length > 0 ?
                     <FlatList 

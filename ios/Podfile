@@ -17,14 +17,15 @@ end
 node_require('react-native/scripts/react_native_pods.rb')
 node_require('react-native-permissions/scripts/setup.rb')
 
-  # setup_permissions([
-  #   'Camera',
-  #   'LocationAccuracy',
-  #   'LocationAlways',
-  #   'LocationWhenInUse',
-  #   'Microphone',
-  #   'PhotoLibrary',
-  # ])
+  setup_permissions([
+    'Camera',
+    'LocationAccuracy',
+    'LocationAlways',
+    'LocationWhenInUse',
+    'Microphone',
+    'PhotoLibrary',
+    'MediaLibrary',
+  ])
 
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
@@ -53,11 +54,13 @@ target 'employeemkg' do
   config = use_native_modules!
 
   rn_maps_path = '../node_modules/react-native-maps'
-  # permissions_path = '../node_modules/react-native-permissions/ios'
 
   pod 'react-native-google-maps', :path => rn_maps_path
   pod 'react-native-google-maps', :path => '../node_modules/react-native-maps'
   pod 'react-native-geolocation', path: '../node_modules/@react-native-community/geolocation'
+  # pod 'RNPermissionHandlerCamera', :path => "#{permissions_path}/Camera"
+  # pod 'Permission-PhotoLibrary', :path => "#{permissions_path}/PhotoLibrary"
+  # pod 'Permission-Microphone', :path => "#{permissions_path}/Microphone"
   # pod 'Permission-Camera', :path => "#{permissions_path}/Camera.podspec"
   # pod 'Permission-LocationAlways', :path => "#{permissions_path}/LocationAlways.podspec"
   # pod 'Permission-LocationWhenInUse', :path => "#{permissions_path}/LocationWhenInUse.podspec"

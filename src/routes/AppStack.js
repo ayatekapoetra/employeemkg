@@ -79,6 +79,11 @@ import ShowTugasKaryawan from '../pages/penugasan-karyawan/showTugasKaryawan';
 // TUGASKU
 import ShowTugasKu from '../pages/penugasanku/show';
 
+// PENGGANTIAN BAN
+import TireUsages from '../pages/penggantian-ban';
+import CreateTireUsages from '../pages/penggantian-ban/create';
+import ShowTireUsages from '../pages/penggantian-ban/show';
+
 // STATUS EQUIPMENT
 import DailyEvent from '../pages/daily-event';
 import CreateDailyEvent from '../pages/daily-event/create';
@@ -139,7 +144,6 @@ export default function AppStack() {
             <Stack.Screen name="Home" component={HomeInitialTab} options={{headerShown: false}}/>
             <Stack.Screen name="Profile" component={UserProfile} options={{headerShown: false}}/>
             <Stack.Screen name="Approval" component={ApprovalPage} options={{headerShown: false}}/>
-            <Stack.Screen name="Riwayat-Absensi" component={RiwayatAbsensiBulananPage} options={{headerShown: false}}/>
             <Stack.Screen name="Checklog-Absensi" component={ChecklogPage} options={{headerShown: false}}/>
             <Stack.Screen name="Absensi-Tulis" component={AbsenTulisPage} options={{headerShown: false}}/>
             <Stack.Screen name="Checklog-Absensi-Riwayat" component={RiwayatAbsensiToday} options={{headerShown: false}}/>
@@ -158,6 +162,7 @@ export default function AppStack() {
             <Stack.Screen name="Show-Aktual-Kerja" component={ShowAktualKerja} options={{headerShown: false}}/>
             <Stack.Screen name="Reset-User-Devices" component={ResetUserDevice} options={{headerShown: false}}/>
             <Stack.Screen name="Keamanan-Akun" component={UbahPassword} options={{headerShown: false}}/>
+            <Stack.Screen name="riwayat-absensi-screen" component={RiwayatAbsensiBulananPage} options={{headerShown: false}}/>
             <Stack.Screen name="notifikasi-screen" component={NotificationApps} options={{headerShown: false}}/>
             <Stack.Screen name="internal-memo-screen" component={InternalMemo} options={{headerShown: false}}/>
             <Stack.Screen name="lingkup-kerja-screen" component={LingkupKerja} options={{headerShown: false}}/>
@@ -203,6 +208,10 @@ export default function AppStack() {
             <Stack.Screen name="Daily-Event" component={DailyEvent} options={{headerShown: false}}/>
             <Stack.Screen name="create-daily-event" component={CreateDailyEvent} options={{headerShown: false}}/>
             <Stack.Screen name="show-daily-event" component={ShowDailyEvent} options={{headerShown: false}}/>
+
+            <Stack.Screen name="penggantian-ban" component={TireUsages} options={{headerShown: false}}/>
+            <Stack.Screen name="create-penggantian-ban" component={CreateTireUsages} options={{headerShown: false}}/>
+            <Stack.Screen name="show-penggantian-ban" component={ShowTireUsages} options={{headerShown: false}}/>
 
             {/* REPORT */}
             <Stack.Screen name="report-maintenances-equipment" component={ReportMaintenanceScreen} options={{headerShown: false}}/>

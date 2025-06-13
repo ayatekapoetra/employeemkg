@@ -6,7 +6,7 @@ import { VStack, Text, HStack, Image, Divider, Badge, Stack, FlatList, Button, V
 import HeaderScreen from '../../../components/HeaderScreen'
 import appcolor from '../../../common/colorMode'
 import { useDispatch, useSelector } from 'react-redux'
-import { Bag, BrushBig, Calendar1, MoneySend, TruckTick, UserSquare } from 'iconsax-react-native'
+import { Bag, Bank, Bill, BrushBig, Calendar1, CreativeCommons, EmptyWalletTick, Moneys, MoneySend, TruckTick, UserSquare, Wallet1, WalletMoney } from 'iconsax-react-native'
 import moment from 'moment'
 import _ from 'underscore'
 import apiFetch from '../../../helpers/ApiFetch'
@@ -90,7 +90,7 @@ const ShowPurchaseRequest = () => {
                 show: true,
                 status: "error",
                 title: "Err Approve Request",
-                subtitle: "Gagal menyetujui request order\nData akan dikirim purchasing order..."
+                subtitle: error.response?.data?.diagnostic?.message || error.message
             }))
         }
     }
@@ -269,7 +269,7 @@ const ShowPurchaseRequest = () => {
                                                             fontFamily={'Dosis'}
                                                             fontWeight={'semibold'}
                                                             color={appcolor.teks[mode][2]}>
-                                                            Rp. {m.totharga_ppn_rp}
+                                                            Rp. {m.totharga_rp}
                                                         </Text>
                                                     </HStack>
                                                     {
@@ -443,7 +443,94 @@ const RenderComponentItem = ( { item, mode, route } ) => {
                                 fontSize={16}
                                 fontFamily={'Abel-Regular'}
                                 color={appcolor.teks[mode][1]}>
-                                { (item.tot_harga)?.toLocaleString('ID') } 
+                                { (item.metode).toUpperCase() } 
+                            </Text>
+                        </HStack>
+                    </VStack>
+                </VStack>
+                <VStack borderTopWidth={.5} borderTopColor={appcolor.line[mode][1]} rounded={'md'}>
+                    <Text 
+                        fontSize={14}
+                        fontWeight={'semibold'}
+                        fontFamily={'Abel-Regular'}
+                        color={appcolor.teks[mode][2]}>
+                        Harga & Mata Uang :
+                    </Text>
+                    <VStack px={2} py={1}>
+                        <HStack space={2} alignItems={'center'}>
+                            <WalletMoney size="22" color={appcolor.ico[mode][1]} variant="Bulk"/>
+                            <Text 
+                                flex={1}
+                                lineHeight={'xs'}
+                                fontSize={18}
+                                fontWeight={'semibold'}
+                                fontFamily={'Quicksand-Regular'}
+                                color={appcolor.teks[mode][1]}>
+                                { (item.harga)?.toLocaleString('ID') }
+                            </Text>
+                            <Moneys size="22" color={appcolor.ico[mode][1]} variant="Bulk"/>
+                            <Text 
+                                flex={1}
+                                lineHeight={'xs'}
+                                fontSize={16}
+                                fontFamily={'Abel-Regular'}
+                                color={appcolor.teks[mode][1]}>
+                                { (item.currency).toUpperCase() }  { item.currency == 'USD' ? item.kurs : '' }
+                            </Text>
+                        </HStack>
+                    </VStack>
+                </VStack>
+                <VStack borderTopWidth={.5} borderTopColor={appcolor.line[mode][1]} rounded={'md'}>
+                    <Text 
+                        fontSize={14}
+                        fontWeight={'semibold'}
+                        fontFamily={'Abel-Regular'}
+                        color={appcolor.teks[mode][2]}>
+                        Potongan & Pajak :
+                    </Text>
+                    <VStack px={2} py={1}>
+                        <HStack space={2} alignItems={'center'}>
+                            <CreativeCommons size="22" color={appcolor.ico[mode][1]} variant="Bulk"/>
+                            <Text 
+                                flex={1}
+                                lineHeight={'xs'}
+                                fontSize={18}
+                                fontWeight={'semibold'}
+                                fontFamily={'Quicksand-Regular'}
+                                color={appcolor.teks[mode][1]}>
+                                { item.potongan > 0 ? (item.potongan)?.toLocaleString('ID') : '-' }
+                            </Text>
+                            <Bank size="22" color={appcolor.ico[mode][1]} variant="Bold"/>
+                            <Text 
+                                flex={1}
+                                lineHeight={'xs'}
+                                fontSize={16}
+                                fontFamily={'Abel-Regular'}
+                                color={appcolor.teks[mode][1]}>
+                                { item.ppn_rp > 0 ? (item.ppn_rp).toLocaleString('ID') : 'Non PPn' } 
+                            </Text>
+                        </HStack>
+                    </VStack>
+                </VStack>
+                <VStack borderTopWidth={.5} borderTopColor={appcolor.line[mode][1]} rounded={'md'}>
+                    <Text 
+                        fontSize={14}
+                        fontWeight={'semibold'}
+                        fontFamily={'Abel-Regular'}
+                        color={appcolor.teks[mode][2]}>
+                        Subtotal Belanja :
+                    </Text>
+                    <VStack px={2} py={1} bg={'amber.100'}>
+                        <HStack space={2} alignItems={'center'}>
+                            <EmptyWalletTick size="22" color={appcolor.teks[mode][5]} variant="Bulk"/>
+                            <Text 
+                                flex={1}
+                                lineHeight={'xs'}
+                                fontSize={18}
+                                fontWeight={'semibold'}
+                                fontFamily={'Dosis-Medium'}
+                                color={appcolor.teks[mode][5]}>
+                                { (item.subtotal)?.toLocaleString('ID') }
                             </Text>
                         </HStack>
                     </VStack>

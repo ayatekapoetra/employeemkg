@@ -261,7 +261,6 @@ const ShowTugasKaryawan = () => {
                     onAction={removeDataHandle}/>
                 <VStack px={3} flex={1}>
                     <VStack flex={1}>
-                        {/*  */}
                         <HStack py={2} space={2} alignItems={'center'} borderBottomWidth={.5} borderBottomColor={appcolor.line[mode][1]}>
                             <Barcode size="32" color={appcolor.teks[mode][2]} variant="Outline"/>
                             <VStack flex={1}>
@@ -526,6 +525,7 @@ const ShowTugasKaryawan = () => {
                         }
                     </HStack>
                 </VStack>
+                
                 {
                     layerOpt.starttask &&
                     <DatePicker

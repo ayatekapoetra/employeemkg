@@ -35,6 +35,7 @@ const RootNavigation = () => {
   
   useEffect(() => {
     requestLocationPermission()
+    requestCameraPermission()
   }, [])
 
   const isUserLogging = async () => {
@@ -59,15 +60,39 @@ const RootNavigation = () => {
     setBackgroundStyle({backgroundColor: initMode === 'dark' ? Colors.darker : Colors.lighter})
     setColorScheme(initMode)
   }
+
   const requestLocationPermission = async () => {
     if(Platform.OS != "ios"){
       try {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
           {
-            title: 'Cool Photo App Location Permission',
-            message: 'Cool Photo App needs access to your camera ' +
-              'so you can take awesome pictures.',
+            title: 'Application Request Location Permission',
+            message: 'Aplikasi membutuhkan izin lokasi user',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('You can use the location');
+        } else {
+          console.log('Location permission denied');
+        }
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+  };
+
+  const requestCameraPermission = async () => {
+    if(Platform.OS != "ios"){
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.IOS.CAMERA,
+          {
+            title: 'Application Request Camera Permission',
+            message: 'Aplikasi membutuhkan izin kamera user',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',

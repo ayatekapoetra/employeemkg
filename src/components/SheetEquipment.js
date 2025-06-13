@@ -1,40 +1,82 @@
-import { FlatList, TextInput, Dimensions } from 'react-native'
-import React, { useState } from 'react'
-import { Actionsheet, HStack, Image, Text, VStack } from 'native-base'
+import { FlatList, TextInput, Dimensions, TouchableOpacity } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { Actionsheet, Button, HStack, Image, Text, VStack } from 'native-base'
 import { useSelector } from 'react-redux'
 import appcolor from '../common/colorMode'
-import { SearchStatus } from 'iconsax-react-native'
+import { CloseSquare, SearchStatus } from 'iconsax-react-native'
+import SearchDataWithKeyword from '../helpers/SearchKeyword'
 
 const { height } = Dimensions.get('screen')
+const keysToSearch = ["kode", "identity", "model", "tipe", "manufaktur", "kategori"]; // Key dinamis
 
-const SheetEquipment = ( { reff, isOpen, onClose, onSelected } ) => {
+const SheetEquipment = ( { reff, clueKey, isOpen, onClose, onSelected } ) => {
     const equipment = useSelector( state => state.equipment.data)
-    const [ state, setState ] = useState(equipment?.map( m => ({...m, visible: true})))
     const mode = useSelector(state => state.themes.value)
+    const [ state, setState ] = useState(equipment?.map( m => ({...m, visible: true})))
+    const [ keyword, setKeyword ] = useState('')
+    
+    useEffect(() => {
+        if(clueKey){
+            setState(state?.filter( f => clueKey.includes(f.tipe)))
+        }
+    }, [])
 
     const searchDataHandle = (teks) => {
+        setKeyword(teks)
         if(teks){
-            setState(state.map(m => (`/${m.kode}/i`).includes(teks) ? {...m, visible: true} : {...m, visible: false}))
+            const regex = new RegExp(teks, "i");
+            setState(state.map(m => keysToSearch?.some(key => regex.test(m[key]?.toString() || "")) ? {...m, visible: true} : {...m, visible: false}))
         }else{
             setState(state?.map( m => ({...m, visible: true})))
         }
     }
 
+    const searchDataBtnHandle = () => {
+        const results = SearchDataWithKeyword(state, keysToSearch, keyword)
+        // console.log(results);
+        if(results.length > 0){
+            let arrayID = results.map( m => m.id)
+            setState(state.map( m => arrayID.includes(m.id) ? {...m, visible: true}:{...m, visible: false}))
+        }
+    }
 
+    const resetDataFilter = () => {
+        setKeyword('')
+        setState(equipment?.map( m => ({...m, visible: true})))
+    }
+    
     return (
         <Actionsheet isOpen={isOpen} onClose={onClose}>
             <Actionsheet.Content style={{height: height * .8}}>
-                <HStack 
-                    p={2} 
-                    mb={3} 
-                    space={2} 
-                    w={'full'} 
-                    borderWidth={1} 
-                    borderColor={'#000'} 
-                    alignItems={'center'}
-                    rounded={'md'}>
-                    <SearchStatus size={22} variant="Broken" color='#000'/>
-                    <TextInput onChangeText={searchDataHandle} autoCapitalize="words" style={{flex: 1, color: '#000'}}/>
+                <HStack w={'full'} space={2}>
+                    <HStack 
+                        p={2} 
+                        mb={3} 
+                        space={2} 
+                        flex={1}
+                        borderWidth={1} 
+                        borderColor={'#000'} 
+                        alignItems={'center'}
+                        rounded={'md'}>
+                        <SearchStatus size={22} variant="Broken" color='#000'/>
+                        <TextInput value={keyword} onChangeText={(teks) => searchDataHandle(teks)} autoCapitalize="words" style={{flex: 1, color: '#000'}}/>
+                        {
+                            keyword &&
+                            <TouchableOpacity onPress={resetDataFilter}>
+                                <CloseSquare size={22} variant="Bulk" color='red'/>
+                            </TouchableOpacity>
+                        }
+                    </HStack>
+                    <TouchableOpacity onPress={searchDataBtnHandle}>
+                        <HStack p={2} bg={'darkBlue.500'} rounded={'sm'}>
+                            <Text 
+                                color={'#FFF'}
+                                fontWeight={'bold'}
+                                fontFamily={'Poppins-Bold'}>
+                                Go
+                            </Text>
+                        </HStack>
+                    </TouchableOpacity>
                 </HStack>
                 <FlatList 
                     data={state} 
@@ -68,6 +110,9 @@ const RenderItemComponent = ( { reff, item, onSelected } ) => {
             break;
         case 'dozer':
             var equipmentIcon = <Image source={require('../../assets/images/dozer.png')} alt='Alat' style={{height: 30, width: 50}}/>
+            break;
+        case 'lightvehicle':
+            var equipmentIcon = <Image source={require('../../assets/images/lightvehicles.png')} alt='Alat' style={{height: 30, width: 50}}/>
             break;
         default:
             var equipmentIcon = <Image source={require('../../assets/images/compactor.png')} alt='Alat' style={{height: 30, width: 50}}/>

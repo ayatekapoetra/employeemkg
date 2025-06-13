@@ -21,6 +21,7 @@ import fetchPurchaseRequestSlice from './fetchPurchaseRequestSlice'
 import fetchDailyEventSlice from './fetchDailyEventSlice'
 import fetchPenugasanSlice from './fetchPenugasanSlice'
 import fetchPenugasanCountSlice from './fetchPenugasanCountSlice'
+import fetchTireUsagesSlice from './fetchTireUsagesSlice'
 
 import izinSakitSlice from './izinSakitSlice'
 import izinCutiSlice from './izinCutiSlice'
@@ -44,6 +45,9 @@ import docWaitOrderSlice from './docWaitOrderSlice'
 import docVerifyOrderSlice from './docVerifyOrderSlice'
 import docWaitPaymentSlice from './docWaitPaymentSlice'
 import docWaitPartSlice from './docWaitPartSlice'
+
+import sysOptionSlice from './sysOptionSlice'
+import roleOperationSlice from './roleOperationSlice'
 
 // Augment middleware to consider Immutable.JS iterables serializable
 // const isSerializable = (value) => Iterable.isIterable(value) || isPlain(value)
@@ -84,12 +88,15 @@ export default configureStore({
       dailyEvent: fetchDailyEventSlice,
       penugasan: fetchPenugasanSlice,
       penugasanCount: fetchPenugasanCountSlice, //
+      tireUsages: fetchTireUsagesSlice,
       newRequest: docNewRequestSlice,
       checkRequest: docCheckRequestSlice,
       waitOrder: docWaitOrderSlice,
       verifyOrder: docVerifyOrderSlice,
       waitPay: docWaitPaymentSlice,
-      waitPart: docWaitPartSlice
+      waitPart: docWaitPartSlice,
+      myoption: sysOptionSlice,
+      roles: roleOperationSlice,
     },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
     // middleware: () => new Tuple(serializableMiddleware),

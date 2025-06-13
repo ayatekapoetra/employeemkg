@@ -4,13 +4,13 @@ import apiFetch from '../helpers/ApiFetch'
 
 console.log(nanoid());
 
-export const getEquipment = createAsyncThunk(
-    'list/equipemnt',
+export const getRoles = createAsyncThunk(
+    'list/roles',
     async (params={isproduksi: 'Y'}) => {
-        const local = await AsyncStorage.getItem("@equipment")
+        const local = await AsyncStorage.getItem("@opsroles")
         if(!local){
-            const resp = await apiFetch.get('equipment', {params: params})
-            await AsyncStorage.setItem("@equipment", JSON.stringify(resp.data.data))
+            const resp = await apiFetch.get('role-penyewa-equipment', {params: params})
+            await AsyncStorage.setItem("@opsroles", JSON.stringify(resp.data.data))
             return resp.data
         }else{
             return {
@@ -26,23 +26,23 @@ const initialState = {
     data: null
 };
 
-const equipmentSlice = createSlice({
-    name: 'list/equipemnt',
+const roleOperationSlice = createSlice({
+    name: 'list/roles',
     initialState,
     extraReducers: (builder) => {
         builder
-        .addCase(getEquipment.pending, (state) => {
+        .addCase(getRoles.pending, (state) => {
             state.loading = true
             state.data = null
             state.error = null
         })
-        .addCase(getEquipment.fulfilled, (state, action) => {
+        .addCase(getRoles.fulfilled, (state, action) => {
             // console.log("action --- ", action);
             state.loading = false
             state.data = action.payload.data
             state.error = action.payload.message
         })
-        .addCase(getEquipment.rejected, (state, action) => {
+        .addCase(getRoles.rejected, (state, action) => {
             console.log("rejected", action);
             state.loading = false
             state.error = action.error.code
@@ -50,4 +50,4 @@ const equipmentSlice = createSlice({
     }
 })
 
-export default equipmentSlice.reducer
+export default roleOperationSlice.reducer

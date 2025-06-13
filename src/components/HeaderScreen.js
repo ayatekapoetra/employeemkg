@@ -1,5 +1,5 @@
 import { TouchableOpacity } from 'react-native'
-import { HStack, Text, VStack } from 'native-base'
+import { HStack, Spinner, Text, VStack } from 'native-base'
 import { Moon, Notification, Sun1, ArrowCircleLeft2, Filter } from 'iconsax-react-native'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigation } from '@react-navigation/native'
@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react'
 import themeManager from '../common/themeScheme'
 import appcolor from '../common/colorMode'
 import { getWorkspace } from '../redux/workspaceSlice'
+import useGroupingActions from '../hook/OpsRoles'
 
 const HeaderScreen = ( { title, onBack, onThemes, onFilter, onNotification } ) => {
     const route = useNavigation()
@@ -16,6 +17,7 @@ const HeaderScreen = ( { title, onBack, onThemes, onFilter, onNotification } ) =
     const { data } = useSelector(state => state.workspaces)
     const mode = useSelector(state => state.themes.value)
     const [ colorTheme, setColorTheme ] = useState(themes.value)
+    const { ungrouping } = useGroupingActions()
     
 
     useEffect(() => {
@@ -44,6 +46,7 @@ const HeaderScreen = ( { title, onBack, onThemes, onFilter, onNotification } ) =
 
     const handleBackScreen = () => {
         route.goBack()
+        ungrouping()
     }
 
     return (
@@ -57,9 +60,19 @@ const HeaderScreen = ( { title, onBack, onThemes, onFilter, onNotification } ) =
                             <Text lineHeight={'xs'} fontSize={20} fontFamily={"Abel-Regular"} color={appcolor.teks[mode][1]}>
                                 { title || 'XXXXX' }
                             </Text>
-                            <Text lineHeight={'xs'} fontFamily={"Abel-Regular"} fontSize={'2xs'} color={appcolor.teks[mode][4]}>
-                                { data?.bisnis?.name || '.......' }
-                            </Text>
+                            {
+                                data?.bisnis ?
+                                <Text lineHeight={'xs'} fontFamily={"Abel-Regular"} fontSize={'2xs'} color={appcolor.teks[mode][4]}>
+                                    { data?.bisnis?.name }
+                                </Text>
+                                :
+                                <HStack alignItems={'center'} space={2}>
+                                    <Spinner size={'sm'} color="success.500" />
+                                    <Text lineHeight={'xs'} fontFamily={"Abel-Regular"} fontSize={'2xs'} color={appcolor.teks[mode][4]}>
+                                        { 'loading workspaces' }
+                                    </Text>
+                                </HStack>
+                            }
                         </VStack>
                     </HStack>
                 </TouchableOpacity>
@@ -69,9 +82,19 @@ const HeaderScreen = ( { title, onBack, onThemes, onFilter, onNotification } ) =
                         <Text fontSize={20} fontFamily={"Abel-Regular"} color={appcolor.teks[mode][1]}>
                             { title || 'XXXXX' }
                         </Text>
-                        <Text lineHeight={'xs'} fontFamily={"Abel-Regular"} fontSize={'2xs'} color={appcolor.teks[mode][4]}>
-                            { data?.bisnis?.name || '.......' }
-                        </Text>
+                        {
+                            data?.bisnis ?
+                            <Text lineHeight={'xs'} fontFamily={"Abel-Regular"} fontSize={'2xs'} color={appcolor.teks[mode][4]}>
+                                { data?.bisnis?.name }
+                            </Text>
+                            :
+                            <HStack alignItems={'center'} space={2}>
+                                <Spinner size={'sm'} color="success.500" />
+                                <Text lineHeight={'xs'} fontFamily={"Abel-Regular"} fontSize={'2xs'} color={appcolor.teks[mode][4]}>
+                                    { 'loading workspaces' }
+                                </Text>
+                            </HStack>
+                        }
                     </VStack>
                 </HStack>
             }

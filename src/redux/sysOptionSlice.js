@@ -4,13 +4,15 @@ import apiFetch from '../helpers/ApiFetch'
 
 console.log(nanoid());
 
-export const getEquipment = createAsyncThunk(
-    'list/equipemnt',
-    async (params={isproduksi: 'Y'}) => {
-        const local = await AsyncStorage.getItem("@equipment")
+export const getOption = createAsyncThunk(
+    'list/option',
+    async () => {
+        const local = await AsyncStorage.getItem("@option")
         if(!local){
-            const resp = await apiFetch.get('equipment', {params: params})
-            await AsyncStorage.setItem("@equipment", JSON.stringify(resp.data.data))
+            const resp = await apiFetch.get('sys-option')
+            console.log("API-OPTION--", resp);
+            
+            await AsyncStorage.setItem("@option", JSON.stringify(resp.data.data))
             return resp.data
         }else{
             return {
@@ -26,23 +28,23 @@ const initialState = {
     data: null
 };
 
-const equipmentSlice = createSlice({
-    name: 'list/equipemnt',
+const optionSlice = createSlice({
+    name: 'list/option',
     initialState,
     extraReducers: (builder) => {
         builder
-        .addCase(getEquipment.pending, (state) => {
+        .addCase(getOption.pending, (state) => {
             state.loading = true
             state.data = null
             state.error = null
         })
-        .addCase(getEquipment.fulfilled, (state, action) => {
-            // console.log("action --- ", action);
+        .addCase(getOption.fulfilled, (state, action) => {
+            console.log("action OPTION--- ", action);
             state.loading = false
             state.data = action.payload.data
             state.error = action.payload.message
         })
-        .addCase(getEquipment.rejected, (state, action) => {
+        .addCase(getOption.rejected, (state, action) => {
             console.log("rejected", action);
             state.loading = false
             state.error = action.error.code
@@ -50,4 +52,4 @@ const equipmentSlice = createSlice({
     }
 })
 
-export default equipmentSlice.reducer
+export default optionSlice.reducer

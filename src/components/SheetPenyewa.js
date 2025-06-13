@@ -76,7 +76,10 @@ const RenderItemComponent = ( { item, onSelected } ) => {
                     borderColor={'#DDD'}>
                     <VStack>
                         <Text fontWeight={'bold'}>{item.nama}</Text>
-                        <Text fontFamily={'Dosis'} fontWeight={'light'}>{item.bisnis?.name}</Text>
+                        {
+                            item.bisnis &&
+                            <Text fontFamily={'Dosis'} fontWeight={'light'}>{item.bisnis.name}</Text>
+                        }
                     </VStack>
                 </Actionsheet.Item>
             </HStack>

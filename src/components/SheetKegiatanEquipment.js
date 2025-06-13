@@ -19,8 +19,7 @@ const SheetKegiatanEquipment = ( { isOpen, onClose, onSelected } ) => {
             setState(state?.map( m => ({...m, visible: true})))
         }
     }
-
-
+    
     return (
         <Actionsheet isOpen={isOpen} onClose={onClose}>
             <Actionsheet.Content style={{height: height * .8}}>
@@ -71,15 +70,18 @@ const RenderItemComponent = ( { item, onSelected } ) => {
                     justifyContent={'center'} 
                     borderWidth={1}
                     borderColor={'#DDD'}>
-                    <HStack space={2} alignItems={'center'}>
+                    <HStack flex={1} space={2} alignItems={'center'}>
                         {
                             item.type === 'DT' ?
                             <Image source={require('../../assets/images/dumptruck.png')} alt='Alat' style={{height: 30, width: 50}}/>
                             :
                             <Image source={require('../../assets/images/dozer.png')} alt='Alat' style={{height: 30, width: 50}}/>
                         }
-                        <VStack>
-                            <Text fontFamily={'Quicksand-Regular'} fontWeight={'bold'}>
+                        <VStack width={'4/5'}>
+                            <Text 
+                                flexShrink={1}
+                                fontFamily={'Quicksand-Regular'} 
+                                fontWeight={'bold'} >
                                 {item.nama}
                             </Text>
                             <Text fontFamily={'Abel-Regular'} fontSize={'xs'}>

@@ -6,6 +6,7 @@ import appcolor from '../common/colorMode'
 import { SearchStatus, TickSquare } from 'iconsax-react-native'
 
 const { height, width } = Dimensions.get('screen')
+const keysToSearch = ["kode", "identity", "model", "tipe", "manufaktur"]; // 
 
 const SheetEquipmentMulti = ( { isOpen, onClose, onSelected } ) => {
     const equipment = useSelector( state => state.equipment.data)
@@ -14,7 +15,9 @@ const SheetEquipmentMulti = ( { isOpen, onClose, onSelected } ) => {
 
     const searchDataHandle = (teks) => {
         if(teks){
-            setState(state.map(m => (`/${m.kode}/i`).includes(teks) ? {...m, visible: true} : {...m, visible: false}))
+            const regex = new RegExp(teks, "i");
+            setState(state.map(m => keysToSearch.some(key => regex.test(m[key]?.toString() || "")) ? {...m, visible: true} : {...m, visible: false}))
+            // setState(state.map(m => (`/${m.kode}/i`).includes(teks) ? {...m, visible: true} : {...m, visible: false}))
         }else{
             setState(state?.map( m => ({...m, visible: true})))
         }

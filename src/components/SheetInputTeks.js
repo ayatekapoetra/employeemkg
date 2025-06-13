@@ -9,8 +9,6 @@ const { height } = Dimensions.get('screen')
 
 const SheetInputTeks = ( { isOpen, onClose, onSelected, title, placeholder } ) => {
     const [ teks, setTeks ] = useState('')
-
-    // console.log(teks);
     
     return (
         <Actionsheet isOpen={isOpen} onClose={onClose}>

@@ -1,12 +1,12 @@
 import moment from 'moment'
 import 'moment/locale/id'
-import { TouchableOpacity, Dimensions, Platform, Alert, Linking } from 'react-native'
-import { VStack, Text, Center, HStack, View, Image, Button, Stack } from 'native-base'
+import { TouchableOpacity, Dimensions, Platform } from 'react-native'
+import { VStack, Text, Center, HStack, View, Image } from 'native-base'
 import { useDispatch, useSelector } from 'react-redux'
 import { Scan } from 'iconsax-react-native'
 import React, { useEffect, useMemo, useState } from 'react'
 import MapView, { Circle, Marker, PROVIDER_GOOGLE } from 'react-native-maps'
-import { launchCamera } from 'react-native-image-picker'
+// import { launchCamera } from 'react-native-image-picker'
 import { getDistance } from 'geolib'
 import Geolocation from '@react-native-community/geolocation'
 import AppScreen from '../../components/AppScreen'
@@ -357,7 +357,7 @@ const ChecklogPage = () => {
                         show: true, 
                         status: "success", 
                         title: "Success", 
-                        subtitle: `Anda berhasil melakukan checklog masuk pada pukul ${moment().format("HH:mm")}`
+                        subtitle: `Anda berhasil melakukan checklog pulang pada pukul ${moment().format("HH:mm")}`
                     })
                 )
             }else{

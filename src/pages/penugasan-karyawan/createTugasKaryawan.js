@@ -159,8 +159,6 @@ const CreateTugasKaryawan = () => {
             });
         }
 
-        console.log(data);
-
         try {
             const resp = await apiFetch.post("penugasan-karyawan", data, {
                 headers: {
@@ -446,22 +444,7 @@ const CreateTugasKaryawan = () => {
                     </HStack>
                 </VStack>
                 {/* COMPONENT OPTIONS */}
-                {
-                    layerOpt.date_task &&
-                    <DatePicker
-                        modal
-                        title={'Tanggal Tugas'}
-                        mode={"date"}
-                        locale={"ID"}
-                        open={layerOpt.date_task}
-                        date={new Date()}
-                        theme={mode != "dark"?"light":"dark"}
-                        onConfirm={(date) => onPickDatetimeHandle(date, 'date_task')}
-                        onCancel={() => {
-                            setLayerOpt({...layerOpt, date_task: false})
-                        }}
-                    />
-                }
+                ›
                 {
                     layerOpt.karyawan &&
                     <SheetKaryawan 

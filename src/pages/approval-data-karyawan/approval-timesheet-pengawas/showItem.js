@@ -23,8 +23,6 @@ const ShowApprovalTimesheet = () => {
     const { data, loading, error } = useSelector(state => state.showData)
     const [ refresh, setRefresh ] = useState(loading)
 
-    console.log('IMAGESSS---', data);
-
     useEffect(() => {
         getDataFetch()
     }, [])

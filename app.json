@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "config": {
         "googleMapsApiKey": "AIzaSyCYMnlvt-xY5PrinwHmw6qGRfPzD6_sZxA"
-      }
+      },
+      "bundleIdentifier": "com.ayateka.employeemkg"
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +28,12 @@
         "googleMaps": {
           "apiKey": "AIzaSyDgpw4bFVEE_z6YzlgbiGvxMa9BegDVCMM"
         }
-      }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.ayateka.employeemkg"
     },
     "web": {
       "output": "static",

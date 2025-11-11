@@ -76,8 +76,12 @@ export default function ChecklogScreen() {
   }, []);
 
   const getLocation = async () => {
+    setLoading(true);
     try {
+      console.log('Requesting location...');
       const coords = await LocationService.getCurrentLocation();
+      console.log('Location received:', coords);
+      
       setMyLocation(coords);
       setLocation({
         latitude: coords.latitude,
@@ -85,14 +89,22 @@ export default function ChecklogScreen() {
       });
 
       calculateDistance(coords);
+      setLoading(false);
     } catch (error) {
       console.log('Location error:', error);
+      setLoading(false);
+      
+      setMyLocation({
+        latitude: -5.145109,
+        longitude: 119.44856182,
+      });
+      
       dispatch(
         applyAlert({
           show: true,
-          status: 'error',
-          title: 'Error',
-          subtitle: 'Tidak dapat mengakses lokasi Anda',
+          status: 'warning',
+          title: 'Peringatan',
+          subtitle: 'Tidak dapat mengakses lokasi GPS. Menggunakan lokasi default.',
         })
       );
     }
@@ -305,7 +317,16 @@ export default function ChecklogScreen() {
 
         <VStack flex={1} bg="amber.100">
           <Center flex={1}>
-            {myLocation && hasMapSupport ? (
+            {loading ? (
+              <Box w="full" h="full" bg={mode === 'dark' ? '#3a3c4a' : '#e5e7eb'}>
+                <Center flex={1}>
+                  <LoadingHauler />
+                  <Text fontSize="sm" fontFamily="Poppins-Light" color={textColor} mt={4}>
+                    Mengambil lokasi GPS...
+                  </Text>
+                </Center>
+              </Box>
+            ) : hasMapSupport && myLocation ? (
               <MapView
                 provider={PROVIDER_GOOGLE}
                 style={{ width: width, height: '100%' }}
@@ -354,25 +375,52 @@ export default function ChecklogScreen() {
                   />
                 </Marker>
               </MapView>
-            ) : myLocation ? (
+            ) : (
               <Box w="full" h="full" bg={mode === 'dark' ? '#3a3c4a' : '#e5e7eb'}>
                 <Center flex={1} p={4}>
-                  <Map1 size={64} color={iconColor} variant="Bulk" />
-                  <Text fontSize="md" fontFamily="Poppins-Regular" color={textColor} mt={3} textAlign="center">
-                    Map Preview
+                  <Location size={80} color={iconColor} variant="Bulk" />
+                  <Text fontSize="lg" fontFamily="Poppins-SemiBold" color={textColor} mt={4} textAlign="center">
+                    Lokasi Anda
                   </Text>
-                  <Text fontSize="sm" fontFamily="Poppins-Light" color={iconColor} textAlign="center" mt={2}>
-                    Lat: {myLocation.latitude.toFixed(6)}
-                  </Text>
-                  <Text fontSize="sm" fontFamily="Poppins-Light" color={iconColor} textAlign="center">
-                    Lng: {myLocation.longitude.toFixed(6)}
-                  </Text>
-                  <Text fontSize="xs" fontFamily="Poppins-Light" color={iconColor} mt={4} textAlign="center">
-                    (Maps requires native build with npx expo prebuild)
-                  </Text>
+                  {myLocation && (
+                    <VStack space={2} mt={4} alignItems="center">
+                      <HStack space={2} alignItems="center">
+                        <Text fontSize="xs" fontFamily="Poppins-Light" color={iconColor}>
+                          Latitude:
+                        </Text>
+                        <Text fontSize="sm" fontFamily="Quicksand-Bold" color={textColor}>
+                          {myLocation.latitude.toFixed(6)}
+                        </Text>
+                      </HStack>
+                      <HStack space={2} alignItems="center">
+                        <Text fontSize="xs" fontFamily="Poppins-Light" color={iconColor}>
+                          Longitude:
+                        </Text>
+                        <Text fontSize="sm" fontFamily="Quicksand-Bold" color={textColor}>
+                          {myLocation.longitude.toFixed(6)}
+                        </Text>
+                      </HStack>
+                      <HStack space={2} alignItems="center" mt={2}>
+                        <Text fontSize="xs" fontFamily="Poppins-Light" color={iconColor}>
+                          Jarak ke Office:
+                        </Text>
+                        <Text fontSize="sm" fontFamily="Quicksand-Bold" color={jarak.jarak < 100 ? '#10b981' : '#ef4444'}>
+                          {jarak.jarak.toFixed(0)} meter
+                        </Text>
+                      </HStack>
+                    </VStack>
+                  )}
+                  <Box mt={6} bg={mode === 'dark' ? '#2f313e' : '#ffffff'} p={4} rounded="lg" maxW="90%">
+                    <Text fontSize="xs" fontFamily="Poppins-Light" color={iconColor} textAlign="center">
+                      📍 Maps hanya tersedia di native build
+                    </Text>
+                    <Text fontSize="xs" fontFamily="Poppins-Light" color={iconColor} textAlign="center" mt={1}>
+                      Jalankan: npx expo prebuild
+                    </Text>
+                  </Box>
                 </Center>
               </Box>
-            ) : null}
+            )}
           </Center>
         </VStack>
       </VStack>

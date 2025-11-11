@@ -36,6 +36,16 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# Credentials & Keystore
+credentials/
+
+# Environment files
+.env
+.env.local
+
+# TypeScript backup
+tsconfig.json.backup
+
 app-example
 
 # generated native folders

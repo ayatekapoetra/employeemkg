@@ -1,10 +1,15 @@
-// https://docs.expo.dev/guides/using-eslint/
-const { defineConfig } = require('eslint/config');
-const expoConfig = require('eslint-config-expo/flat');
+const { config } = require('eslint-config-expo');
 
-module.exports = defineConfig([
-  expoConfig,
+module.exports = [
+  ...config,
   {
-    ignores: ['dist/*'],
+    ignores: ['node_modules', '.expo', 'dist', 'build'],
   },
-]);
+  {
+    rules: {
+      'react/prop-types': 'off',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    },
+  },
+];

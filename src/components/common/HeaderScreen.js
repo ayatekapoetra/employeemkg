@@ -1,7 +1,8 @@
-import React from 'react';
-import { HStack, Text, IconButton, useColorMode, StatusBar } from 'native-base';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Moon, Sun, Notification } from 'iconsax-react-native';
+import { ArrowLeft, Moon, Notification, Sun1 } from 'iconsax-react-native';
+import { HStack, IconButton, StatusBar, Text } from 'native-base';
+import { useDispatch, useSelector } from 'react-redux';
+import { toggleTheme } from '../../store/slices/themeSlice';
 
 const HeaderScreen = ({ 
   title, 
@@ -10,9 +11,14 @@ const HeaderScreen = ({
   onNotification = false,
   showBack = false 
 }) => {
-  const { colorMode, toggleColorMode } = useColorMode();
-  const isDark = colorMode === 'dark';
+  const dispatch = useDispatch();
+  const mode = useSelector(state => state.themes)?.value || 'light';
+  const isDark = mode === 'dark';
   const router = useRouter();
+  
+  const handleToggleTheme = () => {
+    dispatch(toggleTheme());
+  };
 
   const handleBack = () => {
     if (onBack) {
@@ -49,35 +55,36 @@ const HeaderScreen = ({
           )}
           <Text
             fontSize="xl"
-            fontFamily="Quicksand-Bold"
+            fontFamily="Teko-Bold"
             color={isDark ? '#F5F5F5' : '#2f313e'}
           >
             {title}
           </Text>
         </HStack>
 
-        <HStack space={2}>
+        <HStack space={1}>
+          {onThemes && (
+            <IconButton
+              icon={
+                isDark ? (
+                  <Sun1 size={24} color="#f09d27" variant="Bold" />
+                ) : (
+                  <Moon size={24} color="#b31e02" variant="Bulk" />
+                )
+              }
+              onPress={handleToggleTheme}
+            />
+          )}
           {onNotification && (
             <IconButton
               icon={
                 <Notification
                   size={24}
+                  variant="Bulk"
                   color={isDark ? '#F5F5F5' : '#2f313e'}
                 />
               }
               onPress={() => router.push('/notifications')}
-            />
-          )}
-          {onThemes && (
-            <IconButton
-              icon={
-                isDark ? (
-                  <Sun size={24} color="#f09d27" variant="Bulk" />
-                ) : (
-                  <Moon size={24} color="#b31e02" variant="Bulk" />
-                )
-              }
-              onPress={toggleColorMode}
             />
           )}
         </HStack>

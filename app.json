@@ -3,13 +3,14 @@
     "name": "employeemkg",
     "slug": "employeemkg",
     "owner": "ayateka",
-    "version": "1.0.0",
+    "version": "1.2.17",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "employeemkg",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "buildNumber": "17",
       "supportsTablet": true,
       "config": {
         "googleMapsApiKey": "AIzaSyCYMnlvt-xY5PrinwHmw6qGRfPzD6_sZxA"
@@ -17,6 +18,7 @@
       "bundleIdentifier": "com.ayateka.employeemkg"
     },
     "android": {
+      "versionCode": 17,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -55,11 +57,23 @@
         }
       ],
       "expo-secure-store",
-      "expo-location"
+      "expo-location",
+      [
+        "react-native-maps",
+        {
+          "googleMapsApiKey": "AIzaSyDgpw4bFVEE_z6YzlgbiGvxMa9BegDVCMM"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1075cddc-eee7-4b88-a925-365266c5f842"
+      }
     }
   }
 }

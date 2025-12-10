@@ -1,0 +1,60 @@
+{
+  "RECORDS": [
+    {
+      "id": "1",
+      "nama": "Pacalaya",
+      "latitude": "-5.1958649999999995",
+      "longitude": "119.45986999999998",
+      "aktif": "Y",
+      "radius": 100
+    },
+    {
+      "id": "2",
+      "nama": "Workshop I",
+      "latitude": "-5.144458333333334",
+      "longitude": "119.44881333333333",
+      "aktif": "Y",
+      "radius": 100
+    },
+    {
+      "id": "4",
+      "nama": "Kopi Kebun",
+      "latitude": "-5.145160066718947",
+      "longitude": "119.44856202229857",
+      "aktif": "Y",
+      "radius": 100
+    },
+    {
+      "id": "5",
+      "nama": "Site I",
+      "latitude": "-3.01007",
+      "longitude": "122.250008",
+      "aktif": "Y",
+      "radius": 100
+    },
+    {
+      "id": "6",
+      "nama": "Site II",
+      "latitude": "-1.948823",
+      "longitude": "121.321803",
+      "aktif": "Y",
+      "radius": 100
+    },
+    {
+      "id": "7",
+      "nama": "Site III",
+      "latitude": "-1.949685",
+      "longitude": "121.321615",
+      "aktif": "Y",
+      "radius": 100
+    },
+    {
+      "id": "8",
+      "nama": "Gudang Patene",
+      "latitude": "-5.0584839000000000",
+      "longitude": "119.5046299000000000",
+      "aktif": "Y",
+      "radius": 100
+    }
+  ]
+}

@@ -1,48 +1,64 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { TouchableOpacity, Dimensions, Platform } from 'react-native';
-import { VStack, Text, Center, HStack, Button, Image, ScrollView, Box } from 'native-base';
-import { useDispatch, useSelector } from 'react-redux';
-import { Scan, Location, Map1 } from 'iconsax-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getDistance } from 'geolib';
+import { Location, Scan } from 'iconsax-react-native';
 import moment from 'moment';
 import 'moment/locale/id';
-import { getDistance } from 'geolib';
-import { LocationService } from '../../../services';
+import { Box, Center, HStack, Text, VStack } from 'native-base';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, Platform, Image as RNImage, TouchableOpacity, View } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import lokasiAbsenData from '../../../../assets/json/lokasiAbsen.json';
 import { AppScreen, HeaderScreen, LoadingHauler } from '../../../components/common';
-import CameraScreen from '../components/CameraScreen';
+import { COLORS } from '../../../constants/colors';
+import { LocationService } from '../../../services';
 import { applyAlert } from '../../../store/slices/alertSlice';
+import { checkIn, checkOut } from '../../../store/slices/checklogSlice';
+import CameraScreen from '../components/CameraScreen';
 
 moment.locale('id');
 
 const { width } = Dimensions.get('screen');
 
-let MapView, Circle, Marker, PROVIDER_GOOGLE;
+let MapView = null;
+let Circle = null;
+let Marker = null;
+let PROVIDER_GOOGLE = null;
 let hasMapSupport = false;
+let mapLoadError = null;
 
 try {
-  const maps = require('react-native-maps');
-  MapView = maps.default;
-  Circle = maps.Circle;
-  Marker = maps.Marker;
-  PROVIDER_GOOGLE = maps.PROVIDER_GOOGLE;
-  hasMapSupport = true;
-} catch (e) {
-  console.log('Maps not available in Expo Go, using placeholder');
+  const RNMaps = require('react-native-maps');
+  MapView = RNMaps.default || RNMaps;
+  Circle = RNMaps.Circle;
+  Marker = RNMaps.Marker;
+  PROVIDER_GOOGLE = RNMaps.PROVIDER_GOOGLE;
+  
+  if (MapView && Circle && Marker) {
+    hasMapSupport = true;
+    console.log('✅ Maps loaded successfully');
+  } else {
+    console.warn('⚠️ Maps components incomplete');
+    mapLoadError = 'Maps components not properly loaded';
+  }
+} catch (error) {
+  console.error('❌ Maps failed to load:', error.message);
+  mapLoadError = error.message;
+  hasMapSupport = false;
 }
 
-const lokasiAbsensi = [
-  {
-    site_id: 1,
-    nama: 'Office Main',
-    latitude: -5.145109,
-    longitude: 119.44856182,
-    radius: 100,
-  },
-];
+const lokasiAbsensi = lokasiAbsenData.RECORDS.map(item => ({
+  site_id: parseInt(item.id),
+  nama: item.nama,
+  latitude: parseFloat(item.latitude),
+  longitude: parseFloat(item.longitude),
+  radius: item.radius || 100,
+  aktif: item.aktif,
+})).filter(item => item.aktif === 'Y');
 
-export default function ChecklogScreen() {
+function ChecklogScreen() {
   const dispatch = useDispatch();
-  const mode = useSelector(state => state.themes).value;
-  const { user } = useSelector(state => state.auth);
+  const mode = useSelector(state => state.themes)?.value || 'light';
+  const { user } = useSelector(state => state.auth) || {};
 
   const [openKamera, setOpenKamera] = useState({ visible: false, metode: '' });
   const [photo, setPhoto] = useState(null);
@@ -51,7 +67,7 @@ export default function ChecklogScreen() {
   const [myLocation, setMyLocation] = useState(null);
   const [fakeGPS, setFakeGPS] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isLogmasuk, setLogmasuk] = useState(true);
+  const [isLogmasuk, setLogmasuk] = useState(false);
   const [isLogpulang, setLogpulang] = useState(false);
   const [checklogPin, setChecklogPin] = useState(lokasiAbsensi);
   const [location, setLocation] = useState({
@@ -59,9 +75,9 @@ export default function ChecklogScreen() {
     longitude: 119.44856182,
   });
 
-  const textColor = mode === 'dark' ? '#F5F5F5' : '#2f313e';
-  const backgroundColor = mode === 'dark' ? '#2f313e' : '#F5F5F5';
-  const iconColor = mode === 'dark' ? '#9a8f90' : '#b31e02';
+  const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1];
+  const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
+  const iconColor = mode === 'dark' ? COLORS.ico.dark[2] : COLORS.ico.light[2];
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -72,41 +88,91 @@ export default function ChecklogScreen() {
   }, []);
 
   useEffect(() => {
-    getLocation();
+    console.log('Mounting ChecklogScreen...');
+    try {
+      getLocation();
+      getDataInitial();
+    } catch (error) {
+      console.error('Mount error:', error);
+    }
   }, []);
 
   const getLocation = async () => {
+    console.log('🌍 getLocation called');
     setLoading(true);
     try {
-      console.log('Requesting location...');
-      const coords = await LocationService.getCurrentLocation();
-      console.log('Location received:', coords);
+      console.log('📍 Requesting location permission and position...');
       
-      setMyLocation(coords);
-      setLocation({
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-      });
-
-      calculateDistance(coords);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Location timeout after 15s')), 15000)
+      );
+      
+      const locationPromise = LocationService.getCurrentLocation();
+      const coords = await Promise.race([locationPromise, timeoutPromise]);
+      
+      console.log('✅ Location received:', coords);
+      
+      if (coords && coords.latitude && coords.longitude) {
+        setMyLocation(coords);
+        setLocation({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        });
+        calculateDistance(coords);
+        console.log('✅ Location set successfully:', {
+          lat: coords.latitude,
+          lon: coords.longitude
+        });
+      } else {
+        throw new Error('Invalid coordinates received');
+      }
+      
       setLoading(false);
     } catch (error) {
-      console.log('Location error:', error);
+      console.error('❌ Location error:', error.message);
+      console.error('Error details:', error);
       setLoading(false);
       
-      setMyLocation({
-        latitude: -5.145109,
-        longitude: 119.44856182,
-      });
+      const defaultLocation = {
+        latitude: -5.145160066718947,
+        longitude: 119.44856202229857,
+        accuracy: 5,
+      };
+      
+      console.log('⚠️ Using default location (Kopi Kebun):', defaultLocation);
+      
+      setMyLocation(defaultLocation);
+      setLocation(defaultLocation);
+      calculateDistance(defaultLocation);
       
       dispatch(
         applyAlert({
           show: true,
           status: 'warning',
-          title: 'Peringatan',
-          subtitle: 'Tidak dapat mengakses lokasi GPS. Menggunakan lokasi default.',
+          title: 'Lokasi GPS',
+          subtitle: Platform.OS === 'ios' 
+            ? 'Simulator: Set lokasi via Features → Location → Custom Location'
+            : 'Tidak dapat mengakses GPS. Menggunakan lokasi default.',
         })
       );
+    }
+  };
+
+  const getDataInitial = async () => {
+    try {
+      const cachedLocations = await AsyncStorage.getItem('@lokasi-absensi');
+      if (cachedLocations) {
+        const locations = JSON.parse(cachedLocations);
+        setChecklogPin(locations);
+      } else {
+        console.log('Using default locations from JSON');
+      }
+      
+      setLogmasuk(true);
+      setLogpulang(true);
+      console.log('Initial data set');
+    } catch (error) {
+      console.error('getDataInitial error:', error);
     }
   };
 
@@ -165,21 +231,68 @@ export default function ChecklogScreen() {
     console.log('Photo captured:', capturedPhoto);
     setPhoto(capturedPhoto);
     setOpenKamera({ visible: false, metode: '' });
+    setLoading(true);
 
-    dispatch(
-      applyAlert({
-        show: true,
-        status: 'success',
-        title: 'Berhasil',
-        subtitle: `Check-${openKamera.metode === 'in' ? 'in' : 'out'} berhasil`,
-      })
-    );
+    try {
+      const checklogData = {
+        latitude: jarak.latitude,
+        longitude: jarak.longitude,
+        jarak: jarak.jarak,
+        photo: capturedPhoto,
+      };
 
-    if (openKamera.metode === 'in') {
-      setLogmasuk(false);
-      setLogpulang(true);
-    } else {
-      setLogpulang(false);
+      let resultAction;
+      if (openKamera.metode === 'in') {
+        resultAction = await dispatch(checkIn(checklogData));
+        setLogmasuk(false);
+        setLogpulang(true);
+      } else {
+        resultAction = await dispatch(checkOut(checklogData));
+        setLogpulang(false);
+      }
+
+      setLoading(false);
+
+      const result = resultAction.payload;
+      const diagnostic = result?.diagnostic;
+      
+      if (diagnostic && diagnostic.message) {
+        console.log('Using diagnostic message:', diagnostic.message);
+        dispatch(
+          applyAlert({
+            show: true,
+            status: diagnostic.error ? 'warning' : 'success',
+            title: diagnostic.error ? 'Perhatian' : 'Berhasil',
+            subtitle: diagnostic.message,
+            duration: 5000,
+          })
+        );
+      } else {
+        console.log('No diagnostic, using default message');
+        dispatch(
+          applyAlert({
+            show: true,
+            status: 'success',
+            title: 'Berhasil',
+            subtitle: `Check-${openKamera.metode === 'in' ? 'in' : 'out'} berhasil`,
+            duration: 3000,
+          })
+        );
+      }
+
+      await getDataInitial();
+    } catch (error) {
+      console.error('Checklog error:', error);
+      setLoading(false);
+      
+      dispatch(
+        applyAlert({
+          show: true,
+          status: 'error',
+          title: 'Gagal',
+          subtitle: error || `Check-${openKamera.metode === 'in' ? 'in' : 'out'} gagal`,
+        })
+      );
     }
   };
 
@@ -193,6 +306,7 @@ export default function ChecklogScreen() {
   if (openKamera.visible) {
     return (
       <CameraScreen
+        metode={openKamera.metode}
         onCapture={handlePhotoCapture}
         onClose={() => setOpenKamera({ visible: false, metode: '' })}
       />
@@ -200,6 +314,7 @@ export default function ChecklogScreen() {
   }
 
   if (loading) {
+    console.log('Showing loading...');
     return (
       <AppScreen>
         <LoadingHauler />
@@ -210,19 +325,19 @@ export default function ChecklogScreen() {
   return (
     <AppScreen>
       <VStack h="full">
-        <HeaderScreen title="Checklog Kehadiran" onBack onThemes onNotification />
+        <HeaderScreen title="Checklog Kehadiran" showBack onThemes onNotification />
         
-        <Center py={2}>
-          <Text fontSize="sm" fontFamily="Quicksand-Light" color={textColor}>
+        <Center bg={backgroundColor}>
+          <Text fontSize={20} fontFamily="Quicksand-Light" color={textColor}>
             {moment().format('dddd, DD MMMM YYYY')}
           </Text>
-          <Text fontSize="5xl" lineHeight="xs" fontFamily="Quicksand-Bold" color={textColor}>
+          <Text lineHeight="xs" fontSize={45} fontFamily="Quicksand-Bold" color={textColor}>
             {currentClock}
           </Text>
         </Center>
 
         {!openKamera.visible && (
-          <VStack>
+          <VStack bg={backgroundColor}>
             {!fakeGPS && (
               <HStack space={2} mx={3} alignItems="center" justifyContent="space-around">
                 {isLogmasuk ? (
@@ -231,28 +346,33 @@ export default function ChecklogScreen() {
                       p={2}
                       space={1}
                       alignItems="center"
-                      bg="#d1fae5"
+                      bg={mode === 'dark' ? COLORS.box.dark : COLORS.box.light}
+                      borderWidth={2}
+                      borderColor={mode === 'dark' ? COLORS.line.dark[4] : COLORS.line.light[4]}
                       rounded="md"
                       shadow={2}
                     >
-                      <Scan size="32" color={textColor} variant="Bulk" />
-                      <Text fontWeight="semibold" fontFamily="Quicksand-SemiBold">
+                      <Scan size="32" color={mode === 'dark' ? COLORS.ico.dark[4] : COLORS.ico.light[4]} variant="Bulk" />
+                      <Text fontWeight="semibold" fontFamily="Quicksand-SemiBold" color={textColor}>
                         Checklog Masuk
                       </Text>
                     </HStack>
                   </TouchableOpacity>
                 ) : (
-                  <TouchableOpacity style={{ maxWidth: 170 }}>
+                  <TouchableOpacity onPress={() => console.log('Navigate to Riwayat')} style={{ flex: 1 }}>
                     <HStack
                       p={2}
                       space={1}
                       alignItems="center"
-                      bg="muted.100"
+                      bg={mode === 'dark' ? COLORS.box.dark : COLORS.box.light}
+                      borderWidth={2}
+                      borderColor={mode === 'dark' ? COLORS.line.dark[1] : COLORS.line.light[1]}
                       rounded="md"
                       shadow={2}
+                      opacity={0.6}
                     >
                       <Scan size="32" color={iconColor} variant="Bulk" />
-                      <Text fontWeight="600" fontFamily="Poppins-SemiBold" color={iconColor}>
+                      <Text fontWeight="600" fontFamily="Poppins-SemiBold" color={mode === 'dark' ? COLORS.teks.dark[2] : COLORS.teks.light[2]}>
                         Riwayat Masuk
                       </Text>
                     </HStack>
@@ -265,28 +385,33 @@ export default function ChecklogScreen() {
                       p={2}
                       space={1}
                       alignItems="center"
-                      bg="#fecdd3"
+                      bg={mode === 'dark' ? COLORS.box.dark : COLORS.box.light}
+                      borderWidth={2}
+                      borderColor={mode === 'dark' ? COLORS.line.dark[3] : COLORS.line.light[3]}
                       rounded="md"
                       shadow={2}
                     >
-                      <Scan size="32" color={textColor} variant="Bulk" />
-                      <Text fontWeight="semibold" fontFamily="Quicksand-SemiBold">
+                      <Scan size="32" color={mode === 'dark' ? COLORS.teks.dark[5] : COLORS.teks.light[5]} variant="Bulk" />
+                      <Text fontWeight="semibold" fontFamily="Quicksand-SemiBold" color={textColor}>
                         Checklog Pulang
                       </Text>
                     </HStack>
                   </TouchableOpacity>
                 ) : (
-                  <TouchableOpacity style={{ maxWidth: 170 }}>
+                  <TouchableOpacity onPress={() => console.log('Navigate to Riwayat')} style={{ flex: 1 }}>
                     <HStack
                       p={2}
                       space={1}
                       alignItems="center"
-                      bg="muted.100"
+                      bg={mode === 'dark' ? COLORS.box.dark : COLORS.box.light}
+                      borderWidth={2}
+                      borderColor={mode === 'dark' ? COLORS.line.dark[1] : COLORS.line.light[1]}
                       rounded="md"
                       shadow={2}
+                      opacity={0.6}
                     >
                       <Scan size="32" color={iconColor} variant="Bulk" />
-                      <Text fontWeight="600" fontFamily="Poppins-SemiBold" color={iconColor}>
+                      <Text fontWeight="600" fontFamily="Poppins-SemiBold" color={mode === 'dark' ? COLORS.teks.dark[2] : COLORS.teks.light[2]}>
                         Riwayat Pulang
                       </Text>
                     </HStack>
@@ -297,17 +422,17 @@ export default function ChecklogScreen() {
 
             <VStack my={2} justifyContent="center" alignItems="center">
               {jarak.jarak < 10 && (
-                <Text fontSize="xs" fontFamily="Poppins-Light" color="#10b981">
+                <Text fontSize={12} fontWeight="300" fontFamily="Poppins-Light" color="#10b981">
                   Anda berada pada radius checklog {jarak.jarak.toFixed(0)} meter
                 </Text>
               )}
               {jarak.jarak >= 10 && jarak.jarak <= 100 && (
-                <Text fontSize="xs" fontFamily="Poppins-Light" color="#f59e0b">
+                <Text fontSize={12} fontWeight="300" fontFamily="Poppins-Light" color="#f59e0b">
                   Anda berada pada radius checklog {jarak.jarak.toFixed(0)} meter
                 </Text>
               )}
               {jarak.jarak > 100 && (
-                <Text fontSize="xs" fontFamily="Poppins-Light" color="#ef4444">
+                <Text fontSize={12} fontWeight="300" fontFamily="Poppins-Light" color="#ef4444">
                   Anda berada pada radius checklog {jarak.jarak.toFixed(0)} meter
                 </Text>
               )}
@@ -315,69 +440,68 @@ export default function ChecklogScreen() {
           </VStack>
         )}
 
-        <VStack flex={1} bg="amber.100">
-          <Center flex={1}>
-            {loading ? (
-              <Box w="full" h="full" bg={mode === 'dark' ? '#3a3c4a' : '#e5e7eb'}>
-                <Center flex={1}>
-                  <LoadingHauler />
-                  <Text fontSize="sm" fontFamily="Poppins-Light" color={textColor} mt={4}>
-                    Mengambil lokasi GPS...
-                  </Text>
-                </Center>
-              </Box>
-            ) : hasMapSupport && myLocation ? (
-              <MapView
-                provider={PROVIDER_GOOGLE}
-                style={{ width: width, height: '100%' }}
-                showsMyLocationButton={true}
-                showsUserLocation={true}
-                region={{
-                  ...location,
-                  latitudeDelta: 0.002,
-                  longitudeDelta: 0.002,
-                }}
-              >
-                {checklogPin?.map((m, idx) => (
-                  <React.Fragment key={idx}>
-                    <Circle
-                      strokeWidth={1}
-                      strokeColor="red"
-                      fillColor="rgba(239, 68, 68, 0.1)"
-                      center={{ latitude: m.latitude, longitude: m.longitude }}
-                      radius={100}
-                    />
-                    <Marker
-                      title={`Titik Checklog ${m.nama}`}
-                      description="Radius checklog untuk absensi"
-                      coordinate={{
-                        latitude: parseFloat(m.latitude),
-                        longitude: parseFloat(m.longitude),
-                      }}
-                    >
-                      <Image
-                        alt="Pin"
-                        source={require('../../../../assets/images/finger-mechine.png')}
-                        style={{ height: 25, width: 30 }}
+        <VStack flex={1}>
+          {myLocation && hasMapSupport && MapView && location?.latitude && location?.longitude ? (
+            <MapView
+              style={{ flex: 1 }}
+              initialRegion={{
+                latitude: location.latitude,
+                longitude: location.longitude,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
+              }}
+            >
+                {checklogPin?.map(m => {
+                  const lat = parseFloat(m.latitude);
+                  const lng = parseFloat(m.longitude);
+                  
+                  if (isNaN(lat) || isNaN(lng)) {
+                    console.warn('Invalid coordinates for checkpoint:', m.nama);
+                    return null;
+                  }
+                  
+                  return (
+                    <View key={m.site_id}>
+                      <Circle
+                        strokeWidth={1}
+                        strokeColor="red"
+                        fillColor="rgba(239, 68, 68, 0.1)"
+                        center={{ latitude: lat, longitude: lng }}
+                        radius={100}
                       />
-                    </Marker>
-                  </React.Fragment>
-                ))}
-                <Marker
-                  title="Lokasi Saya..."
-                  description="Posisi anda saat ini"
-                  coordinate={myLocation}
-                >
-                  <Image
-                    alt="My Location"
-                    source={require('../../../../assets/images/engineer-standing.png')}
-                    style={{ height: 65, width: 20 }}
-                  />
-                </Marker>
-              </MapView>
-            ) : (
-              <Box w="full" h="full" bg={mode === 'dark' ? '#3a3c4a' : '#e5e7eb'}>
-                <Center flex={1} p={4}>
+                      <Marker
+                        title={`Titik Checklog ${m.nama}`}
+                        description="Radius checklog untuk absensi"
+                        coordinate={{ latitude: lat, longitude: lng }}
+                      >
+                        <RNImage
+                          source={require('../../../../assets/images/finger-mechine.png')}
+                          style={{ height: 25, width: 30 }}
+                          resizeMode="contain"
+                        />
+                      </Marker>
+                    </View>
+                  );
+                })}
+                {myLocation && myLocation.latitude && myLocation.longitude && (
+                  <Marker
+                    title="Lokasi Saya..."
+                    description="Posisi anda saat ini"
+                    coordinate={{
+                      latitude: myLocation.latitude,
+                      longitude: myLocation.longitude,
+                    }}
+                  >
+                    <RNImage
+                      source={require('../../../../assets/images/engineer-standing.png')}
+                      style={{ height: 65, width: 20 }}
+                      resizeMode="contain"
+                    />
+                  </Marker>
+                )}
+            </MapView>
+          ) : (
+            <Center flex={1} bg={mode === 'dark' ? '#3a3c4a' : '#e5e7eb'} p={4}>
                   <Location size={80} color={iconColor} variant="Bulk" />
                   <Text fontSize="lg" fontFamily="Poppins-SemiBold" color={textColor} mt={4} textAlign="center">
                     Lokasi Anda
@@ -410,20 +534,68 @@ export default function ChecklogScreen() {
                       </HStack>
                     </VStack>
                   )}
-                  <Box mt={6} bg={mode === 'dark' ? '#2f313e' : '#ffffff'} p={4} rounded="lg" maxW="90%">
-                    <Text fontSize="xs" fontFamily="Poppins-Light" color={iconColor} textAlign="center">
-                      📍 Maps hanya tersedia di native build
-                    </Text>
-                    <Text fontSize="xs" fontFamily="Poppins-Light" color={iconColor} textAlign="center" mt={1}>
-                      Jalankan: npx expo prebuild
-                    </Text>
-                  </Box>
-                </Center>
+              <Box mt={6} bg={mode === 'dark' ? '#2f313e' : '#ffffff'} p={4} rounded="lg" maxW="90%">
+                <Text fontSize="xs" fontFamily="Poppins-Light" color={iconColor} textAlign="center">
+                  {!hasMapSupport ? '📍 Maps sedang dimuat...' : '📍 Mengambil lokasi...'}
+                </Text>
+                {!hasMapSupport && (
+                  <Text fontSize="xs" fontFamily="Poppins-Light" color={iconColor} textAlign="center" mt={1}>
+                    Rebuild app: npx expo run:android
+                  </Text>
+                )}
               </Box>
-            )}
-          </Center>
+            </Center>
+          )}
         </VStack>
       </VStack>
     </AppScreen>
+  );
+}
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('ChecklogScreen Error Boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <AppScreen>
+          <VStack flex={1} justifyContent="center" alignItems="center" p={4}>
+            <Text fontSize="lg" fontFamily="Quicksand-Bold" color="red.500" mb={2}>
+              Error Loading Map
+            </Text>
+            <Text fontSize="sm" fontFamily="Poppins-Light" textAlign="center" mb={4}>
+              {this.state.error?.message || 'Unknown error occurred'}
+            </Text>
+            <Text fontSize="xs" fontFamily="Poppins-Light" color="gray.500" textAlign="center">
+              Possible causes:{'\n'}
+              • Google Maps API key not configured{'\n'}
+              • Location permissions denied{'\n'}
+              • Network connection issue
+            </Text>
+          </VStack>
+        </AppScreen>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default function ChecklogScreenWrapper() {
+  return (
+    <ErrorBoundary>
+      <ChecklogScreen />
+    </ErrorBoundary>
   );
 }

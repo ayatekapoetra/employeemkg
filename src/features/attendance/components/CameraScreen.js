@@ -1,237 +1,243 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, TouchableOpacity, StyleSheet, Image as RNImage, Platform } from 'react-native';
+import { VStack, Text, HStack, Button } from 'native-base';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { VStack, Button, Image, Text, HStack, Center, useColorMode } from 'native-base';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { PermissionService } from '../../../services';
-import { Camera, FlashCircle, RotateLeft } from 'iconsax-react-native';
+import { useSelector } from 'react-redux';
+import { ArrowLeft2, Camera as CameraIcon, Flash, GalleryAdd } from 'iconsax-react-native';
 
-const CameraScreen = ({ onCapture, onCancel, onClose, facing: initialFacing = 'front' }) => {
-  const [facing, setFacing] = useState(initialFacing);
-  const [photo, setPhoto] = useState(null);
-  const [permission, requestPermission] = useCameraPermissions();
+export default function CameraScreen({ onClose, onCapture, metode = 'in' }) {
   const cameraRef = useRef(null);
-  const { colorMode } = useColorMode();
-  const isDark = colorMode === 'dark';
+  const [permission, requestPermission] = useCameraPermissions();
+  const [photo, setPhoto] = useState(null);
+  const [flash, setFlash] = useState('off');
+  const mode = useSelector(state => state.themes).value;
+
+  const backgroundColor = mode === 'dark' ? '#2f313e' : '#F5F5F5';
+  const textColor = mode === 'dark' ? '#F5F5F5' : '#2f313e';
 
   useEffect(() => {
-    checkPermission();
+    if (!permission?.granted) {
+      requestPermission();
+    }
   }, []);
 
-  const checkPermission = async () => {
-    const hasPermission = await PermissionService.checkCamera();
-    if (!hasPermission) {
-      await requestPermission();
-    }
-  };
-
   const takePicture = async () => {
-    if (cameraRef.current) {
-      try {
-        const result = await cameraRef.current.takePictureAsync({
+    try {
+      if (cameraRef.current) {
+        const options = {
           quality: 0.7,
           base64: true,
-        });
-        setPhoto(result);
-      } catch (error) {
-        console.error('Error taking picture:', error);
+          skipProcessing: false,
+        };
+        
+        const capturedPhoto = await cameraRef.current.takePictureAsync(options);
+        console.log('Photo captured:', capturedPhoto.uri);
+        setPhoto(capturedPhoto);
       }
+    } catch (error) {
+      console.error('Error taking picture:', error);
     }
   };
 
-  const handleRetake = () => {
+  const retakePhoto = () => {
     setPhoto(null);
   };
 
-  const handleUsePhoto = () => {
-    if (photo && onCapture) {
+  const confirmPhoto = () => {
+    if (photo) {
       onCapture(photo);
+      setPhoto(null);
     }
   };
 
-  const toggleCameraFacing = () => {
-    setFacing((current) => (current === 'back' ? 'front' : 'back'));
+  const handleClose = () => {
+    setPhoto(null);
+    onClose();
   };
 
   if (!permission) {
     return (
-      <Center flex={1} bg={isDark ? '#2f313e' : '#F5F5F5'}>
-        <Text>Checking camera permission...</Text>
-      </Center>
+      <View style={[styles.container, { backgroundColor }]}>
+        <Text color={textColor}>Loading camera...</Text>
+      </View>
     );
   }
 
   if (!permission.granted) {
     return (
-      <Center flex={1} bg={isDark ? '#2f313e' : '#F5F5F5'} px={6}>
+      <View style={[styles.container, { backgroundColor }]}>
         <VStack space={4} alignItems="center">
-          <Camera size={64} color={isDark ? '#9a8f90' : '#b31e02'} variant="Bulk" />
-          <Text
-            fontSize="lg"
-            fontFamily="Quicksand-Bold"
-            color={isDark ? '#F5F5F5' : '#2f313e'}
-            textAlign="center"
-          >
-            Camera Permission Required
+          <CameraIcon size={64} color="#b31e02" variant="Bulk" />
+          <Text fontSize="lg" fontFamily="Poppins-SemiBold" color={textColor} textAlign="center">
+            Izin Kamera Diperlukan
           </Text>
-          <Text
-            fontSize="sm"
-            fontFamily="Poppins-Light"
-            color={isDark ? '#9a8f90' : '#666666'}
-            textAlign="center"
-          >
-            We need access to your camera for attendance check-in
+          <Text fontSize="sm" fontFamily="Poppins-Regular" color={textColor} textAlign="center" px={8}>
+            Aplikasi memerlukan akses kamera untuk mengambil foto selfie saat checklog
           </Text>
-          <Button onPress={requestPermission} colorScheme="primary" mt={4}>
-            Grant Permission
+          <Button onPress={requestPermission} bg="error.600" mt={4}>
+            <Text color="white" fontFamily="Poppins-SemiBold">
+              Berikan Izin Kamera
+            </Text>
           </Button>
-          {onCancel && (
-            <Button variant="ghost" onPress={onCancel}>
-              Cancel
-            </Button>
-          )}
+          <Button variant="ghost" onPress={handleClose} mt={2}>
+            <Text color={textColor} fontFamily="Poppins-Regular">
+              Batal
+            </Text>
+          </Button>
         </VStack>
-      </Center>
+      </View>
     );
   }
 
   if (photo) {
     return (
-      <VStack flex={1} bg="black">
-        <Image
-          source={{ uri: photo.uri }}
-          alt="Captured photo"
-          flex={1}
-          resizeMode="contain"
-        />
-        <VStack
-          position="absolute"
-          bottom={0}
-          left={0}
-          right={0}
-          bg="rgba(0,0,0,0.7)"
-          p={4}
-          space={3}
-        >
-          <HStack space={3}>
-            <Button
-              flex={1}
-              variant="outline"
-              onPress={handleRetake}
-              colorScheme="light"
+      <View style={styles.container}>
+        <RNImage source={{ uri: photo.uri }} style={styles.preview} />
+        
+        <View style={styles.header}>
+          <TouchableOpacity onPress={retakePhoto} style={styles.headerButton}>
+            <ArrowLeft2 size={24} color="#FFF" />
+            <Text color="white" fontFamily="Poppins-SemiBold" ml={2}>
+              Ulang
+            </Text>
+          </TouchableOpacity>
+          <Text fontSize="lg" fontFamily="Poppins-SemiBold" color="white">
+            Preview Foto
+          </Text>
+          <View style={{ width: 80 }} />
+        </View>
+
+        <View style={styles.bottomControls}>
+          <VStack space={3} w="full" px={4}>
+            <Button 
+              bg="success.600" 
+              onPress={confirmPhoto}
+              _text={{ fontFamily: 'Poppins-SemiBold', fontSize: 16 }}
+              leftIcon={<GalleryAdd size={24} color="#FFF" variant="Bulk" />}
             >
-              Retake
+              Gunakan Foto Ini
             </Button>
-            <Button
-              flex={1}
-              onPress={handleUsePhoto}
-              colorScheme="success"
+            <Button 
+              variant="outline" 
+              borderColor="white"
+              onPress={retakePhoto}
+              _text={{ color: 'white', fontFamily: 'Poppins-SemiBold' }}
             >
-              Use Photo
+              Foto Ulang
             </Button>
-          </HStack>
-          {(onCancel || onClose) && (
-            <Button variant="ghost" onPress={onCancel || onClose} colorScheme="light">
-              Cancel
-            </Button>
-          )}
-        </VStack>
-      </VStack>
+          </VStack>
+        </View>
+      </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <CameraView
+      <CameraView 
         ref={cameraRef}
         style={styles.camera}
-        facing={facing}
+        facing="front"
+        flash={flash}
       >
-        <View style={styles.overlay}>
-          <View style={styles.topBar}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={toggleCameraFacing}
-            >
-              <RotateLeft size={32} color="white" variant="Bulk" />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleClose} style={styles.headerButton}>
+            <ArrowLeft2 size={24} color="#FFF" />
+            <Text color="white" fontFamily="Poppins-SemiBold" ml={2}>
+              Batal
+            </Text>
+          </TouchableOpacity>
+          <Text fontSize="lg" fontFamily="Poppins-SemiBold" color="white">
+            {metode === 'in' ? 'Check In' : 'Check Out'}
+          </Text>
+          <TouchableOpacity 
+            onPress={() => setFlash(flash === 'off' ? 'on' : 'off')}
+            style={styles.headerButton}
+          >
+            <Flash size={24} color={flash === 'on' ? '#f59e0b' : '#FFF'} variant="Bulk" />
+          </TouchableOpacity>
+        </View>
 
-          <View style={styles.bottomBar}>
-            {(onCancel || onClose) && (
-              <Button
-                variant="ghost"
-                onPress={onCancel || onClose}
-                colorScheme="light"
-                mb={2}
-              >
-                Cancel
-              </Button>
-            )}
-            <TouchableOpacity
-              style={styles.captureButton}
-              onPress={takePicture}
-            >
+        <View style={styles.bottomControls}>
+          <VStack alignItems="center" space={4}>
+            <Text fontSize="sm" fontFamily="Poppins-Light" color="white" textAlign="center">
+              Posisikan wajah Anda di tengah kamera
+            </Text>
+            
+            <TouchableOpacity onPress={takePicture} style={styles.captureButton}>
               <View style={styles.captureButtonInner} />
             </TouchableOpacity>
-            <Text
-              fontSize="sm"
-              color="white"
-              fontFamily="Poppins-Light"
-              mt={2}
-            >
-              Tap to capture
-            </Text>
-          </View>
+          </VStack>
         </View>
       </CameraView>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   camera: {
     flex: 1,
+    width: '100%',
   },
-  overlay: {
+  preview: {
     flex: 1,
-    backgroundColor: 'transparent',
-    justifyContent: 'space-between',
+    width: '100%',
   },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    padding: 20,
-  },
-  iconButton: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 30,
-    padding: 10,
-  },
-  bottomBar: {
-    alignItems: 'center',
-    paddingBottom: 40,
+  header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
     paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+  },
+  bottomControls: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
   },
   captureButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: 'white',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: 'rgba(255,255,255,0.5)',
+    borderColor: '#FFF',
   },
   captureButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'white',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFF',
+  },
+  flipButton: {
+    padding: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
 });
-
-export default CameraScreen;

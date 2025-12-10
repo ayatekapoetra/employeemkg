@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<gpx version="1.1" creator="Custom Location Simulator">
+  
+  <!-- Kopi Kebun - Office Main -->
+  <wpt lat="-5.145160066718947" lon="119.44856202229857">
+    <name>Kopi Kebun Office</name>
+    <desc>Main Office Location</desc>
+  </wpt>
+  
+  <!-- Workshop I -->
+  <wpt lat="-5.144458333333334" lon="119.44881333333333">
+    <name>Workshop I</name>
+    <desc>Workshop Location</desc>
+  </wpt>
+  
+  <!-- Pacalaya -->
+  <wpt lat="-5.1958649999999995" lon="119.45986999999998">
+    <name>Pacalaya</name>
+    <desc>Pacalaya Site</desc>
+  </wpt>
+  
+  <!-- Gudang Patene -->
+  <wpt lat="-5.0584839" lon="119.5046299">
+    <name>Gudang Patene</name>
+    <desc>Warehouse Location</desc>
+  </wpt>
+  
+  <!-- Route simulation: Moving from Kopi Kebun to Workshop -->
+  <trk>
+    <name>Office Route</name>
+    <trkseg>
+      <trkpt lat="-5.145160" lon="119.448562">
+        <time>2024-01-01T08:00:00Z</time>
+      </trkpt>
+      <trkpt lat="-5.144900" lon="119.448700">
+        <time>2024-01-01T08:01:00Z</time>
+      </trkpt>
+      <trkpt lat="-5.144650" lon="119.448750">
+        <time>2024-01-01T08:02:00Z</time>
+      </trkpt>
+      <trkpt lat="-5.144458" lon="119.448813">
+        <time>2024-01-01T08:03:00Z</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+  
+</gpx>

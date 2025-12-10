@@ -1,64 +1,78 @@
-export const COLORS = {
-  primary: {
-    50: '#ffe8e5',
-    100: '#ffbfb8',
-    200: '#ff958a',
-    300: '#ff6b5c',
-    400: '#ff422e',
-    500: '#b31e02',
-    600: '#8f1801',
-    700: '#6b1201',
-    800: '#470c01',
-    900: '#230600',
+const appcolor = {
+  container: {
+    dark: "#2f313e",
+    light: "#F5F5F5"
   },
-  
-  secondary: {
-    50: '#fff9e6',
-    100: '#ffecb3',
-    200: '#ffe080',
-    300: '#ffd44d',
-    400: '#ffc71a',
-    500: '#f09d27',
-    600: '#c07d1f',
-    700: '#905e17',
-    800: '#603e0f',
-    900: '#301f08',
+  box: {
+    dark: "#697689",
+    light: "#edecec"
   },
-
-  dark: {
-    background: '#2f313e',
-    surface: '#3a3c4a',
-    text: {
-      primary: '#F5F5F5',
-      secondary: '#9a8f90',
-      tertiary: '#b0b0b0',
+  header: {
+    dark: "#68778b",
+    light: "#edeaea"
+  },
+  btn: {
+    dark: {
+      active: "#373e48",
+      inactive: "#697689",
     },
+    light: {
+      active: "#d6d6e5",
+      inactive: "#F5F5F5",
+    }
   },
-
-  light: {
-    background: '#F5F5F5',
-    surface: '#FFFFFF',
-    text: {
-      primary: '#2f313e',
-      secondary: '#b31e02',
-      tertiary: '#666666',
+  teks: {
+    dark: {
+      1: "#F5F5F5",
+      2: "#d0cccc",
+      3: "#f09d27",
+      4: "#09cd02",
+      5: "#ef4444",
+      6: "#01a8d7",
+      7: "#38bdf8",
     },
+    light: {
+      1: "#2f313e",
+      2: "#4f4c46",
+      3: "#ef981e",
+      4: "#15803d",
+      5: "#dc2626",
+      6: "#0180c7",
+      7: "#0284c7",
+    }
   },
-
-  status: {
-    success: '#10b981',
-    warning: '#f59e0b',
-    error: '#ef4444',
-    info: '#3b82f6',
-  },
-
-  tab: {
-    active: '#f09d27',
-    inactive: {
-      dark: '#9a8f90',
-      light: '#b31e02',
+  line: {
+    dark: {
+      1: "#4a4d5f",
+      2: "#d0cccc",
+      3: "#dc2626",
+      4: "#15803d",
     },
+    light: {
+      1: "#DDDDDD",
+      2: "#2d3e54de",
+      3: "#ef4444",
+      4: "#4ade80",
+    }
   },
+  ico: {
+    dark: {
+      1: "#d9e3f0",
+      2: "#797c8e",
+      3: "#01a8d7",
+      4: "#58b455",
+      5: "#efb539",
+    },
+    light: {
+      1: "#555555",
+      2: "#697689",
+      3: "#0180c7",
+      4: "#50b903",
+      5: "#efb539",
+    }
+  }
 };
 
-export default COLORS;
+export const COLORS = appcolor;
+
+export default appcolor;

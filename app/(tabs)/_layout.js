@@ -1,11 +1,19 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { useColorMode } from 'native-base';
-import { CalendarSearch, Trello, Shop, StatusUp, Setting2 } from 'iconsax-react-native';
+import { Tabs, useRouter } from 'expo-router';
+import { CalendarSearch, Setting2, Shop } from 'iconsax-react-native';
+import { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
 export default function TabLayout() {
-  const { colorMode } = useColorMode();
-  const isDark = colorMode === 'dark';
+  const router = useRouter();
+  const { user, token } = useSelector(state => state.auth);
+  const mode = useSelector(state => state.themes)?.value || 'light';
+  const isDark = mode === 'dark';
+
+  useEffect(() => {
+    if (!user || !token) {
+      router.replace('/login');
+    }
+  }, [user, token]);
 
   return (
     <Tabs
@@ -15,35 +23,12 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: isDark ? '#2f313e' : '#F5F5F5',
           borderTopColor: isDark ? '#3a3c4a' : '#e0e0e0',
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 10,
         },
       }}
     >
-      <Tabs.Screen
-        name="kehadiran"
-        options={{
-          title: 'Absensi',
-          tabBarIcon: ({ color, focused }) => (
-            <CalendarSearch
-              size={32}
-              variant={focused ? 'Bulk' : 'Broken'}
-              color={isDark ? '#9a8f90' : '#b31e02'}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="tugasku"
-        options={{
-          title: 'Tugasku',
-          tabBarIcon: ({ color, focused }) => (
-            <Trello
-              size={32}
-              variant={focused ? 'Bulk' : 'Broken'}
-              color={isDark ? '#9a8f90' : '#b31e02'}
-            />
-          ),
-        }}
-      />
       <Tabs.Screen
         name="home"
         options={{
@@ -58,11 +43,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="laporan"
+        name="kehadiran"
         options={{
-          title: 'Laporan',
+          title: 'Absensi',
           tabBarIcon: ({ color, focused }) => (
-            <StatusUp
+            <CalendarSearch
               size={32}
               variant={focused ? 'Bulk' : 'Broken'}
               color={isDark ? '#9a8f90' : '#b31e02'}

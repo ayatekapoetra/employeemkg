@@ -3,19 +3,18 @@ import { COLORS } from './colors';
 
 const theme = extendTheme({
   colors: {
-    primary: COLORS.primary,
-    secondary: COLORS.secondary,
+    primary: {
+      500: COLORS.teks.light[6],
+      600: COLORS.teks.dark[6],
+    },
     success: {
-      500: COLORS.status.success,
+      500: COLORS.teks.light[4],
     },
     warning: {
-      500: COLORS.status.warning,
+      500: COLORS.teks.light[3],
     },
     error: {
-      500: COLORS.status.error,
-    },
-    info: {
-      500: COLORS.status.info,
+      500: COLORS.teks.light[5],
     },
   },
   
@@ -30,21 +29,21 @@ const theme = extendTheme({
         colorScheme: 'primary',
       },
       variants: {
-        solid: {
-          bg: 'primary.500',
+        solid: ({ colorMode }) => ({
+          bg: colorMode === 'dark' ? COLORS.btn.dark.active : COLORS.btn.light.active,
           _pressed: {
-            bg: 'primary.600',
+            bg: colorMode === 'dark' ? COLORS.btn.dark.inactive : COLORS.btn.light.inactive,
           },
-        },
-        outline: {
-          borderColor: 'primary.500',
+        }),
+        outline: ({ colorMode }) => ({
+          borderColor: colorMode === 'dark' ? COLORS.teks.dark[6] : COLORS.teks.light[6],
           _text: {
-            color: 'primary.500',
+            color: colorMode === 'dark' ? COLORS.teks.dark[6] : COLORS.teks.light[6],
           },
           _pressed: {
-            bg: 'primary.50',
+            bg: colorMode === 'dark' ? COLORS.btn.dark.inactive : COLORS.btn.light.inactive,
           },
-        },
+        }),
       },
     },
     
@@ -53,13 +52,13 @@ const theme = extendTheme({
         size: 'md',
       },
       variants: {
-        outline: {
-          borderColor: 'gray.300',
+        outline: ({ colorMode }) => ({
+          borderColor: colorMode === 'dark' ? COLORS.line.dark[1] : COLORS.line.light[1],
           _focus: {
-            borderColor: 'primary.500',
+            borderColor: colorMode === 'dark' ? COLORS.teks.dark[6] : COLORS.teks.light[6],
             bg: 'transparent',
           },
-        },
+        }),
       },
     },
   },

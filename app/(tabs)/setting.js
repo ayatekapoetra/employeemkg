@@ -1,82 +1,229 @@
-import React from 'react';
-import { VStack, Text, Center, ScrollView, Button } from 'native-base';
-import { useColorMode } from 'native-base';
+import React, { useEffect } from 'react';
+import { TouchableOpacity } from 'react-native';
+import { VStack, Text, Center, HStack, Divider } from 'native-base';
 import { AppScreen, HeaderScreen } from '../../src/components/common';
-import { useDispatch } from 'react-redux';
-import { applyAlert } from '../../src/store/slices/alertSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { ArrowRight2, Profile, ShieldSecurity, DirectNotification, Calendar2, Stickynote, Convert, MonitorMobbile, House2, Civic, Logout } from 'iconsax-react-native';
+import { logout } from '../../src/store/slices/authSlice';
+import { saveTheme } from '../../src/store/slices/themeSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 
 export default function SettingScreen() {
-  const { colorMode, toggleColorMode } = useColorMode();
   const dispatch = useDispatch();
-  const isDark = colorMode === 'dark';
+  const router = useRouter();
+  const { user } = useSelector(state => state.auth);
+  const mode = useSelector(state => state.themes).value;
 
-  const testAlert = (status) => {
-    dispatch(applyAlert({
-      show: true,
-      status: status,
-      title: `${status.toUpperCase()} Alert`,
-      subtitle: `This is a test ${status} alert message`,
-      duration: 3000,
-    }));
+  const textColor = mode === 'dark' ? '#F5F5F5' : '#2f313e';
+  const backgroundColor = mode === 'dark' ? '#2f313e' : '#F5F5F5';
+  const lineColor = mode === 'dark' ? '#3a3c4a' : '#e5e7eb';
+
+  const actionHandle = (val) => {
+    console.log(val);
+    try {
+      if (val.access) {
+        if (val.access.includes(user?.usertype)) {
+          if (val.uri === 'Profile') {
+            router.push('/setting/profile');
+          } else if (val.uri === 'Keamanan-Akun') {
+            router.push('/setting/security');
+          } else if (val.uri === 'izin-aplikasi-screen') {
+            router.push('/setting/permissions');
+          } else if (val.uri === 'notifikasi-screen') {
+            router.push('/setting/notifications');
+          } else if (val.uri === 'riwayat-absensi-screen') {
+            router.push('/setting/attendance-history');
+          } else if (val.uri === 'internal-memo-screen') {
+            router.push('/setting/internal-memo');
+          } else if (val.uri === 'unsending-screen') {
+            router.push('/setting/failed-send');
+          } else if (val.uri === 'Reset-User-Devices') {
+            router.push('/setting/reset-devices');
+          } else if (val.uri === 'lingkup-kerja-screen') {
+            router.push('/setting/change-workspace');
+          } else {
+            router.push({
+              pathname: '/setting/coming-soon',
+              params: { feature: val.title }
+            });
+          }
+        } else {
+          alert('Anda tidak memiliki akses ke menu ini...');
+        }
+      } else {
+        if (val.uri === 'Profile') {
+          router.push('/setting/profile');
+        } else if (val.uri === 'Keamanan-Akun') {
+          router.push('/setting/security');
+        } else if (val.uri === 'izin-aplikasi-screen') {
+          router.push('/setting/permissions');
+        } else if (val.uri === 'notifikasi-screen') {
+          router.push('/setting/notifications');
+        } else if (val.uri === 'riwayat-absensi-screen') {
+          router.push('/setting/attendance-history');
+        } else if (val.uri === 'internal-memo-screen') {
+          router.push('/setting/internal-memo');
+        } else if (val.uri === 'unsending-screen') {
+          router.push('/setting/failed-send');
+        } else if (val.uri === 'Reset-User-Devices') {
+          router.push('/setting/reset-devices');
+        } else if (val.uri === 'lingkup-kerja-screen') {
+          router.push('/setting/change-workspace');
+        } else {
+          router.push({
+            pathname: '/setting/coming-soon',
+            params: { feature: val.title }
+          });
+        }
+      }
+    } catch (error) {
+      alert('Maaf, Fitur ini dalam pengembangan...');
+    }
   };
+
+  const onUserLogout = async () => {
+    console.log('Logging out...');
+    const keys = (await AsyncStorage.getAllKeys()).filter(f => f !== '@DEVICESID');
+    try {
+      await AsyncStorage.multiRemove(keys);
+      console.log('AsyncStorage cleared');
+    } catch (e) {
+      console.error('Error clearing storage:', e);
+    }
+
+    dispatch(logout());
+    console.log('User logged out');
+    router.replace('/login');
+  };
+
+  const settingMenus = [
+    {
+      key: 1,
+      title: 'Profile Saya',
+      access: '',
+      uri: 'Profile',
+      grpIcon: <Profile size="28" color="#787b83" variant="Bulk" />,
+    },
+    {
+      key: 2,
+      title: 'Keamanan Akun',
+      access: '',
+      uri: 'Keamanan-Akun',
+      grpIcon: <ShieldSecurity size="28" color="#787b83" variant="Bulk" />,
+    },
+    {
+      key: 3,
+      title: 'Notifikasi',
+      access: '',
+      uri: 'notifikasi-screen',
+      grpIcon: <DirectNotification size="28" color="#787b83" variant="Bulk" />,
+    },
+    {
+      key: 4,
+      title: 'Absensi Bulanan',
+      access: '',
+      uri: 'riwayat-absensi-screen',
+      grpIcon: <Calendar2 size="28" color="#787b83" variant="Bulk" />,
+    },
+    {
+      key: 5,
+      title: 'Internal Memo',
+      access: '',
+      uri: 'internal-memo-screen',
+      grpIcon: <Stickynote size="28" color="#787b83" variant="Bulk" />,
+    },
+    {
+      key: 6,
+      title: 'Gagal Kirim',
+      access: '',
+      uri: 'unsending-screen',
+      grpIcon: <Convert size="28" color="#787b83" variant="Bulk" />,
+    },
+    {
+      key: 7,
+      title: 'Reset UUID Devices',
+      access: ['developer', 'administrator', 'hrd'],
+      uri: 'Reset-User-Devices',
+      grpIcon: <MonitorMobbile size="28" color="#787b83" variant="Bulk" />,
+    },
+    {
+      key: 8,
+      title: 'Ubah Lingkup Kerja',
+      access: '',
+      uri: 'lingkup-kerja-screen',
+      grpIcon: <House2 size="28" color="#787b83" variant="Bulk" />,
+    },
+    {
+      key: 9,
+      title: 'Izin Aplikasi',
+      access: '',
+      uri: 'izin-aplikasi-screen',
+      grpIcon: <Civic size="28" color="#787b83" variant="Bulk" />,
+    },
+  ];
 
   return (
     <AppScreen>
-      <HeaderScreen title="Settings" onThemes />
-      <ScrollView flex={1}>
-        <VStack flex={1} p={4} space={4}>
-          <Center mt={4}>
-            <Text fontSize="md" fontFamily="Poppins-Light" mb={4}>
-              Pengaturan Aplikasi
-            </Text>
-
-            <VStack space={3} w="full" maxW="300px">
-              <Button
-                onPress={toggleColorMode}
-                colorScheme="secondary"
-              >
-                Toggle {isDark ? 'Light' : 'Dark'} Mode
-              </Button>
-
-              <Text fontSize="sm" fontFamily="Quicksand-Bold" mt={4} mb={2}>
-                Test Alerts:
-              </Text>
-
-              <Button
-                onPress={() => testAlert('success')}
-                colorScheme="success"
-                size="sm"
-              >
-                Success Alert
-              </Button>
-
-              <Button
-                onPress={() => testAlert('error')}
-                colorScheme="error"
-                size="sm"
-              >
-                Error Alert
-              </Button>
-
-              <Button
-                onPress={() => testAlert('warning')}
-                colorScheme="warning"
-                size="sm"
-              >
-                Warning Alert
-              </Button>
-
-              <Button
-                onPress={() => testAlert('info')}
-                colorScheme="info"
-                size="sm"
-              >
-                Info Alert
-              </Button>
-            </VStack>
-          </Center>
+      <VStack h="full">
+        <HeaderScreen title="Pengaturan & Informasi" onThemes onNotification />
+        <Divider />
+        <VStack flex={1}>
+          {settingMenus.map(item => {
+            return (
+              <TouchableOpacity onPress={() => actionHandle(item)} key={item.key}>
+                <HStack
+                  p={3}
+                  alignItems="center"
+                  justifyContent="space-between"
+                  borderBottomWidth={1}
+                  borderBottomColor={lineColor}
+                >
+                  <HStack space={2} alignItems="center">
+                    {item.grpIcon}
+                    <Text fontWeight={500} fontFamily="Poppins-SemiBold" color={textColor}>
+                      {item.title}
+                    </Text>
+                  </HStack>
+                  <ArrowRight2 size="12" color="#d9e3f0" variant="Outline" />
+                </HStack>
+              </TouchableOpacity>
+            );
+          })}
         </VStack>
-      </ScrollView>
+        <Center mb={5}>
+          <Text fontWeight={300} fontFamily="Poppins-Regular" color={textColor}>
+            Mobile Attendances Aplication
+          </Text>
+          <Text fontWeight={700} fontFamily="Poppins-Regular" color={textColor}>
+            Makkuraga Group
+          </Text>
+          <Text fontFamily="Poppins-Regular" color={mode === 'dark' ? '#9a8f90' : '#b31e02'}>
+            version {Constants.expoConfig?.version || '1.0.0'}
+          </Text>
+        </Center>
+        <VStack>
+          <TouchableOpacity onPress={onUserLogout}>
+            <HStack
+              p={3}
+              bg="error.500"
+              alignItems="center"
+              justifyContent="space-between"
+              borderBottomWidth={1}
+              borderBottomColor={lineColor}
+            >
+              <HStack space={2} alignItems="center">
+                <Logout size="28" color="#FFF" variant="Bulk" />
+                <Text fontWeight={500} fontFamily="Poppins-SemiBold" color="#FFF">
+                  Keluar
+                </Text>
+              </HStack>
+              <ArrowRight2 size="12" color="#FFF" variant="Outline" />
+            </HStack>
+          </TouchableOpacity>
+        </VStack>
+      </VStack>
     </AppScreen>
   );
 }

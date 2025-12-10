@@ -1,68 +1,82 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { StorageService } from '../storage';
 
-class ApiClient {
-  constructor() {
-    this.instance = axios.create({
-      baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api',
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://apimkglocal.makkuragatama.id/api';
 
-    this.setupInterceptors();
-  }
+const createApiClient = (baseURL) => {
+  const client = axios.create({
+    baseURL,
+    timeout: 30000,
+    headers: {
+      'Content-type': 'application/json',
+      'Cache-Control': 'no-cache',
+      appsversion: '1.0.1',
+    },
+  });
 
-  setupInterceptors() {
-    this.instance.interceptors.request.use(
-      async (config) => {
-        const token = await StorageService.getToken('token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
+  client.interceptors.request.use(
+    async config => {
+      const uuid = await AsyncStorage.getItem('@DEVICESID');
+      if (uuid) {
+        config.headers['X-UUID-DEVICE'] = uuid;
       }
-    );
 
-    this.instance.interceptors.response.use(
-      (response) => {
-        return response;
-      },
-      async (error) => {
-        if (error.response?.status === 401) {
-          await StorageService.removeToken('token');
-          await StorageService.removeData('user');
-        }
-
-        return Promise.reject(error);
+      const token = await AsyncStorage.getItem('@token');
+      if (token) {
+        config.headers.Authorization = 'Bearer ' + token;
       }
-    );
-  }
 
-  get(url, config) {
-    return this.instance.get(url, config);
-  }
+      console.log('🌐 API REQUEST:', {
+        method: config.method?.toUpperCase(),
+        url: config.baseURL + config.url,
+        headers: config.headers,
+        hasData: !!config.data,
+      });
 
-  post(url, data, config) {
-    return this.instance.post(url, data, config);
-  }
+      return config;
+    },
+    error => {
+      console.error('❌ Request Interceptor Error:', error);
+      return Promise.reject(error);
+    }
+  );
 
-  put(url, data, config) {
-    return this.instance.put(url, data, config);
-  }
+  client.interceptors.response.use(
+    response => {
+      console.log('✅ API RESPONSE:', {
+        status: response.status,
+        url: response.config.url,
+        hasData: !!response.data,
+      });
+      return response;
+    },
+    error => {
+      console.error('❌ API RESPONSE ERROR:', {
+        message: error.message,
+        code: error.code,
+        status: error.response?.status,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+      });
 
-  patch(url, data, config) {
-    return this.instance.patch(url, data, config);
-  }
+      if (error.code === 'ECONNABORTED') {
+        console.error('⏱️  Request Timeout (30s)');
+      } else if (error.message === 'Network Error') {
+        console.error('🔴 Network Error - Possible issues:');
+        console.error('1. Server not accessible');
+        console.error('2. No internet connection');
+        console.error('3. CORS issue');
+        console.error('4. SSL certificate issue');
+        console.error('Server URL:', error.config?.baseURL);
+      }
 
-  delete(url, config) {
-    return this.instance.delete(url, config);
-  }
-}
+      return Promise.reject(error);
+    }
+  );
 
-export const apiClient = new ApiClient();
+  return client;
+};
+
+const apiClient = createApiClient(API_URL);
+
 export default apiClient;

@@ -1,0 +1,4 @@
+This is a backup marker file created during MapView debugging.
+Original file: ChecklogScreen.js
+Issue: Force close when opening MapView
+Date: 2025-11-18

@@ -26,25 +26,30 @@ let PROVIDER_GOOGLE = null;
 let hasMapSupport = false;
 let mapLoadError = null;
 
-try {
-  const RNMaps = require('react-native-maps');
-  MapView = RNMaps.default || RNMaps;
-  Circle = RNMaps.Circle;
-  Marker = RNMaps.Marker;
-  PROVIDER_GOOGLE = RNMaps.PROVIDER_GOOGLE;
-  
-  if (MapView && Circle && Marker) {
-    hasMapSupport = true;
-    console.log('✅ Maps loaded successfully');
-  } else {
-    console.warn('⚠️ Maps components incomplete');
-    mapLoadError = 'Maps components not properly loaded';
+// Add delay for Android to prevent crash during map loading
+const loadMaps = () => {
+  try {
+    const RNMaps = require('react-native-maps');
+    MapView = RNMaps.default || RNMaps;
+    Circle = RNMaps.Circle;
+    Marker = RNMaps.Marker;
+    PROVIDER_GOOGLE = RNMaps.PROVIDER_GOOGLE;
+    
+    if (MapView && Circle && Marker) {
+      hasMapSupport = true;
+      console.log('✅ Maps loaded successfully');
+    } else {
+      console.warn('⚠️ Maps components incomplete');
+      mapLoadError = 'Maps components not properly loaded';
+    }
+  } catch (error) {
+    console.error('❌ Maps failed to load:', error.message);
+    mapLoadError = error.message;
+    hasMapSupport = false;
   }
-} catch (error) {
-  console.error('❌ Maps failed to load:', error.message);
-  mapLoadError = error.message;
-  hasMapSupport = false;
-}
+};
+
+// Map module will be loaded after mount via useEffect
 
 const lokasiAbsensi = lokasiAbsenData.RECORDS.map(item => ({
   site_id: parseInt(item.id),
@@ -89,12 +94,53 @@ function ChecklogScreen() {
 
   useEffect(() => {
     console.log('Mounting ChecklogScreen...');
-    try {
-      getLocation();
-      getDataInitial();
-    } catch (error) {
-      console.error('Mount error:', error);
-    }
+    let isMounted = true;
+
+    // Load react-native-maps after mount to avoid SSR/require timing issues
+    const loadMapModule = () => {
+      try {
+        const RNMaps = require('react-native-maps');
+        MapView = RNMaps.default || RNMaps;
+        Circle = RNMaps.Circle;
+        Marker = RNMaps.Marker;
+        PROVIDER_GOOGLE = RNMaps.PROVIDER_GOOGLE;
+        if (MapView && Circle && Marker) {
+          hasMapSupport = true;
+        }
+      } catch (e) {
+        console.error('Load map module failed:', e.message);
+      }
+    };
+
+    const initializeData = async () => {
+      try {
+        if (isMounted) {
+          loadMapModule();
+          await getDataInitial();
+          setTimeout(() => {
+            if (isMounted) getLocation();
+          }, 800);
+        }
+      } catch (error) {
+        console.error('Mount error:', error);
+        if (isMounted) {
+          dispatch(
+            applyAlert({
+              show: true,
+              status: 'error',
+              title: 'Initialization Error',
+              subtitle: 'Failed to initialize attendance screen. Please restart the app.',
+            })
+          );
+        }
+      }
+    };
+
+    initializeData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const getLocation = async () => {
@@ -103,8 +149,13 @@ function ChecklogScreen() {
     try {
       console.log('📍 Requesting location permission and position...');
       
+      // Add delay to prevent immediate crash on Android
+      if (Platform.OS === 'android') {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Location timeout after 15s')), 15000)
+        setTimeout(() => reject(new Error('Location timeout after 20s')), 20000)
       );
       
       const locationPromise = LocationService.getCurrentLocation();
@@ -443,12 +494,34 @@ function ChecklogScreen() {
         <VStack flex={1}>
           {myLocation && hasMapSupport && MapView && location?.latitude && location?.longitude ? (
             <MapView
+              provider={PROVIDER_GOOGLE}
               style={{ flex: 1 }}
               initialRegion={{
                 latitude: location.latitude,
                 longitude: location.longitude,
                 latitudeDelta: 0.005,
                 longitudeDelta: 0.005,
+              }}
+              showsUserLocation
+              showsMyLocationButton
+              moveOnMarkerPress={false}
+              toolbarEnabled={false}
+            
+              // Add error handling for MapView
+              onError={(error) => {
+                console.error('MapView error:', error);
+                dispatch(
+                  applyAlert({
+                    show: true,
+                    status: 'error',
+                    title: 'Map Error',
+                    subtitle: 'Failed to load map. Please try again.',
+                  })
+                );
+              }}
+              // Add loading state for MapView
+              onMapReady={() => {
+                console.log('✅ MapView is ready');
               }}
             >
                 {checklogPin?.map(m => {

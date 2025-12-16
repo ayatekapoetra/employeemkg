@@ -20,11 +20,12 @@ export const getPemasok = createAsyncThunk(
       console.log('Fetching pemasok from API...');
       const resp = await apiClient.get(API_ENDPOINTS.PEMASOK.LIST);
       
-      if (resp.data?.data) {
-        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(resp.data.data));
+       const rows = resp.data?.rows ?? resp.data?.data ?? [];
+      if (Array.isArray(rows)) {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(rows));
       }
       
-      return resp.data;
+      return { data: rows };
     } catch (error) {
       console.error('Error fetching pemasok:', error);
       const cached = await AsyncStorage.getItem(CACHE_KEY);

@@ -20,7 +20,7 @@ import { getKaryawan } from '../src/store/slices/karyawanSlice';
 import { getPemasok } from '../src/store/slices/pemasokSlice';
 import { getPenyewa } from '../src/store/slices/penyewaSlice';
 import { getShift } from '../src/store/slices/shiftSlice';
-import { getSysOption } from '../src/store/slices/sysOptionSlice';
+
 
 // Polyfill for BackHandler removeEventListener (deprecated in RN 0.65+)
 if (BackHandler && !BackHandler.removeEventListener) {
@@ -47,7 +47,6 @@ function AppContent() {
           dispatch(getPemasok()),
           dispatch(getPenyewa()),
           dispatch(getShift()),
-          dispatch(getSysOption()),
         ]);
         console.log('✅ Master data loaded successfully');
       } catch (error) {

@@ -65,6 +65,7 @@ export const login = createAsyncThunk(
       const response = await apiClient.post(API_ENDPOINTS.AUTH.LOGIN_MOBILE, credentials);
 
       console.log('Login response:', JSON.stringify(response.data, null, 2));
+      console.log('------------------', API_ENDPOINTS.AUTH.LOGIN_MOBILE, credentials);
       
       if (response?.data?.diagnostic?.error) {
         const errorMsg = response.data.diagnostic.message || 'Login gagal';

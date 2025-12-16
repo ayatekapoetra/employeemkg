@@ -18,13 +18,14 @@ export const getGudang = createAsyncThunk(
       }
 
       console.log('Fetching gudang from API...');
-      const resp = await apiClient.get(API_ENDPOINTS.GUDANG.LIST);
+      const resp = await apiClient.get('/master/gudang/list');
       
-      if (resp.data?.data) {
-        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(resp.data.data));
+       const rows = resp.data?.rows ?? resp.data?.data ?? [];
+      if (Array.isArray(rows)) {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(rows));
       }
       
-      return resp.data;
+      return { data: rows };
     } catch (error) {
       console.error('Error fetching gudang:', error);
       const cached = await AsyncStorage.getItem(CACHE_KEY);

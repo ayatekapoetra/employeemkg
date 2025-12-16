@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TouchableOpacity } from 'react-native';
-import { VStack, Text, HStack, Button, Switch } from 'native-base';
+import { VStack, Text, HStack, Button } from 'native-base';
 import { useSelector } from 'react-redux';
 import { CalendarSearch, CalendarTick, UserSearch } from 'iconsax-react-native';
 import moment from 'moment';
@@ -94,37 +94,7 @@ export default function FilterAbsensi({ onApplyFilter, setFilter, qstring, setQs
           title="Hingga Tanggal"
         />
 
-        <VStack mt={2} h="75px" borderBottomWidth={0.5} borderBottomColor={lineColor}>
-          <Text fontFamily="Poppins-Regular" color={textColor}>
-            Status Verify :
-          </Text>
-          <HStack py={2} space={2} alignItems="center">
-            <Switch
-              size="sm"
-              onToggle={() => setQstring({ ...qstring, verify_sts: qstring.verify_sts ? '' : 'A' })}
-              isChecked={qstring.verify_sts ? true : false}
-            />
-            <Text fontSize={20} fontFamily="Poppins-Bold" color={subTextColor}>
-              {qstring.verify_sts ? 'Verified' : 'Waiting Verified'}
-            </Text>
-          </HStack>
-        </VStack>
 
-        <VStack mt={2} h="75px" borderBottomWidth={0.5} borderBottomColor={lineColor}>
-          <Text fontFamily="Poppins-Regular" color={textColor}>
-            Status Approval :
-          </Text>
-          <HStack py={2} space={2} alignItems="center">
-            <Switch
-              size="sm"
-              onToggle={() => setQstring({ ...qstring, approve_sts: qstring.approve_sts ? '' : 'A' })}
-              isChecked={qstring.approve_sts ? true : false}
-            />
-            <Text fontSize={20} fontFamily="Poppins-Bold" color={subTextColor}>
-              {qstring.approve_sts ? 'Approved' : 'Waiting Approved'}
-            </Text>
-          </HStack>
-        </VStack>
       </VStack>
 
       <HStack space={2} mt={3}>

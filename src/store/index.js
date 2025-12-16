@@ -19,7 +19,7 @@ import kegiatanPitReducer from './slices/kegiatanPitSlice';
 import shiftReducer from './slices/shiftSlice';
 import pemasokReducer from './slices/pemasokSlice';
 import barangRackReducer from './slices/barangRackSlice';
-import sysOptionReducer from './slices/sysOptionSlice';
+
 import tugasReducer from './slices/tugasSlice';
 import pengajuanReducer from './slices/pengajuanSlice';
 
@@ -45,7 +45,6 @@ const store = configureStore({
     shift: shiftReducer,
     pemasok: pemasokReducer,
     barangrack: barangRackReducer,
-    sysoption: sysOptionReducer,
     tugas: tugasReducer,
     datapengajuan: pengajuanReducer,
   },

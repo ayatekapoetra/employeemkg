@@ -23,7 +23,7 @@ export const API_ENDPOINTS = {
   },
 
   ATTENDANCE: {
-    DAILY: 'mobile/attendance/daily',
+    DAILY: '/attendances/daily',
     MONTHLY: 'mobile/attendance/monthly',
     SCORE_CHART: 'absensi-score-chart',
     MANUAL: 'mobile/attendance/manual',
@@ -37,9 +37,9 @@ export const API_ENDPOINTS = {
   },
 
   KARYAWAN: {
-    LIST: 'master/karyawan',
-    OPRDRV: 'master/karyawan/oprdrv',
-    DETAIL: id => `master/karyawan/${id}`,
+    LIST: '/master/karyawan',
+    OPRDRV: '/master/karyawan/oprdrv',
+    DETAIL: id => `/master/karyawan/${id}`,
   },
 
   EQUIPMENT: {
@@ -88,7 +88,7 @@ export const API_ENDPOINTS = {
 
   GUDANG: {
     LIST: 'master/gudang/list',
-    DETAIL: id => `gudang/${id}`,
+    DETAIL: id => `master/gudang/${id}`,
   },
 
   BARANG: {
@@ -105,8 +105,7 @@ export const API_ENDPOINTS = {
   },
 
   PEMASOK: {
-    LIST: 'master/pemasok/list',
-    DETAIL: id => `master/pemasok/${id}`,
+    LIST: '/master/pemasok/list',
   },
 
   LOKASI_PIT: {
@@ -143,9 +142,7 @@ export const API_ENDPOINTS = {
     DETAIL: id => `rack-barang/${id}`,
   },
 
-  SYSTEM: {
-    OPTIONS: 'sys-option',
-  },
+
 
   PENGAJUAN: {
     LIST: 'pengajuan-dana',

@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://apimkglocal.makkuragatama.id/api';
+const API_URL = (process.env.EXPO_PUBLIC_API_URL || 'https://apinext.makkuragatama.id/api').replace(/\/?$/, '/') ;
 
 const createApiClient = (baseURL) => {
   const client = axios.create({

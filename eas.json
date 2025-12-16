@@ -21,7 +21,8 @@
     },
     "production": {
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle",
+        "credentialsSource": "local"
       },
       "ios": {
         "simulator": false

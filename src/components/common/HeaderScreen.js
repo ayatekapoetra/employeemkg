@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Moon, Notification, Sun1 } from 'iconsax-react-native';
+import { ArrowLeft, Moon, Notification, Sun1, Filter } from 'iconsax-react-native';
 import { HStack, IconButton, StatusBar, Text } from 'native-base';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleTheme } from '../../store/slices/themeSlice';
@@ -9,6 +9,7 @@ const HeaderScreen = ({
   onBack, 
   onThemes = false, 
   onNotification = false,
+  onFilter,
   showBack = false 
 }) => {
   const dispatch = useDispatch();
@@ -73,6 +74,18 @@ const HeaderScreen = ({
                 )
               }
               onPress={handleToggleTheme}
+            />
+          )}
+          {onFilter && (
+            <IconButton
+              icon={
+                <Filter
+                  size={24}
+                  variant="Bold"
+                  color={isDark ? '#F5F5F5' : '#2f313e'}
+                />
+              }
+              onPress={onFilter}
             />
           )}
           {onNotification && (

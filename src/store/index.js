@@ -22,6 +22,8 @@ import barangRackReducer from './slices/barangRackSlice';
 
 import tugasReducer from './slices/tugasSlice';
 import pengajuanReducer from './slices/pengajuanSlice';
+import koordinatChecklogReducer from './slices/koordinatChecklogSlice';
+import downloadReducer from './slices/downloadSlice';
 
 const isDevelopment = __DEV__;
 
@@ -47,6 +49,8 @@ const store = configureStore({
     barangrack: barangRackReducer,
     tugas: tugasReducer,
     datapengajuan: pengajuanReducer,
+    koordinatChecklog: koordinatChecklogReducer,
+    download: downloadReducer,
   },
   middleware: (getDefaultMiddleware) => {
     const middleware = getDefaultMiddleware({

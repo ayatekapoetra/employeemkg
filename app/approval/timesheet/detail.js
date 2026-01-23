@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { VStack, HStack, ScrollView, Text, Pressable, Spinner, Center, useToast, Divider } from 'native-base';
+import { VStack, HStack, ScrollView, Text, Pressable, Center, useToast, Divider } from 'native-base';
+import { Spinner } from 'native-base';
 import { useSelector } from 'react-redux';
-import { AppScreen, HeaderScreen } from '../../../src/components/common';
+import { AppScreen, HeaderScreen, LoadingHauler } from '../../../src/components/common';
 import { COLORS } from '../../../src/constants/colors';
 import { 
   Calendar, 
@@ -38,7 +39,7 @@ export default function TimesheetDetail() {
   const params = useLocalSearchParams();
   const mode = useSelector(state => state.themes)?.value || 'light';
   const { user } = useSelector(state => state.auth);
-  
+
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [timesheet, setTimesheet] = useState(null);
@@ -62,20 +63,20 @@ export default function TimesheetDetail() {
     try {
       setLoading(true);
       console.log('🔍 Fetching timesheet detail, ID:', params.id);
-      
+
       const response = await apiClient.get(API_ENDPOINTS.TIMESHEET.DETAIL(params.id));
-      
+
       // Data is directly in response.data.rows (not nested)
       const data = response.data?.rows || response.data?.data || response.data;
 
       console.log('DATA----', data);
-      
-      
+
+
       if (!data || !data.id) {
         console.error('❌ Invalid data structure - no ID found');
         throw new Error('Data timesheet tidak valid');
       }
-      
+
       setTimesheet(data);
     } catch (error) {
       console.error('❌ Error fetching timesheet detail:', error);
@@ -100,7 +101,7 @@ export default function TimesheetDetail() {
       setActionLoading(true);
       setApproveModalVisible(false);
       console.log('✅ Approving timesheet:', params.id);
-      
+
       // Backend doesn't require body - it gets karyawan from authenticated user
       await apiClient.put(API_ENDPOINTS.TIMESHEET.APPROVE(params.id));
 
@@ -133,7 +134,7 @@ export default function TimesheetDetail() {
       setActionLoading(true);
       setRejectModalVisible(false);
       console.log('❌ Rejecting timesheet:', params.id);
-      
+
       // Backend doesn't require body - it gets karyawan from authenticated user
       await apiClient.put(API_ENDPOINTS.TIMESHEET.REJECT(params.id));
 
@@ -162,7 +163,7 @@ export default function TimesheetDetail() {
     if (timesheet?.durasi) {
       return timesheet.durasi;
     }
-    
+
     // Fallback to calculation
     if (!timesheet?.starttime || !timesheet?.endtime) return '0.0';
     const start = moment(timesheet.starttime);
@@ -170,13 +171,13 @@ export default function TimesheetDetail() {
     const duration = moment.duration(end.diff(start));
     return duration.asHours().toFixed(1);
   };
-  
+
   const getActivityDuration = () => {
     // Calculate total duration from all activities
     if (!timesheet?.kegiatan || timesheet.kegiatan.length === 0) {
       return calculateDuration();
     }
-    
+
     let totalHours = 0;
     timesheet.kegiatan.forEach(item => {
       // Use timetot if available (pre-calculated in hours)
@@ -190,7 +191,7 @@ export default function TimesheetDetail() {
         totalHours += diff.asHours();
       }
     });
-    
+
     return totalHours > 0 ? totalHours.toFixed(1) : calculateDuration();
   };
 
@@ -276,11 +277,11 @@ export default function TimesheetDetail() {
     const timeIn = item.starttime;
     const timeOut = item.endtime;
     const hasTime = timeIn && timeOut;
-    
+
     // Parse as full datetime, then format to HH:mm
     const formattedTimeIn = hasTime ? moment(timeIn).format('HH:mm') : '-';
     const formattedTimeOut = hasTime ? moment(timeOut).format('HH:mm') : '-';
-    
+
     // Calculate duration
     let duration = '-';
     if (item.timetot) {
@@ -294,7 +295,7 @@ export default function TimesheetDetail() {
       const hours = diff.asHours();
       duration = `${hours.toFixed(2)} jam`;
     }
-    
+
     // SMU/HM values - ensure they're numbers
     const smuStart = Number(item.smustart) || 0;
     const smuFinish = Number(item.smufinish) || 0;
@@ -377,7 +378,7 @@ export default function TimesheetDetail() {
 
         {/* Time Frame & SMU/HM Info */}
         <Divider bg={cardBorder} />
-        
+
         {/* Time Information */}
         <VStack space={2}>
           <HStack justifyContent="space-between" alignItems="center">
@@ -417,7 +418,7 @@ export default function TimesheetDetail() {
           </HStack>
         </VStack>
 
-        {/* SMU/HM Information */}
+        {/* SMU/HM Information - Only show HM/KM values if they exist */}
         {(smuStart > 0 || smuFinish > 0) && (
           <>
             <Divider bg={cardBorder} />
@@ -457,32 +458,33 @@ export default function TimesheetDetail() {
                   {usedSmu.toFixed(2)} {timesheet?.equipment?.kategori === 'HE' ? 'HM' : 'KM'}
                 </Text>
               </HStack>
-
-              {/* Seq and Ritase - Vertical Layout */}
-              <HStack space={3} justifyContent="space-around" alignItems="center">
-                {/* Sequence */}
-                <VStack alignItems="center" flex={1} bg={mode === 'dark' ? '#1e293b' : '#f1f5f9'} py={2} rounded="lg">
-                  <Text fontSize="xs" fontFamily="Poppins-Regular" color={subtitleColor}>
-                    Sequence
-                  </Text>
-                  <Text fontSize="lg" fontFamily="Quicksand-Bold" color={mode === 'dark' ? '#60a5fa' : '#3b82f6'}>
-                    #{item.seq || index + 1}
-                  </Text>
-                </VStack>
-
-                {/* Ritase */}
-                <VStack alignItems="center" flex={1} bg={mode === 'dark' ? '#1e293b' : '#f1f5f9'} py={2} rounded="lg">
-                  <Text fontSize="xs" fontFamily="Poppins-Regular" color={subtitleColor}>
-                    Ritase
-                  </Text>
-                  <Text fontSize="lg" fontFamily="Quicksand-Bold" color={mode === 'dark' ? '#8b5cf6' : '#7c3aed'}>
-                    {item.ritase || index + 1}
-                  </Text>
-                </VStack>
-              </HStack>
             </VStack>
           </>
         )}
+
+        {/* Seq and Ritase - Always show regardless of SMU values */}
+        <Divider bg={cardBorder} />
+        <HStack space={3} justifyContent="space-around" alignItems="center">
+          {/* Sequence */}
+          <VStack alignItems="center" flex={1} bg={mode === 'dark' ? '#1e293b' : '#f1f5f9'} py={2} rounded="lg">
+            <Text fontSize="xs" fontFamily="Poppins-Regular" color={subtitleColor}>
+              Sequence
+            </Text>
+            <Text fontSize="lg" fontFamily="Quicksand-Bold" color={mode === 'dark' ? '#60a5fa' : '#3b82f6'}>
+              #{item.seq || index + 1}
+            </Text>
+          </VStack>
+
+          {/* Ritase */}
+          <VStack alignItems="center" flex={1} bg={mode === 'dark' ? '#1e293b' : '#f1f5f9'} py={2} rounded="lg">
+            <Text fontSize="xs" fontFamily="Poppins-Regular" color={subtitleColor}>
+              Ritase
+            </Text>
+            <Text fontSize="lg" fontFamily="Quicksand-Bold" color={mode === 'dark' ? '#8b5cf6' : '#7c3aed'}>
+              {item.ritase || index + 1}
+            </Text>
+          </VStack>
+        </HStack>
 
         {/* Additional Info */}
         {item.keterangan && (
@@ -511,10 +513,11 @@ export default function TimesheetDetail() {
           onThemes={true}
         />
         <Center flex={1}>
-          <Spinner size="lg" color={mode === 'dark' ? '#60a5fa' : '#3b82f6'} />
-          <Text mt={4} fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
-            Memuat detail timesheet...
-          </Text>
+          <LoadingHauler
+            message="Memuat detail timesheet..."
+            subMessage="Mengambil data lengkap timesheet"
+            type="default"
+          />
         </Center>
       </AppScreen>
     );
@@ -650,7 +653,7 @@ export default function TimesheetDetail() {
             space={3}
           >
             <SectionHeader title="Informasi Detail" icon={DocumentText} />
-            
+
             <VStack space={2}>
               <HStack justifyContent="space-between">
                 <Text fontSize="sm" fontFamily="Poppins-Regular" color={subtitleColor}>
@@ -745,7 +748,7 @@ export default function TimesheetDetail() {
                   </Text>
                 </HStack>
               )}
-              
+
               {(timesheet?.refuel_liter || timesheet?.bbm) && (
                 <HStack justifyContent="space-between">
                   <Text fontSize="sm" fontFamily="Poppins-Regular" color={subtitleColor}>

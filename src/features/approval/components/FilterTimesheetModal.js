@@ -412,9 +412,10 @@ const OprDrvBottomSheet = ({ visible, onClose, onSelect, mode }) => {
   const filteredOprDrv = useMemo(() => {
     if (!searchQuery) return oprdrvList;
     const searchLower = searchQuery.toLowerCase();
-    return oprdrvList.filter(item => 
+    return oprdrvList.filter(item =>
       (item.nama || '').toLowerCase().includes(searchLower) ||
-      (item.section?.nama || '').toLowerCase().includes(searchLower)
+      (item.section?.nama || '').toLowerCase().includes(searchLower) ||
+      (item.area?.nama || '').toLowerCase().includes(searchLower)
     );
   }, [oprdrvList, searchQuery]);
 
@@ -426,8 +427,11 @@ const OprDrvBottomSheet = ({ visible, onClose, onSelect, mode }) => {
 
   const renderItem = useCallback(({ item }) => {
     const section = item.section?.nama || '';
+    const area = item.area || '';
+    const noktp = item.ktp || '';
     const role = item.driver === 'Y' ? 'Driver' : 'Operator';
     
+
     return (
       <TouchableOpacity
         onPress={() => handleSelect(item)}
@@ -442,12 +446,22 @@ const OprDrvBottomSheet = ({ visible, onClose, onSelect, mode }) => {
         }}
       >
         <VStack space={0.5}>
-          <Text fontSize="sm" fontFamily="Quicksand-Bold" color={textColor}>
+          <Text fontSize="md" fontFamily="Quicksand-Bold" color={textColor}>
             {item.nama || '[No Name]'}
           </Text>
-          <Text fontSize="xs" fontFamily="Poppins-Regular" color={labelColor}>
-            {section ? `${section} - ${role}` : role}
+          <Text fontSize="xs" fontFamily="Poppins-Medium" color={mode === 'dark' ? '#60a5fa' : '#2563eb'}>
+            {noktp}
           </Text>
+          <HStack justifyContent="space-between" alignItems="center" flex={1}>
+            <Text fontSize="xs" fontFamily="Poppins-Regular" color={labelColor} flex={1}>
+              {section ? `${section} - ${role}` : role}
+            </Text>
+            {area ? (
+              <Text fontSize="xs" fontFamily="Poppins-Medium" color={mode === 'dark' ? '#60a5fa' : '#2563eb'} ml={2}>
+                {area}
+              </Text>
+            ) : null}
+          </HStack>
         </VStack>
       </TouchableOpacity>
     );
@@ -596,19 +610,34 @@ const FilterTimesheetModal = ({
   };
 
   const handlePenyewaSelect = (id) => {
+    console.log('🏢 Penyewa Selected - ID:', id);
+    const selected = penyewaData.find(p => p.id.toString() === id.toString());
+    console.log('🏢 Selected Penyewa:', selected);
     setTempFilter({ ...tempFilter, penyewa_id: id });
   };
 
   const handleEquipmentSelect = (id) => {
+    console.log('🚜 Equipment Selected - ID:', id);
+    const selected = equipmentData.find(e => e.id.toString() === id.toString());
+    console.log('🚜 Selected Equipment:', selected);
     setTempFilter({ ...tempFilter, equipment_id: id });
   };
 
   const handleShiftSelect = (id) => {
+    console.log('⏰ Shift Selected - ID:', id);
+    const selected = shiftData.find(s => s.id.toString() === id.toString());
+    console.log('⏰ Selected Shift:', selected);
     setTempFilter({ ...tempFilter, shift_id: id });
   };
 
   const handleKaryawanSelect = (id) => {
+    console.log('👤 Operator/Driver Selected - ID:', id);
+    console.log('👤 ID Type:', typeof id);
+    console.log('👤 All Available Operators:', oprdrvData.map(o => ({ id: o.id, nama: o.nama, idType: typeof o.id })));
+    const selected = oprdrvData.find(k => k.id.toString() === id.toString());
+    console.log('👤 Selected Operator Details:', selected);
     setTempFilter({ ...tempFilter, karyawan_id: id });
+    console.log('👤 Updated tempFilter.karyawan_id:', id);
   };
 
   return (

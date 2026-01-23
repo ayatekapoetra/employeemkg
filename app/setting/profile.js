@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TouchableOpacity, ScrollView, RefreshControl, Image } from 'react-native';
-import { VStack, HStack, Text, Center, Avatar, Badge, Divider, Spinner } from 'native-base';
-import { AppScreen } from '../../src/components/common';
+import { VStack, HStack, Text, Center, Avatar, Badge, Divider } from 'native-base';
+import { AppScreen, LoadingHauler } from '../../src/components/common';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'expo-router';
 import { 
@@ -37,7 +37,7 @@ export default function ProfileScreen() {
   const mode = useSelector(state => state.themes)?.value || 'light';
   const userAuth = useSelector(state => state.auth)?.user || {};
   const karyawan = useSelector(state => state.auth)?.karyawan || {};
-  
+
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [profileData, setProfileData] = useState(null);
@@ -55,7 +55,7 @@ export default function ProfileScreen() {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      
+
       // Combine data from userAuth and karyawan
       const combinedData = {
         // Data dari karyawan (prioritas utama)
@@ -66,44 +66,44 @@ export default function ProfileScreen() {
         ktp: karyawan?.ktp || userAuth?.ktp || '-', // KTP = Nomor Induk Kependudukan
         email: karyawan?.email || userAuth?.email || '-',
         phone: karyawan?.phone || userAuth?.karyawan?.phone || userAuth?.phone || '-',
-        
+
         // Data pekerjaan
         section: karyawan?.section || userAuth?.karyawan?.section || '-',
         jabatan: karyawan?.jabatan || userAuth?.jabatan || '-',
         divisi: karyawan?.divisi || userAuth?.divisi || '-',
-        
+
         // Data lokasi
         cabang_id: karyawan?.cabang_id || userAuth?.karyawan?.cabang_id || userAuth?.cabang_id,
         cabang: karyawan?.cabang?.nama || userAuth?.karyawan?.cabang?.nama || userAuth?.cabang?.nama || '-',
         area: karyawan?.cabang?.area || karyawan?.area || userAuth?.karyawan?.area || userAuth?.area || '-',
         bisnis: karyawan?.bisnis?.nama || userAuth?.bisnis?.nama || '-',
-        
+
         // Data alamat
         alamat: karyawan?.alamat || userAuth?.alamat || '-',
         t4_lahir: karyawan?.t4_lahir || userAuth?.t4_lahir || '-', // Tempat Lahir
         kota: karyawan?.kota || userAuth?.kota || '-',
         provinsi: karyawan?.provinsi || userAuth?.provinsi || '-',
         kode_pos: karyawan?.kode_pos || userAuth?.kode_pos || '-',
-        
+
         // Data tanggal
         tgl_lahir: karyawan?.tgl_lahir || userAuth?.tgl_lahir || null,
         tgl_gabung: karyawan?.tgl_gabung || userAuth?.tgl_gabung || userAuth?.created_at || null, // Join Date
-        
+
         // Data lainnya
         usertype: userAuth?.usertype || 'user',
         status_karyawan: karyawan?.status || 'Aktif',
         jenis_kelamin: karyawan?.jenis_kelamin || userAuth?.jenis_kelamin || '-',
         pendidikan: karyawan?.pendidikan || userAuth?.pendidikan || '-',
-        
+
         // Data bank (jika ada)
         bank_name: karyawan?.bank_name || userAuth?.bank_name || '-',
         bank_account: karyawan?.bank_account || userAuth?.bank_account || '-',
         bank_account_name: karyawan?.bank_account_name || userAuth?.bank_account_name || '-',
-        
+
         // Foto
         foto: karyawan?.foto || userAuth?.foto || null,
       };
-      
+
       console.log('Profile Data:', combinedData);
       setProfileData(combinedData);
     } catch (error) {
@@ -201,10 +201,11 @@ export default function ProfileScreen() {
             </Text>
           </HStack>
           <Center flex={1}>
-            <Spinner size="lg" color={mode === 'dark' ? '#60a5fa' : '#2563eb'} />
-            <Text mt={4} fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
-              Memuat profile...
-            </Text>
+            <LoadingHauler
+              message="Memuat profile..."
+              subMessage="Mengambil data profil karyawan"
+              type="default"
+            />
           </Center>
         </VStack>
       </AppScreen>

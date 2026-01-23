@@ -1,0 +1,290 @@
+import React, { useEffect, useState, useMemo } from 'react';
+import {
+  TouchableOpacity,
+  Image,
+  SectionList,
+  RefreshControl,
+} from 'react-native';
+import { Box, Center, HStack, Text, VStack, Spinner } from 'native-base';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import moment from 'moment';
+import 'moment/locale/id';
+import { useSelector } from 'react-redux';
+import ImageViewing from 'react-native-image-viewing';
+
+import { AppScreen, HeaderScreen } from '../../src/components/common';
+import { COLORS } from '../../src/constants/colors';
+import apiClient from '../../src/services/api/client';
+
+moment.locale('id');
+
+const PHOTO_BASE_URL = 'https://cdn.makkuragatama.id';
+
+// Chip Component for displaying badge
+function Chip({ color, text }) {
+  return (
+    <Box
+      px={2}
+      py={1}
+      borderRadius={6}
+      bg={color}
+    >
+      <Text color="white" fontFamily="Poppins-Medium" fontSize={12}>
+        {text}
+      </Text>
+    </Box>
+  );
+}
+
+// Attendance Card Component
+function AttendanceCard({ item, cardBg, line, onPreview, isDark }) {
+  const textColor = isDark ? COLORS.teks.dark[1] : COLORS.teks.light[1];
+  const subTextColor = isDark ? COLORS.teks.dark[2] : COLORS.teks.light[2];
+
+  const imgIn = item.photo_in
+    ? (item.photo_in.startsWith('http')
+      ? item.photo_in
+      : `${PHOTO_BASE_URL.replace(/\/$/, '')}/${String(item.photo_in).replace(/^\//, '')}`)
+    : '';
+
+  const imgOut = item.photo_out
+    ? (item.photo_out.startsWith('http')
+      ? item.photo_out
+      : `${PHOTO_BASE_URL.replace(/\/$/, '')}/${String(item.photo_out).replace(/^\//, '')}`)
+    : '';
+
+  const dateLabel = (() => {
+    const src = item.checklog_in || item.date_ops;
+    const m = moment(src, [
+      'DD-MM-YYYY HH:mm:ss',
+      'YYYY-MM-DD HH:mm:ss',
+      moment.ISO_8601,
+      'DD/MM/YYYY HH:mm:ss',
+      'DD-MM-YYYY',
+      'YYYY-MM-DD'
+    ], true);
+    return m.isValid() ? m.locale('id').format('dddd, DD MMMM YYYY') : String(src || '');
+  })();
+
+  const timeFmt = (val) => {
+    if (!val) return '??:??';
+    const m = moment(val, [
+      'DD-MM-YYYY HH:mm:ss',
+      'YYYY-MM-DD HH:mm:ss',
+      moment.ISO_8601,
+      'DD/MM/YYYY HH:mm:ss'
+    ], true);
+    return m.isValid() ? m.format('HH:mm') : String(val).split(' ')[1]?.slice(0, 5) || '??:??';
+  };
+
+  return (
+    <Box
+      bg={cardBg}
+      borderWidth={1}
+      borderColor={line}
+      borderRadius={12}
+      p={3}
+      mb={3}
+    >
+      {/* Header: Date & ID */}
+      <HStack justifyContent="space-between" alignItems="center" mb={3}>
+        <Text fontFamily="Quicksand-Bold" fontSize={18} color={textColor}>
+          {dateLabel}
+        </Text>
+        <Text fontFamily="Poppins-Medium" fontSize={12} opacity={0.6} color={subTextColor}>
+          ID#{item.id}
+        </Text>
+      </HStack>
+
+      {/* Content: Photos & Times */}
+      <HStack alignItems="center">
+        {/* Check-in Photo */}
+        <TouchableOpacity onPress={() => imgIn && onPreview(imgIn)}>
+          <Image
+            source={{ uri: imgIn || 'https://cdn.makkuragatama.id/no-image.jpg' }}
+            style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: line }}
+          />
+        </TouchableOpacity>
+
+        {/* Divider */}
+        <Box w={0.5} h={12} bg={line} mx={3} />
+
+        {/* Times */}
+        <VStack flex={1} space={2}>
+          {/* Check-in */}
+          <HStack justifyContent="space-between" alignItems="center">
+            <HStack alignItems="center" space={2}>
+              <MaterialCommunityIcons name="clock-time-four" size={20} color="#16a34a" />
+              <Text fontFamily="Poppins-SemiBold" fontSize={20} color={textColor}>
+                {timeFmt(item.checklog_in)}
+              </Text>
+            </HStack>
+            <Chip color={item.via_in === 'M' ? '#0891b2' : '#7c3aed'} text={item.via_in === 'M' ? 'finger' : 'mobile'} />
+          </HStack>
+
+          {/* Divider */}
+          <Box h={0.5} bg={line} my={1} />
+
+          {/* Check-out */}
+          <HStack justifyContent="space-between" alignItems="center">
+            <HStack alignItems="center" space={2}>
+              <MaterialCommunityIcons name="clock-time-four" size={20} color="#dc2626" />
+              <Text fontFamily="Poppins-SemiBold" fontSize={20} color={textColor}>
+                {timeFmt(item.checklog_out)}
+              </Text>
+            </HStack>
+            <Chip color={item.via_out === 'M' ? '#0891b2' : '#7c3aed'} text={item.via_out === 'M' ? 'finger' : 'mobile'} />
+          </HStack>
+        </VStack>
+
+        {/* Check-out Photo */}
+        <TouchableOpacity onPress={() => imgOut && onPreview(imgOut)}>
+          <Image
+            source={{ uri: imgOut || 'https://cdn.makkuragatama.id/no-image.jpg' }}
+            style={{ width: 56, height: 56, borderRadius: 28, ml:3, backgroundColor: line }}
+          />
+        </TouchableOpacity>
+      </HStack>
+    </Box>
+  );
+}
+
+export default function AttendanceHistoryScreen() {
+  const mode = useSelector(state => state.themes)?.value || 'light';
+  const isDark = mode === 'dark';
+
+  const backgroundColor = isDark ? COLORS.container.dark : COLORS.container.light;
+  const cardBg = isDark ? COLORS.box.dark : COLORS.box.light;
+  const line = isDark ? COLORS.line.dark[1] : COLORS.line.light[1];
+
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState(null);
+
+  // Group rows by date
+  const sections = useMemo(() => {
+    const grouped = rows.reduce((acc, item) => {
+      const date = item.date_ops || '';
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(item);
+      return acc;
+    }, {});
+
+    return Object.keys(grouped)
+      .sort((a, b) => new Date(b) - new Date(a))
+      .map(date => ({
+        title: date,
+        data: grouped[date]
+      }));
+  }, [rows]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      const { data } = await apiClient.get('attendances/daily', {
+        params: {
+          page: 1,
+          limit: 50
+        }
+      });
+
+      const attendanceRows = data?.rows || data?.data || [];
+
+      setRows(attendanceRows);
+
+    } catch (error) {
+      console.error('❌ Error fetching attendance history:', error?.message || error);
+      console.error('❌ Error response:', error?.response?.data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const renderSectionHeader = ({ section: { title } }) => {
+    const m = moment(title, [
+      'DD-MM-YYYY HH:mm:ss',
+      'YYYY-MM-DD HH:mm:ss',
+      moment.ISO_8601,
+      'DD-MM-YYYY',
+      'YYYY-MM-DD'
+    ], true);
+
+    const formattedDate = m.isValid()
+      ? m.locale('id').format('dddd, DD MMMM YYYY')
+      : String(title || '');
+
+    const textColor = isDark ? COLORS.teks.dark[1] : COLORS.teks.light[1];
+
+    return (
+      <Box px={2} py={2} bg={backgroundColor}>
+        <Text fontFamily="Quicksand-Bold" fontSize={16} color={textColor}>
+          {formattedDate}
+        </Text>
+      </Box>
+    );
+  };
+
+  return (
+    <AppScreen>
+      <VStack h="full">
+        <HeaderScreen title="Absensi Bulanan" showBack onThemes onNotification />
+
+        {loading && rows.length === 0 ? (
+          <Center flex={1} bg={backgroundColor}>
+            <Spinner size="lg" color={isDark ? COLORS.ico.dark[4] : COLORS.ico.light[4]} />
+            <Text mt={4} color={isDark ? COLORS.teks.dark[2] : COLORS.teks.light[2]}>
+              Memuat riwayat kehadiran...
+            </Text>
+          </Center>
+        ) : (
+          <SectionList
+            sections={sections}
+            keyExtractor={(item) => String(item.id)}
+            style={{ backgroundColor }}
+            contentContainerStyle={{ backgroundColor, padding: 12, flexGrow: 1 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={loading}
+                onRefresh={fetchData}
+                tintColor={isDark ? '#FAFAFA' : '#1F2937'}
+              />
+            }
+            renderItem={({ item }) => (
+              <TouchableOpacity activeOpacity={0.8}>
+                <AttendanceCard
+                  item={item}
+                  cardBg={cardBg}
+                  line={line}
+                  onPreview={setPreview}
+                  isDark={isDark}
+                />
+              </TouchableOpacity>
+            )}
+            renderSectionHeader={renderSectionHeader}
+            ListEmptyComponent={
+              <Center py={10}>
+                <Text fontSize={16} color={isDark ? COLORS.teks.dark[2] : COLORS.teks.light[2]}>
+                  Tidak ada riwayat kehadiran
+                </Text>
+              </Center>
+            }
+          />
+        )}
+
+        {/* Image Viewer */}
+        <ImageViewing
+          images={preview ? [{ uri: preview }] : []}
+          visible={!!preview}
+          onRequestClose={() => setPreview(null)}
+          doubleTapToZoomEnabled
+          swipeToCloseEnabled
+        />
+      </VStack>
+    </AppScreen>
+  );
+}

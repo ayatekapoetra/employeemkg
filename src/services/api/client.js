@@ -1,12 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import deviceIdGenerator from '../../utils/deviceIdGenerator';
 
 const API_URL = (process.env.EXPO_PUBLIC_API_URL || 'https://apinext.makkuragatama.id/api').replace(/\/?$/, '/') ;
 
 const createApiClient = (baseURL) => {
+  console.log('BASEURL---------------------------------------------', API_URL);
+  console.log('ENDPOINT--------------------------------------------', baseURL);
+  
   const client = axios.create({
     baseURL,
-    timeout: 30000,
+    timeout: 60000, // Increased to 60s for monthly attendance queries
     headers: {
       'Content-type': 'application/json',
       'Cache-Control': 'no-cache',
@@ -16,22 +20,16 @@ const createApiClient = (baseURL) => {
 
   client.interceptors.request.use(
     async config => {
-      const uuid = await AsyncStorage.getItem('@DEVICESID');
-      if (uuid) {
-        config.headers['X-UUID-DEVICE'] = uuid;
+      // Use Enhanced Device ID Generator
+      const deviceId = await deviceIdGenerator.getDeviceId();
+      if (deviceId) {
+        config.headers['X-UUID-DEVICE'] = deviceId;
       }
 
       const token = await AsyncStorage.getItem('@token');
       if (token) {
         config.headers.Authorization = 'Bearer ' + token;
       }
-
-      console.log('🌐 API REQUEST:', {
-        method: config.method?.toUpperCase(),
-        url: config.baseURL + config.url,
-        headers: config.headers,
-        hasData: !!config.data,
-      });
 
       return config;
     },
@@ -60,7 +58,7 @@ const createApiClient = (baseURL) => {
       });
 
       if (error.code === 'ECONNABORTED') {
-        console.error('⏱️  Request Timeout (30s)');
+        console.error('⏱️  Request Timeout (60s)');
       } else if (error.message === 'Network Error') {
         console.error('🔴 Network Error - Possible issues:');
         console.error('1. Server not accessible');

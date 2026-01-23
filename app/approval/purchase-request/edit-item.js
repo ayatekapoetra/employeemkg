@@ -6,7 +6,7 @@ import { Badge, Button, Center, Divider, HStack, ScrollView, Spinner, Text, VSta
 import { useCallback, useMemo } from 'react';
 import { RefreshControl } from 'react-native';
 import { useSelector } from 'react-redux';
-import { AppScreen, HeaderScreen } from '../../../src/components/common';
+import { AppScreen, HeaderScreen, LoadingHauler } from '../../../src/components/common';
 import { COLORS } from '../../../src/constants/colors';
 import BottomSheetModal from './components/BottomSheetModal';
 import ItemInfoCard from './components/ItemInfoCard';
@@ -32,7 +32,7 @@ export default function PurchaseRequestEditItem() {
   console.log('Final UserProfile:', userProfile);
   console.log('UserType:', userProfile?.usertype);
   console.log('=========================');
-  
+
   const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1];
   const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
   const cardBg = mode === 'dark' ? '#2a2c3e' : '#ffffff';
@@ -192,14 +192,11 @@ export default function PurchaseRequestEditItem() {
     return (
       <AppScreen backgroundColor={backgroundColor}>
         <HeaderScreen title="Edit Item" onBack={() => router.back()} />
-        <Center flex={1}>
-          <VStack space={3} alignItems="center">
-            <Spinner size="lg" color={mode === 'dark' ? '#60a5fa' : '#2563eb'} />
-            <Text fontSize="sm" fontFamily="Poppins-Regular" color={subtitleColor}>
-              Memuat data...
-            </Text>
-          </VStack>
-        </Center>
+        <LoadingHauler
+          message="Memuat data..."
+          subMessage="Mengambil data item untuk edit"
+          type="default"
+        />
       </AppScreen>
     );
   }
@@ -207,7 +204,7 @@ export default function PurchaseRequestEditItem() {
   return (
     <AppScreen backgroundColor={backgroundColor}>
       <HeaderScreen title="Edit Item" onBack={() => router.back()} />
-      
+
       <ScrollView
         flex={1}
         showsVerticalScrollIndicator={false}
@@ -220,7 +217,7 @@ export default function PurchaseRequestEditItem() {
         }
       >
         <VStack p={4} space={4} pb={8}>
-          
+
           {/* Item Info Card */}
           <ItemInfoCard
             mode={mode}

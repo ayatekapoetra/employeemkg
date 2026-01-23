@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { SectionList, RefreshControl } from 'react-native';
+import { SectionList, RefreshControl, ScrollView } from 'react-native';
 import { VStack } from 'native-base';
 import { AppScreen, HeaderScreen, LoadingHauler, NoData } from '../../src/components/common';
 import { useSelector } from 'react-redux';
@@ -41,13 +41,20 @@ export default function KehadiranScreen() {
   const getDataFetch = async (params) => {
     try {
       setLoading(true);
-      console.log('Fetching attendance data...', params);
-      const response = await apiClient.get(API_ENDPOINTS.ATTENDANCE.DAILY, { params: { karyawan_id: params.karyawan_id, page: 1, limit: 50 } });
+      
+      const queryParams = {
+        karyawan_id: params.karyawan_id,
+        page: 1,
+        limit: 50,
+        from: params.dateStart,
+        to: params.dateEnd
+      };
+      
+      const response = await apiClient.get(API_ENDPOINTS.ATTENDANCE.DAILY, { params: queryParams });
       const rows = response.data?.rows || response.data?.data || [];
       
       setAttendanceHistory(rows);
     } catch (error) {
-      console.error('Error fetching attendance:', error);
       setAttendanceHistory([]);
     } finally {
       setLoading(false);
@@ -59,17 +66,43 @@ export default function KehadiranScreen() {
   };
 
   const onApplyFilter = async () => {
-    await getDataFetch(filter);
+    const newFilter = {
+      ...filter,
+      karyawan_id: filter.karyawan?.id || user?.karyawan?.id
+    };
+    await getDataFetch(newFilter);
     setFilterAbsensi(!filterAbsensi);
   };
 
   const onRefreshHandle = async () => {
-    await getDataFetch(filter);
+    try {
+      setLoading(true);
+      console.log('Refreshing attendance data...');
+      
+      const queryParams = {
+        karyawan_id: filter.karyawan?.id || user?.karyawan?.id,
+        page: 1,
+        limit: 50,
+        from: filter.dateStart,
+        to: filter.dateEnd
+      };
+      
+      const response = await apiClient.get(API_ENDPOINTS.ATTENDANCE.DAILY, { params: queryParams });
+      const rows = response.data?.rows || response.data?.data || [];
+      
+      setAttendanceHistory(rows);
+    } catch (error) {
+      console.error('Error refreshing attendance data:', error);
+      // Keep existing data on refresh error, don't clear it
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onShowDetails = (item) => {
     console.log('Show details:', item);
   };
+  
 
   if (loading) {
     return (
@@ -96,21 +129,25 @@ export default function KehadiranScreen() {
                 setQstring={setFilter}
               />
             ) : (
-              <>
+              <ScrollView
+                refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefreshHandle} tintColor={mode==='dark' ? '#F5F5F5' : '#2f313e'} />}
+                showsVerticalScrollIndicator={false}
+                style={{ backgroundColor: sectionBg }}
+                contentContainerStyle={{ flexGrow: 1, paddingBottom: 16, backgroundColor: sectionBg }}
+              >
                 {attendanceHistory && attendanceHistory.length > 0 ? (
                   <SectionList
                     sections={sections}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => <ListAbsensi item={item} onPress={onShowDetails} />}
-                    refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefreshHandle} tintColor={mode==='dark' ? '#F5F5F5' : '#2f313e'} />}
-                    showsVerticalScrollIndicator={false}
+                    scrollEnabled={false}
                     style={{ backgroundColor: sectionBg }}
                     contentContainerStyle={{ paddingBottom: 16, backgroundColor: sectionBg }}
                   />
                 ) : (
                   <NoData title="Maaf, data tidak ditemukan" subtitle="Gunakan filter untuk mencari data" />
                 )}
-              </>
+              </ScrollView>
             )}
           </VStack>
         </VStack>

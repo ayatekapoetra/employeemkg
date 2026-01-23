@@ -6,7 +6,7 @@ import { AlertDialog, Badge, Button, Center, Checkbox, Divider, HStack, Modal, P
 import { useEffect, useState } from 'react';
 import { Clipboard, RefreshControl } from 'react-native';
 import { useSelector } from 'react-redux';
-import { AppScreen, HeaderScreen } from '../../../src/components/common';
+import { AppScreen, HeaderScreen, LoadingHauler } from '../../../src/components/common';
 import { COLORS } from '../../../src/constants/colors';
 import apiClient from '../../../src/services/api/client';
 import { API_ENDPOINTS } from '../../../src/services/api/endpoints';
@@ -21,7 +21,7 @@ export default function PurchaseRequestDetail() {
   const userProfile = useSelector(state => state.userProfile)?.value || {};
   const auth = useSelector(state => state.auth) || {};
   const user = auth?.user || userProfile;
-  
+
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [purchaseRequest, setPurchaseRequest] = useState(null);
@@ -47,9 +47,9 @@ export default function PurchaseRequestDetail() {
       console.log('Can Validate:', canValidate);
       console.log('Can Approve:', canApprove);
       console.log('========================');
-      
+
       const response = await apiClient.get(API_ENDPOINTS.PURCHASE_REQUEST.DETAIL(params.id));
-      
+
       if (response.data?.diagnostic?.error === false) {
         console.log('='.repeat(80));
         console.log('📦 PURCHASE REQUEST DETAIL - FULL DATA');
@@ -62,7 +62,7 @@ export default function PurchaseRequestDetail() {
         console.log('📦 ITEMS DATA:');
         console.log(JSON.stringify(response.data.rows?.items, null, 2));
         console.log('='.repeat(80));
-        
+
         if (response.data.rows?.items?.length > 0) {
           console.log('📦 FIRST ITEM DETAILS:');
           console.log('- Barang:', response.data.rows.items[0]?.barang);
@@ -79,7 +79,7 @@ export default function PurchaseRequestDetail() {
           console.log('- Subtotal:', response.data.rows.items[0]?.subtotal);
           console.log('='.repeat(80));
         }
-        
+
         setPurchaseRequest(response.data.rows);
       }
     } catch (error) {
@@ -143,10 +143,10 @@ export default function PurchaseRequestDetail() {
     try {
       const isValidated = item.user_validated && item.date_validated;
       const isApproved = item.user_approved && item.date_approved;
-      
+
       let rollbackType = 'validation';
       let rollbackMessage = 'Rollback Validasi';
-      
+
       if (isApproved) {
         rollbackType = 'approval';
         rollbackMessage = 'Rollback Approval';
@@ -189,7 +189,7 @@ export default function PurchaseRequestDetail() {
       console.error('Error:', error);
       console.error('Response:', error.response?.data);
       console.error('======================');
-      
+
       toast.show({
         description: error.response?.data?.diagnostic?.error || error.message || 'Gagal rollback status',
         placement: 'top',
@@ -235,7 +235,7 @@ export default function PurchaseRequestDetail() {
   const handleBulkApproveConfirm = async () => {
     try {
       setBulkApproving(true);
-      
+
       const itemsToApprove = selectedItems.map(itemId => ({
         id: itemId
       }));
@@ -358,7 +358,7 @@ export default function PurchaseRequestDetail() {
             />
           </Pressable>
         )}
-        
+
         <VStack space={2}>
           <HStack space={2} alignItems="flex-start">
             <VStack
@@ -372,7 +372,7 @@ export default function PurchaseRequestDetail() {
                 #{index + 1}
               </Text>
             </VStack>
-            
+
             <Text
               flex={1}
               fontSize="md"
@@ -530,7 +530,7 @@ export default function PurchaseRequestDetail() {
               </Text>
             </HStack>
           )}
-          
+
           {item.ppn_rp > 0 && (
             <HStack justifyContent="space-between">
               <Text fontSize="xs" fontFamily="Poppins-Light" color={subtitleColor}>
@@ -717,12 +717,11 @@ export default function PurchaseRequestDetail() {
           onBack={() => router.back()} 
           onThemes={true}
         />
-        <Center flex={1} bg={backgroundColor}>
-          <Spinner size="lg" color={mode === 'dark' ? '#60a5fa' : '#2563eb'} />
-          <Text mt={2} fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
-            Memuat data...
-          </Text>
-        </Center>
+        <LoadingHauler
+          message="Memuat data..."
+          subMessage="Mengambil detail purchase request dari server"
+          type="default"
+        />
       </AppScreen>
     );
   }
@@ -755,7 +754,7 @@ export default function PurchaseRequestDetail() {
         onThemes={true}
         onNotification={true}
       />
-      
+
       <ScrollView
         flex={1}
         bg={backgroundColor}
@@ -783,7 +782,7 @@ export default function PurchaseRequestDetail() {
                 >
                   <ShoppingCart size={32} color={mode === 'dark' ? '#60a5fa' : '#2563eb'} variant="Bold" />
                 </VStack>
-                
+
                 <VStack flex={1}>
                   <HStack space={2} alignItems="center">
                     <Text
@@ -901,7 +900,7 @@ export default function PurchaseRequestDetail() {
             ) : (
               <VStack space={3}>
                 {purchaseRequest.items?.map(renderItemCard)}
-                
+
                 {canApprove && selectedItems.length > 0 && (
                   <VStack
                     bg={mode === 'dark' ? '#065f46' : '#d1fae5'}
@@ -917,7 +916,7 @@ export default function PurchaseRequestDetail() {
                         {selectedItems.length} item dipilih
                       </Text>
                     </HStack>
-                    
+
                     <Button
                       onPress={handleBulkApproveClick}
                       bg={mode === 'dark' ? '#10b981' : '#059669'}
@@ -959,7 +958,7 @@ export default function PurchaseRequestDetail() {
               <Text fontSize="sm" fontFamily="Poppins-Regular" color={textColor}>
                 Anda akan menyetujui <Text fontFamily="Quicksand-Bold" color={mode === 'dark' ? '#10b981' : '#059669'}>{selectedItems.length} item</Text> sekaligus.
               </Text>
-              
+
               <VStack 
                 space={1} 
                 bg={mode === 'dark' ? '#1f2937' : '#f9fafb'} 

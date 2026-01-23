@@ -34,7 +34,7 @@ const HeaderScreen = ({
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <HStack
         px={4}
-        py={3}
+        py={2}
         alignItems="center"
         justifyContent="space-between"
         bg={isDark ? '#2f313e' : '#F5F5F5'}

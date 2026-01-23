@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
-import { VStack, ScrollView, Text, HStack, Spinner, Center } from 'native-base';
+import { VStack, ScrollView, Text, HStack, Center } from 'native-base';
 import { useSelector } from 'react-redux';
-import { AppScreen, HeaderScreen } from '../../src/components/common';
+import { AppScreen, HeaderScreen, LoadingHauler } from '../../src/components/common';
 import { COLORS } from '../../src/constants/colors';
 import ApprovalCard from '../../src/features/approval/components/ApprovalCard';
 import { ClipboardTick } from 'iconsax-react-native';
@@ -13,7 +13,7 @@ import { API_ENDPOINTS } from '../../src/services/api/endpoints';
 export default function ApprovalManagement() {
   const router = useRouter();
   const mode = useSelector(state => state.themes)?.value || 'light';
-  
+
   const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1];
   const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
   const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280';
@@ -37,21 +37,21 @@ export default function ApprovalManagement() {
       }
 
       const [timesheetRes, purchaseRequestActiveRes, purchaseRequestApprovedRes, pengajuanDanaRes] = await Promise.allSettled([
-        apiClient.get(`${API_ENDPOINTS.TIMESHEET.APPROVAL_LIST}?status=pending&limit=1`),
+        apiClient.get(API_ENDPOINTS.TIMESHEET.APPROVAL_LIST_COUNT),
         apiClient.get(`${API_ENDPOINTS.PURCHASE_REQUEST.LIST}?status=active&limit=1`),
         apiClient.get(`${API_ENDPOINTS.PURCHASE_REQUEST.LIST}?status=approved&limit=1`),
-        apiClient.get(`${API_ENDPOINTS.PENGAJUAN.LIST}?status=pending&limit=1`),
+        apiClient.get(API_ENDPOINTS.PENGAJUAN.APPROVAL_LIST_COUNT),
       ]);
 
       const activeCount = purchaseRequestActiveRes.status === 'fulfilled' ? (purchaseRequestActiveRes.value?.data?.total || 0) : 0;
       const approvedCount = purchaseRequestApprovedRes.status === 'fulfilled' ? (purchaseRequestApprovedRes.value?.data?.total || 0) : 0;
 
       setCounts({
-        timesheet: timesheetRes.status === 'fulfilled' ? (timesheetRes.value?.data?.total || 0) : 0,
+        timesheet: timesheetRes.status === 'fulfilled' ? (timesheetRes.value?.data?.count || 0) : 0,
         purchaseRequest: activeCount + approvedCount,
         purchaseRequestActive: activeCount,
         purchaseRequestApproved: approvedCount,
-        pengajuanDana: pengajuanDanaRes.status === 'fulfilled' ? (pengajuanDanaRes.value?.data?.total || 0) : 0,
+        pengajuanDana: pengajuanDanaRes.status === 'fulfilled' ? (pengajuanDanaRes.value?.data?.count || 0) : 0,
       });
     } catch (error) {
       console.error('Error fetching approval counts:', error);
@@ -110,7 +110,7 @@ export default function ApprovalManagement() {
         onThemes={true}
         onNotification={true}
       />
-      
+
       <ScrollView 
         flex={1} 
         bg={backgroundColor} 
@@ -120,12 +120,11 @@ export default function ApprovalManagement() {
         }
       >
         {loading ? (
-          <Center py={10}>
-            <Spinner size="lg" color={mode === 'dark' ? '#60a5fa' : '#2563eb'} />
-            <Text mt={2} fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
-              Memuat data...
-            </Text>
-          </Center>
+          <LoadingHauler
+            message="Memuat data..."
+            subMessage="Mengambil data approval dari server"
+            type="default"
+          />
         ) : (
           <VStack p={4} space={4}>
           <VStack
@@ -152,7 +151,7 @@ export default function ApprovalManagement() {
                   {totalPending}
                 </Text>
               </VStack>
-              
+
               <View
                 style={{
                   backgroundColor: mode === 'dark' ? '#374151' : '#fef3e2',

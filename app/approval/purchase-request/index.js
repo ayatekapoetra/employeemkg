@@ -6,7 +6,7 @@ import { Badge, Center, HStack, Pressable, ScrollView, Spinner, Text, VStack } f
 import { TouchableOpacity, RefreshControl, FlatList } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { AppScreen, HeaderScreen } from '../../../src/components/common';
+import { AppScreen, HeaderScreen, LoadingHauler } from '../../../src/components/common';
 import { COLORS } from '../../../src/constants/colors';
 import apiClient from '../../../src/services/api/client';
 import { API_ENDPOINTS } from '../../../src/services/api/endpoints';
@@ -18,7 +18,7 @@ export default function ApprovalPurchaseRequest() {
   const router = useRouter();
   const mode = useSelector(state => state.themes)?.value || 'light';
   const userProfile = useSelector(state => state.userProfile)?.value || {};
-  
+
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -28,7 +28,7 @@ export default function ApprovalPurchaseRequest() {
   const [hasMore, setHasMore] = useState(true);
   const [totalData, setTotalData] = useState(0);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
-  
+
   const [filters, setFilters] = useState({
     status: 'active',
     bisnis_id: '',
@@ -56,7 +56,7 @@ export default function ApprovalPurchaseRequest() {
       } else {
         setLoading(true);
       }
-      
+
       const params = new URLSearchParams();
       if (filters.status) params.append('status', filters.status);
       if (filters.bisnis_id) params.append('bisnis_id', filters.bisnis_id);
@@ -69,20 +69,20 @@ export default function ApprovalPurchaseRequest() {
       if (filters.description) params.append('description', filters.description);
       params.append('page', pageNum);
       params.append('limit', ITEMS_PER_PAGE);
-      
+
       const url = `${API_ENDPOINTS.PURCHASE_REQUEST.LIST}?${params.toString()}`;
       const response = await apiClient.get(url);
-      
+
       if (response.data?.diagnostic?.error === false) {
         const newData = response.data.rows || [];
         const total = response.data.total || newData.length;
-        
+
         if (isLoadMore) {
           setPurchaseRequests(prev => [...prev, ...newData]);
         } else {
           setPurchaseRequests(newData);
         }
-        
+
         setTotalData(total);
         setHasMore(newData.length === ITEMS_PER_PAGE);
       }
@@ -174,7 +174,7 @@ export default function ApprovalPurchaseRequest() {
   const renderPurchaseCard = (item) => {
     const statusColor = getStatusColor(item.status);
     const priorityColor = getPriorityColor(item.prioritas);
-    
+
     const itemsCount = item.items?.length || 0;
     const validatedCount = item.items?.filter(i => i.date_validated)?.length || 0;
     const approvedCount = item.items?.filter(i => i.date_approved)?.length || 0;
@@ -205,7 +205,7 @@ export default function ApprovalPurchaseRequest() {
               >
                 <ShoppingCart size={24} color={mode === 'dark' ? '#60a5fa' : '#2563eb'} variant="Bold" />
               </VStack>
-              
+
               <VStack flex={1} space={1}>
                 <Text
                   fontSize="lg"
@@ -261,7 +261,7 @@ export default function ApprovalPurchaseRequest() {
                 {moment(item.date_ro).format('DD MMM YYYY')}
               </Text>
             </HStack>
-            
+
             <HStack space={1} alignItems="center">
               <Box size={14} color={subtitleColor} />
               <Text fontSize="xs" fontFamily="Poppins-Light" color={subtitleColor}>
@@ -284,7 +284,7 @@ export default function ApprovalPurchaseRequest() {
                 Validated: {validatedCount}/{itemsCount} | Approved: {approvedCount}/{itemsCount}
               </Text>
             </HStack>
-            
+
             <HStack space={1} alignItems="center">
               <VStack flex={1} bg={mode === 'dark' ? '#374151' : '#e5e7eb'} h={1.5} rounded="full">
                 <VStack 
@@ -325,7 +325,7 @@ export default function ApprovalPurchaseRequest() {
         onThemes={true}
         onNotification={true}
       />
-      
+
       <VStack flex={1} bg={backgroundColor}>
         <VStack p={4} space={4}>
           {!isHeaderCollapsed && (
@@ -377,7 +377,7 @@ export default function ApprovalPurchaseRequest() {
                     {purchaseRequests.filter(item => item.status === 'active').length}
                   </Text>
                 </VStack>
-                
+
                 <VStack 
                   flex={1}
                   bg="rgba(255,255,255,0.15)"
@@ -391,7 +391,7 @@ export default function ApprovalPurchaseRequest() {
                     {purchaseRequests.filter(item => item.status === 'approved').length}
                   </Text>
                 </VStack>
-                
+
                 <VStack 
                   flex={1}
                   bg="rgba(255,255,255,0.15)"
@@ -444,7 +444,7 @@ export default function ApprovalPurchaseRequest() {
                   <ArrowUp2 size={20} color={mode === 'dark' ? '#9ca3af' : '#6b7280'} />
                 )}
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 onPress={() => setShowFilterModal(true)}
                 style={{
@@ -474,12 +474,11 @@ export default function ApprovalPurchaseRequest() {
           onEndReachedThreshold={0.5}
           ListEmptyComponent={
             loading ? (
-              <Center py={10}>
-                <Spinner size="lg" color={mode === 'dark' ? '#60a5fa' : '#2563eb'} />
-                <Text mt={2} fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
-                  Memuat data...
-                </Text>
-              </Center>
+              <LoadingHauler
+                message="Memuat data..."
+                subMessage="Mengambil daftar purchase request dari server"
+                type="default"
+              />
             ) : (
               <Center py={10}>
                 <FilterSearch size={64} color={subtitleColor} variant="Bulk" />

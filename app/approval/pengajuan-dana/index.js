@@ -6,7 +6,7 @@ import { Badge, Center, HStack, Pressable, ScrollView, Spinner, Text, VStack } f
 import { TouchableOpacity, RefreshControl, FlatList } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { AppScreen } from '../../../src/components/common';
+import { AppScreen, LoadingHauler } from '../../../src/components/common';
 import { COLORS } from '../../../src/constants/colors';
 import apiClient from '../../../src/services/api/client';
 import { API_ENDPOINTS } from '../../../src/services/api/endpoints';
@@ -18,7 +18,7 @@ export default function ApprovalPengajuanDana() {
   const router = useRouter();
   const mode = useSelector(state => state.themes)?.value || 'light';
   const userProfile = useSelector(state => state.userProfile)?.value || {};
-  
+
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -35,7 +35,7 @@ export default function ApprovalPengajuanDana() {
     verified: 0,
     rejected: 0
   });
-  
+
   const [filters, setFilters] = useState({
     status: '',
     kategori: '',
@@ -83,7 +83,7 @@ export default function ApprovalPengajuanDana() {
 
       if (response.data.success) {
         const newData = response.data.data || [];
-        
+
         if (isLoadMore) {
           setPengajuanList(prev => [...prev, ...newData]);
         } else {
@@ -91,11 +91,11 @@ export default function ApprovalPengajuanDana() {
         }
 
         setTotalData(response.data.pagination?.total || 0);
-        
+
         if (response.data.summary) {
           setSummary(response.data.summary);
         }
-        
+
         setPage(pageNum);
         setHasMore(newData.length === ITEMS_PER_PAGE);
       }
@@ -150,7 +150,7 @@ export default function ApprovalPengajuanDana() {
     };
 
     const config = statusConfig[status] || statusConfig.open;
-    
+
     return (
       <Badge
         bg={config.bg}
@@ -365,12 +365,11 @@ export default function ApprovalPengajuanDana() {
               Pengajuan Dana
             </Text>
           </HStack>
-          <Center flex={1}>
-            <Spinner size="lg" color={mode === 'dark' ? '#60a5fa' : '#2563eb'} />
-            <Text mt={4} fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
-              Memuat data...
-            </Text>
-          </Center>
+          <LoadingHauler
+            message="Memuat data..."
+            subMessage="Mengambil daftar pengajuan dana dari server"
+            type="default"
+          />
         </VStack>
       </AppScreen>
     );
@@ -387,7 +386,7 @@ export default function ApprovalPengajuanDana() {
             Pengajuan Dana
           </Text>
         </HStack>
-      
+
       <VStack flex={1} bg={backgroundColor}>
         <VStack p={4} space={4}>
           {!isHeaderCollapsed && (
@@ -439,7 +438,7 @@ export default function ApprovalPengajuanDana() {
                     {summary.open}
                   </Text>
                 </VStack>
-                
+
                 <VStack 
                   flex={1}
                   bg="rgba(255,255,255,0.15)"
@@ -453,7 +452,7 @@ export default function ApprovalPengajuanDana() {
                     {summary.approval}
                   </Text>
                 </VStack>
-                
+
                 <VStack 
                   flex={1}
                   bg="rgba(255,255,255,0.15)"

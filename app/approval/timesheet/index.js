@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
-import { VStack, HStack, ScrollView, Text, Badge, Pressable, Spinner, Center, useToast } from 'native-base';
+import { VStack, HStack, ScrollView, Text, Badge, Pressable, Center, useToast } from 'native-base';
 import { useSelector, useDispatch } from 'react-redux';
-import { AppScreen, HeaderScreen } from '../../../src/components/common';
+import { AppScreen, HeaderScreen, LoadingHauler } from '../../../src/components/common';
 import { COLORS } from '../../../src/constants/colors';
 import { getPenyewa } from '../../../src/store/slices/penyewaSlice';
 import { getEquipment } from '../../../src/store/slices/equipmentSlice';
@@ -24,10 +24,17 @@ export default function ApprovalTimesheet() {
   const dispatch = useDispatch();
   const mode = useSelector(state => state.themes)?.value || 'light';
   const { user } = useSelector(state => state.auth);
-  
+
+  // Redux state for debugging filter options
+  const penyewaState = useSelector(state => state.penyewa);
+  const equipmentState = useSelector(state => state.equipment);
+  const shiftState = useSelector(state => state.shift);
+  const oprdrvState = useSelector(state => state.oprdrv);
+
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [approvalList, setApprovalList] = useState([]);
+  const [pendingCount, setPendingCount] = useState(0);
   const [actionLoading, setActionLoading] = useState(null);
   const [showFilter, setShowFilter] = useState(false);
   const [filterParams, setFilterParams] = useState({
@@ -55,17 +62,42 @@ export default function ApprovalTimesheet() {
   const cardBorder = mode === 'dark' ? '#3a3c4e' : '#e5e7eb';
   const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280';
 
+  const fetchCount = useCallback(async () => {
+    try {
+      console.log('🔢 Fetching pending count...');
+
+      // Build query params with filters
+      const params = { ...filterParams };
+
+      // Remove empty params
+      Object.keys(params).forEach(key => {
+        if (params[key] === '' || params[key] === null || params[key] === undefined) {
+          delete params[key];
+        }
+      });
+
+      const response = await apiClient.get(API_ENDPOINTS.TIMESHEET.APPROVAL_LIST_COUNT, { params });
+      const count = response.data?.count || 0;
+      console.log('🔢 Pending count:', count);
+      setPendingCount(count);
+    } catch (error) {
+      console.error('❌ Error fetching pending count:', error);
+      // Fallback to local count if API fails
+      setPendingCount(approvalList.length);
+    }
+  }, [filterParams, approvalList.length]);
+
   const fetchApprovals = useCallback(async () => {
     try {
       setLoading(true);
       console.log('🔍 Fetching timesheet approvals for supervisor:', user?.karyawan?.id);
       console.log('📋 Current filterParams:', filterParams);
-      
+
       // OPTION 1: Try API endpoint
       try {
         // Build query params with filters
         const params = { ...filterParams };
-        
+
         // Remove empty params
         Object.keys(params).forEach(key => {
           if (params[key] === '' || params[key] === null || params[key] === undefined) {
@@ -74,20 +106,58 @@ export default function ApprovalTimesheet() {
         });
 
         console.log('🔍 Final params sent to API:', params);
-        
+        console.log('🌐 API Endpoint:', API_ENDPOINTS.TIMESHEET.APPROVAL_LIST);
+        console.log('🌐 Full Request URL:', `${API_ENDPOINTS.TIMESHEET.APPROVAL_LIST}?${new URLSearchParams(params).toString()}`);
+
         const response = await apiClient.get(API_ENDPOINTS.TIMESHEET.APPROVAL_LIST, { params });
 
         const data = response.data?.data || response.data?.rows?.data || response.data?.rows || [];
         console.log('📊 Timesheet approvals found:', data.length);
+        console.log('📊 Full Response Structure:', {
+          'response.data?.data': !!response.data?.data,
+          'response.data?.rows?.data': !!response.data?.rows?.data,
+          'response.data?.rows': !!response.data?.rows,
+          'dataLength': data.length
+        });
+
         if (data.length > 0) {
-          console.log('📄 Sample data:', data[0]);
+          console.log('📄 Sample data (first item):', JSON.stringify(data[0], null, 2));
+
+          // Log karyawan_id comparison if filter is active
+          if (params.karyawan_id) {
+            console.log('🔍 Filter karyawan_id:', params.karyawan_id, '(Type:', typeof params.karyawan_id, ')');
+            data.forEach((item, idx) => {
+              const itemKaryawanId = item.karyawan?.id || item.karyawan_id;
+              const itemKaryawanIdType = typeof itemKaryawanId;
+              const match = itemKaryawanId?.toString() === params.karyawan_id?.toString();
+              console.log(`📋 Item ${idx + 1}:`, {
+                nama: item.karyawan?.nama || item.nama_karyawan,
+                karyawan_id: itemKaryawanId,
+                idType: itemKaryawanIdType,
+                matches: match,
+                'item.karyawan_id.toString()': itemKaryawanId?.toString(),
+                'params.karyawan_id.toString()': params.karyawan_id?.toString()
+              });
+            });
+          }
+        } else {
+          console.warn('⚠️ No data returned from API with the following filters:');
+          console.warn('⚠️ Filters:', JSON.stringify(params, null, 2));
         }
-        
+
         setApprovalList(data);
       } catch (apiError) {
+        console.error('═══════════════════════════════════════════════════════════════');
+        console.error('❌ API ERROR DETAILS:');
+        console.error('❌ Error Message:', apiError.message);
+        console.error('❌ Error Response:', apiError.response?.data);
+        console.error('❌ Error Status:', apiError.response?.status);
+        console.error('❌ Request URL:', apiError.config?.url);
+        console.error('❌ Request Params:', apiError.config?.params);
+        console.error('═══════════════════════════════════════════════════════════════');
         console.warn('⚠️ API endpoint not ready, using dummy data');
-        console.error('API Error:', apiError.response?.data?.error?.message);
-        
+        console.warn('⚠️ API Error:', apiError.response?.data?.error?.message);
+
         // OPTION 2: Dummy data fallback (comment out when API is ready)
         const dummyData = [
           {
@@ -143,9 +213,9 @@ export default function ApprovalTimesheet() {
             },
           },
         ];
-        
+
         setApprovalList(dummyData);
-        
+
         toast.show({
           description: 'Menggunakan data dummy - Backend belum siap',
           duration: 2000,
@@ -170,9 +240,26 @@ export default function ApprovalTimesheet() {
   }, []);
 
   useEffect(() => {
+    // Initialize karyawan_id with active user on mount
+    if (user?.karyawan?.id) {
+      const activeKaryawanId = user.karyawan.id.toString();
+      console.log('👤 Initializing filter with active user:', activeKaryawanId);
+      setFilterParams(prev => ({
+        ...prev,
+        karyawan_id: activeKaryawanId,
+      }));
+      setTempFilter(prev => ({
+        ...prev,
+        karyawan_id: activeKaryawanId,
+      }));
+    }
+  }, [user?.karyawan?.id]);
+
+  useEffect(() => {
     // Fetch approvals whenever filterParams changes
     fetchApprovals();
-  }, [filterParams, fetchApprovals]);
+    fetchCount();
+  }, [filterParams, fetchApprovals, fetchCount]);
 
   const handleApprove = async (item) => {
     Alert.alert(
@@ -186,7 +273,7 @@ export default function ApprovalTimesheet() {
             try {
               setActionLoading(item.id);
               console.log('✅ Approving timesheet:', item.id);
-              
+
               try {
                 await apiClient.put(API_ENDPOINTS.TIMESHEET.APPROVE(item.id), {
                   status: 'A', // A = Approved
@@ -238,7 +325,7 @@ export default function ApprovalTimesheet() {
             try {
               setActionLoading(item.id);
               console.log('❌ Rejecting timesheet:', item.id);
-              
+
               try {
                 await apiClient.put(API_ENDPOINTS.TIMESHEET.REJECT(item.id), {
                   status: 'R', // R = Retry/Rejected
@@ -280,9 +367,39 @@ export default function ApprovalTimesheet() {
   const onRefresh = () => {
     setRefreshing(true);
     fetchApprovals();
+    fetchCount();
   };
 
   const handleOpenFilter = () => {
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('🔽 OPENING FILTER MODAL');
+    console.log('📋 Current filterParams:', filterParams);
+
+    // Log Redux state for debugging
+    console.log('🏢 Penyewa Redux State:', {
+      loading: penyewaState?.loading,
+      dataCount: penyewaState?.data?.length || 0,
+      sample: penyewaState?.data?.slice(0, 3).map(p => ({ id: p.id, idType: typeof p.id, nama: p.nama }))
+    });
+    console.log('🚜 Equipment Redux State:', {
+      loading: equipmentState?.loading,
+      dataCount: equipmentState?.data?.length || 0,
+      sample: equipmentState?.data?.slice(0, 3).map(e => ({ id: e.id, idType: typeof e.id, kode: e.kode }))
+    });
+    console.log('⏰ Shift Redux State:', {
+      loading: shiftState?.loading,
+      dataCount: shiftState?.data?.length || 0,
+      sample: shiftState?.data?.slice(0, 3).map(s => ({ id: s.id, idType: typeof s.id, nama: s.nama }))
+    });
+    console.log('👤 OprDrv Redux State:', {
+      loading: oprdrvState?.loading,
+      dataCount: oprdrvState?.data?.length || 0,
+      sample: oprdrvState?.data?.slice(0, 5).map(o => ({ id: o.id, idType: typeof o.id, nama: o.nama }))
+    });
+
+    console.log('📋 Setting tempFilter to:', { ...filterParams });
+    console.log('═══════════════════════════════════════════════════════════════');
+
     setTempFilter({ ...filterParams });
     setShowFilter(true);
   };
@@ -294,12 +411,49 @@ export default function ApprovalTimesheet() {
       startdate: tempFilter.startdate,
       enddate: tempFilter.enddate,
     };
-    console.log('🔍 Applying filter:', appliedFilter);
+
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('🔍 APPLYING FILTER - Details:');
+    console.log('🔍 Status:', appliedFilter.status);
+    console.log('🔍 Start Date:', appliedFilter.startdate);
+    console.log('🔍 End Date:', appliedFilter.enddate);
+    console.log('🔍 Penyewa ID:', appliedFilter.penyewa_id, '(Type:', typeof appliedFilter.penyewa_id, ')');
+    console.log('🔍 Equipment ID:', appliedFilter.equipment_id, '(Type:', typeof appliedFilter.equipment_id, ')');
+    console.log('🔍 Shift ID:', appliedFilter.shift_id, '(Type:', typeof appliedFilter.shift_id, ')');
+    console.log('🔍 Karyawan ID:', appliedFilter.karyawan_id, '(Type:', typeof appliedFilter.karyawan_id, ')');
+
+    // Log the actual selected items from Redux
+    const penyewa = penyewaState?.data || [];
+    const equipment = equipmentState?.data || [];
+    const shift = shiftState?.data || [];
+    const oprdrv = oprdrvState?.data || [];
+
+    if (appliedFilter.penyewa_id) {
+      const selectedPenyewa = penyewa.find(p => p.id.toString() === appliedFilter.penyewa_id.toString());
+      console.log('🏢 Selected Penyewa:', selectedPenyewa);
+    }
+    if (appliedFilter.equipment_id) {
+      const selectedEquipment = equipment.find(e => e.id.toString() === appliedFilter.equipment_id.toString());
+      console.log('🚜 Selected Equipment:', selectedEquipment);
+    }
+    if (appliedFilter.shift_id) {
+      const selectedShift = shift.find(s => s.id.toString() === appliedFilter.shift_id.toString());
+      console.log('⏰ Selected Shift:', selectedShift);
+    }
+    if (appliedFilter.karyawan_id) {
+      const selectedKaryawan = oprdrv.find(k => k.id.toString() === appliedFilter.karyawan_id.toString());
+      console.log('👤 Selected Karyawan:', selectedKaryawan);
+    }
+
+    console.log('═══════════════════════════════════════════════════════════════');
+
     setFilterParams(appliedFilter);
     setShowFilter(false);
   };
 
-  const handleClearFilter = () => {
+  const handleClearFilter = useCallback(() => {
+    const activeKaryawanId = user?.karyawan?.id?.toString() || '';
+
     const defaultFilterParams = {
       status: 'W',
       startdate: '',
@@ -307,7 +461,7 @@ export default function ApprovalTimesheet() {
       penyewa_id: '',
       equipment_id: '',
       shift_id: '',
-      karyawan_id: '',
+      karyawan_id: activeKaryawanId,
     };
     const defaultTempFilter = {
       status: 'W',
@@ -316,12 +470,14 @@ export default function ApprovalTimesheet() {
       penyewa_id: '',
       equipment_id: '',
       shift_id: '',
-      karyawan_id: '',
+      karyawan_id: activeKaryawanId,
     };
+
+    console.log('🔄 Resetting filter to active user:', activeKaryawanId);
     setTempFilter(defaultTempFilter);
     setFilterParams(defaultFilterParams);
     setShowFilter(false);
-  };
+  }, [user?.karyawan?.id]);
 
   const getActiveFilterCount = () => {
     let count = 0;
@@ -350,7 +506,7 @@ export default function ApprovalTimesheet() {
 
   const renderTimesheetCard = (item) => {
     const hours = calculateHours(item.starttime, item.endtime);
-    
+
     return (
       <Pressable
         key={item.id}
@@ -384,7 +540,7 @@ export default function ApprovalTimesheet() {
             >
               <User size={24} color={mode === 'dark' ? '#60a5fa' : '#3b82f6'} variant="Bold" />
             </View>
-            
+
             <VStack flex={1}>
               <Text
                 fontSize="md"
@@ -458,8 +614,40 @@ export default function ApprovalTimesheet() {
         onNotification={true}
       />
 
-      {/* Filter Button */}
-      <HStack px={4} py={2} justifyContent="flex-end">
+      <ScrollView
+        flex={1}
+        bg={backgroundColor}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <VStack p={4} space={4}>
+          <VStack
+            bg={mode === 'dark' ? '#1e3a8a' : '#dbeafe'}
+            p={4}
+            rounded="xl"
+            borderWidth={1}
+            borderColor={mode === 'dark' ? '#1e40af' : '#bfdbfe'}
+          >
+            <HStack alignItems="center" justifyContent="space-between">
+              <VStack flex={1}>
+                <Text
+                  fontSize="xs"
+                  fontFamily="Poppins-Light"
+                  color={mode === 'dark' ? '#bfdbfe' : '#1e40af'}
+                >
+                  Menunggu Persetujuan
+                </Text>
+                <Text
+                  fontSize="2xl"
+                  fontFamily="Quicksand-Bold"
+                  color={mode === 'dark' ? '#ffffff' : '#1e3a8a'}
+                >
+                  {pendingCount}
+                </Text>
+              </VStack>
+              <HStack px={4} py={2} justifyContent="flex-end">
         <Pressable
           onPress={handleOpenFilter}
           style={styles.filterButton}
@@ -499,50 +687,15 @@ export default function ApprovalTimesheet() {
           )}
         </Pressable>
       </HStack>
-      
-      <ScrollView
-        flex={1}
-        bg={backgroundColor}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        <VStack p={4} space={4}>
-          <VStack
-            bg={mode === 'dark' ? '#1e3a8a' : '#dbeafe'}
-            p={4}
-            rounded="xl"
-            borderWidth={1}
-            borderColor={mode === 'dark' ? '#1e40af' : '#bfdbfe'}
-          >
-            <HStack alignItems="center" justifyContent="space-between">
-              <VStack flex={1}>
-                <Text
-                  fontSize="xs"
-                  fontFamily="Poppins-Light"
-                  color={mode === 'dark' ? '#bfdbfe' : '#1e40af'}
-                >
-                  Menunggu Persetujuan
-                </Text>
-                <Text
-                  fontSize="2xl"
-                  fontFamily="Quicksand-Bold"
-                  color={mode === 'dark' ? '#ffffff' : '#1e3a8a'}
-                >
-                  {approvalList.length}
-                </Text>
-              </VStack>
             </HStack>
           </VStack>
 
           {loading ? (
-            <Center py={10}>
-              <Spinner size="lg" color={mode === 'dark' ? '#60a5fa' : '#3b82f6'} />
-              <Text mt={2} fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
-                Memuat data...
-              </Text>
-            </Center>
+            <LoadingHauler
+              message="Memuat daftar approval..."
+              subMessage="Mengambil data timesheet yang menunggu persetujuan"
+              type="default"
+            />
           ) : approvalList.length === 0 ? (
             <Center py={10}>
               <Text fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>

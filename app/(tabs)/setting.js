@@ -33,6 +33,8 @@ export default function SettingScreen() {
             router.push('/setting/permissions');
           } else if (val.uri === 'notifikasi-screen') {
             router.push('/setting/notifications');
+          } else if (val.uri === 'download-data-screen') {
+            router.push('/setting/download-data-screen');
           } else if (val.uri === 'riwayat-absensi-screen') {
             router.push('/setting/attendance-history');
           } else if (val.uri === 'internal-memo-screen') {
@@ -61,6 +63,8 @@ export default function SettingScreen() {
           router.push('/setting/permissions');
         } else if (val.uri === 'notifikasi-screen') {
           router.push('/setting/notifications');
+        } else if (val.uri === 'download-data-screen') {
+          router.push('/setting/download-data-screen');
         } else if (val.uri === 'riwayat-absensi-screen') {
           router.push('/setting/attendance-history');
         } else if (val.uri === 'internal-memo-screen') {
@@ -115,10 +119,10 @@ export default function SettingScreen() {
     },
     {
       key: 3,
-      title: 'Notifikasi',
+      title: 'Download Data Options',
       access: '',
-      uri: 'notifikasi-screen',
-      grpIcon: <DirectNotification size="28" color="#787b83" variant="Bulk" />,
+      uri: 'download-data-screen',
+      grpIcon: <Text fontSize={24}>📥</Text>,
     },
     {
       key: 4,

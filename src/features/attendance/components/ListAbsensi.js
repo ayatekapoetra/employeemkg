@@ -44,10 +44,12 @@ export default function ListAbsensi({ item, onPress }) {
   const imgIn = item.photo_in ? (item.photo_in.startsWith('http') ? item.photo_in : `${PHOTO_BASE_URL.replace(/\/$/, '')}/${item.photo_in.replace(/^\//,'')}`) : null;
   const imgOut = item.photo_out ? (item.photo_out.startsWith('http') ? item.photo_out : `${PHOTO_BASE_URL.replace(/\/$/, '')}/${item.photo_out.replace(/^\//,'')}`) : null;
 
+  console.log(item);
+  
   return (
     <TouchableOpacity onPress={() => onPress && onPress(item)}>
-      <HStack space={3} alignItems="stretch" my={2}>
-        <VStack w={10} alignItems="center">
+      <HStack space={0} alignItems="stretch" my={2}>
+        <VStack w={5} alignItems="center">
           <Center w={3} h={3} rounded="full" bg={statusText === 'H' ? '#10b981' : '#9ca3af'} />
           <Box flex={1} w={1} bg={lineColor} mt={1} rounded="full" />
         </VStack>
@@ -57,7 +59,7 @@ export default function ListAbsensi({ item, onPress }) {
             <HStack alignItems="center" justifyContent="space-between">
               <VStack>
                 <Text fontSize={20} fontWeight={700} fontFamily="Quicksand-Bold" color={textColor}>{dateLabel}</Text>
-                <Text fontSize={16} fontFamily="Poppins-Light" color={subTextColor}>{authUser?.karyawan?.nama || authUser?.username || '-'}</Text>
+                <Text fontSize={16} fontFamily="Poppins-Light" color={subTextColor}>{item.karyawan?.nama || 'unregister'}</Text>
               </VStack>
             </HStack>
 

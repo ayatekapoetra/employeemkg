@@ -60,7 +60,7 @@ const ApprovalCard = ({
               px={2.5}
               py={0.5}
             >
-              {count > 99 ? '99+' : count}
+              {count}
             </Badge>
           )}
         </HStack>

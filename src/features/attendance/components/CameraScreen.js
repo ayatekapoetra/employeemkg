@@ -25,11 +25,11 @@ export default function CameraScreen({ onClose, onCapture, metode = 'in' }) {
     try {
       if (cameraRef.current) {
         const options = {
-          quality: 0.7,
-          base64: true,
+          quality: 0.8,    // Good initial quality, will be compressed later
+          base64: false,   // Base64 not needed since we compress before upload
           skipProcessing: false,
         };
-        
+
         const capturedPhoto = await cameraRef.current.takePictureAsync(options);
         console.log('Photo captured:', capturedPhoto.uri);
         setPhoto(capturedPhoto);

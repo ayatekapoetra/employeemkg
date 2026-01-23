@@ -1,6 +1,6 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { 
-  ArrowLeft, Calendar, User, Building, Location, Money, 
+import {
+  ArrowLeft, Calendar, User, Building, Location, Money,
   DocumentText, TickCircle, CloseCircle, Clock, InfoCircle, CloseSquare,
   ArrowLeft2, ArrowRight2, Copy
 } from 'iconsax-react-native';
@@ -10,7 +10,7 @@ import { Badge, Center, HStack, Pressable, ScrollView, Spinner, Text, VStack, Mo
 import { TouchableOpacity, RefreshControl, Image, Dimensions } from 'react-native';
 import { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { AppScreen } from '../../../src/components/common';
+import { AppScreen, LoadingHauler } from '../../../src/components/common';
 import { COLORS } from '../../../src/constants/colors';
 import apiClient from '../../../src/services/api/client';
 import { API_ENDPOINTS } from '../../../src/services/api/endpoints';
@@ -25,7 +25,7 @@ export default function PengajuanDanaDetail() {
   const { id } = useLocalSearchParams();
   const mode = useSelector(state => state.themes)?.value || 'light';
   const userProfile = useSelector(state => state.userProfile)?.value || {};
-  
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pengajuan, setPengajuan] = useState(null);
@@ -40,7 +40,7 @@ export default function PengajuanDanaDetail() {
   const [actionLoading, setActionLoading] = useState(false);
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  
+
   const toast = useToast();
 
   const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
@@ -60,7 +60,7 @@ export default function PengajuanDanaDetail() {
         apiClient.get(API_ENDPOINTS.PENGAJUAN.DETAIL(id)),
         apiClient.get(API_ENDPOINTS.PENGAJUAN.PERMISSIONS(id))
       ]);
-      
+
       if (detailResponse.data.success) {
         console.log('Pengajuan Detail:', JSON.stringify(detailResponse.data.data, null, 2));
         setPengajuan(detailResponse.data.data);
@@ -213,7 +213,7 @@ export default function PengajuanDanaDetail() {
     };
 
     const config = statusConfig[status] || statusConfig.open;
-    
+
     return (
       <Badge
         bg={config.bg}
@@ -281,13 +281,13 @@ export default function PengajuanDanaDetail() {
             </HStack>
           </HStack>
         </Pressable>
-        
+
         <VStack 
           pt={2} 
           borderTopWidth={1} 
           borderTopColor={borderColor}
         />
-        
+
         <HStack justifyContent="space-between" alignItems="center">
           <HStack space={2} alignItems="center" flex={1}>
             <Building size={16} color={subtitleColor} />
@@ -350,7 +350,7 @@ export default function PengajuanDanaDetail() {
         <Text fontSize="sm" fontFamily="Quicksand-SemiBold" color={textColor}>
           Dibuat Oleh
         </Text>
-        
+
         <VStack space={2}>
           <HStack space={2} alignItems="center">
             <User size={16} color={subtitleColor} />
@@ -381,7 +381,7 @@ export default function PengajuanDanaDetail() {
           <Text fontSize="sm" fontFamily="Quicksand-SemiBold" color={textColor}>
             Lampiran ({pengajuan.files.length})
           </Text>
-          
+
           <HStack flexWrap="wrap" space={2}>
             {pengajuan.files.map((file, index) => (
               <Pressable 
@@ -702,13 +702,12 @@ export default function PengajuanDanaDetail() {
               Detail Pengajuan Dana
             </Text>
           </HStack>
-          
-          <Center flex={1}>
-            <Spinner size="lg" color={mode === 'dark' ? '#60a5fa' : '#2563eb'} />
-            <Text mt={4} fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
-              Memuat detail...
-            </Text>
-          </Center>
+
+          <LoadingHauler
+            message="Memuat detail..."
+            subMessage="Mengambil detail pengajuan dana dari server"
+            type="default"
+          />
         </VStack>
       </AppScreen>
     );
@@ -775,7 +774,7 @@ export default function PengajuanDanaDetail() {
               </Text>
             </VStack>
           </TouchableOpacity>
-          
+
           <TouchableOpacity 
             style={{ flex: 1 }}
             onPress={() => setSelectedTab('items')}
@@ -795,7 +794,7 @@ export default function PengajuanDanaDetail() {
               </Text>
             </VStack>
           </TouchableOpacity>
-          
+
           <TouchableOpacity 
             style={{ flex: 1 }}
             onPress={() => setSelectedTab('history')}
@@ -863,7 +862,7 @@ export default function PengajuanDanaDetail() {
                     )}
                   </VStack>
                 </TouchableOpacity>
-                
+
                 <TouchableOpacity
                   style={{ flex: 1 }}
                   onPress={() => setShowRejectModal(true)}

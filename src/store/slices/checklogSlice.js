@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import apiClient from '../../services/api/client';
 import { API_ENDPOINTS } from '../../services/api/endpoints';
+import { compressSelfiePhoto } from '../../utils/imageUtils';
 
 export const checkIn = createAsyncThunk('checklog/checkIn', async (data, { rejectWithValue, getState }) => {
   try {
@@ -25,9 +26,24 @@ export const checkIn = createAsyncThunk('checklog/checkIn', async (data, { rejec
       formData.append('pin', employeePin);
     }
     
+    let photoToUpload = data.photo;
     if (data.photo) {
+      // Compress photo before upload to reduce network payload
+      console.log('[CheckIn] Compressing selfie photo...');
+      try {
+        photoToUpload = await compressSelfiePhoto(data.photo, {
+          maxWidth: 640,    // Selffies don't need to be large
+          maxHeight: 640,   // Maintain aspect ratio
+          quality: 0.6,     // 60% quality is sufficient for attendance photos
+        });
+        console.log('[CheckIn] Photo compression completed');
+      } catch (compressError) {
+        console.warn('[CheckIn] Compression failed, using original photo:', compressError?.message);
+        photoToUpload = data.photo;
+      }
+      
       formData.append('photo', {
-        uri: data.photo.uri,
+        uri: photoToUpload.uri,
         type: 'image/jpeg',
         name: 'checklog.jpg',
       });
@@ -82,9 +98,24 @@ export const checkOut = createAsyncThunk('checklog/checkOut', async (data, { rej
       formData.append('pin', employeePin);
     }
     
+    let photoToUpload = data.photo;
     if (data.photo) {
+      // Compress photo before upload to reduce network payload
+      console.log('[CheckOut] Compressing selfie photo...');
+      try {
+        photoToUpload = await compressSelfiePhoto(data.photo, {
+          maxWidth: 640,    // Selffies don't need to be large
+          maxHeight: 640,   // Maintain aspect ratio
+          quality: 0.6,     // 60% quality is sufficient for attendance photos
+        });
+        console.log('[CheckOut] Photo compression completed');
+      } catch (compressError) {
+        console.warn('[CheckOut] Compression failed, using original photo:', compressError?.message);
+        photoToUpload = data.photo;
+      }
+      
       formData.append('photo', {
-        uri: data.photo.uri,
+        uri: photoToUpload.uri,
         type: 'image/jpeg',
         name: 'checklog.jpg',
       });

@@ -24,7 +24,8 @@ export const API_ENDPOINTS = {
 
   ATTENDANCE: {
     DAILY: '/attendances/daily',
-    MONTHLY: 'mobile/attendance/monthly',
+    MONTHLY: 'attendances/monthly',
+    DAILY_DETAIL: 'attendances/daily-detail',
     SCORE_CHART: 'absensi-score-chart',
     MANUAL: 'mobile/attendance/manual',
   },
@@ -60,6 +61,7 @@ export const API_ENDPOINTS = {
     LIST: 'operation/timesheet/list',
     MY_LIST: 'operation/timesheet/my/list',
     APPROVAL_LIST: 'operation/timesheet/approval/list',
+    APPROVAL_LIST_COUNT: 'operation/timesheet/approval/list-count',
     DETAIL: id => `operation/timesheet/${id}`,
     CREATE: 'operation/timesheet/mobile',
     UPDATE: id => `operation/timesheet/${id}/updMobile`,
@@ -146,6 +148,7 @@ export const API_ENDPOINTS = {
 
   PENGAJUAN: {
     LIST: 'pengajuan-dana',
+    APPROVAL_LIST_COUNT: 'pengajuan-dana/approval-count',
     CREATE: 'pengajuan-dana',
     UPDATE: id => `pengajuan-dana/${id}`,
     DETAIL: id => `pengajuan-dana/${id}`,

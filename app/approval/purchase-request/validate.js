@@ -6,7 +6,7 @@ import { Badge, Button, Center, Divider, HStack, ScrollView, Spinner, Text, VSta
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { RefreshControl } from 'react-native';
 import { useSelector } from 'react-redux';
-import { AppScreen, HeaderScreen } from '../../../src/components/common';
+import { AppScreen, HeaderScreen, LoadingHauler } from '../../../src/components/common';
 import { COLORS } from '../../../src/constants/colors';
 import BottomSheetModal from './components/BottomSheetModal';
 import ItemInfoCard from './components/ItemInfoCard';
@@ -32,7 +32,7 @@ export default function PurchaseRequestValidate() {
   console.log('Final UserProfile:', userProfile);
   console.log('UserType:', userProfile?.usertype);
   console.log('=========================');
-  
+
   const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1];
   const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
   const cardBg = mode === 'dark' ? '#2a2c3e' : '#ffffff';
@@ -99,7 +99,7 @@ export default function PurchaseRequestValidate() {
     () => equipmentList.find(e => e.id.toString() === formData.equipment_id) || item?.equipment,
     [equipmentList, formData.equipment_id, item]
   );
-  
+
   const qtyDiminta = parseFloat(item?.qty_req) || 0;
   const qtyDisetujui = parseFloat(formData.qty_acc) || 0;
   const hargaSatuan = parseFloat(formData.harga) || 0;
@@ -136,7 +136,7 @@ export default function PurchaseRequestValidate() {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
-      
+
       searchTimeoutRef.current = setTimeout(() => {
         if (!allPemasokLoadedRef.current) {
           setPemasokPage(1);
@@ -158,7 +158,7 @@ export default function PurchaseRequestValidate() {
     if (!searchQuery) {
       return pemasokList;
     }
-    
+
     const query = searchQuery.toLowerCase();
     const filtered = pemasokList.filter(pemasok => {
       const nama = (pemasok.nama_pemasok || pemasok.nama || '').toLowerCase();
@@ -169,10 +169,10 @@ export default function PurchaseRequestValidate() {
   }, [pemasokList, searchQuery]);
 
   const openBottomSheet = useCallback((type, title) => {
-    
+
     setShowModal({ visible: true, type, title });
     setSearchQuery('');
-    
+
     if (type === 'barang') {
       setBarangPage(1);
       setHasMoreBarang(true);
@@ -260,12 +260,11 @@ export default function PurchaseRequestValidate() {
           onBack={() => router.back()} 
           onThemes={true}
         />
-        <Center flex={1} bg={backgroundColor}>
-          <Spinner size="lg" color={mode === 'dark' ? '#60a5fa' : '#2563eb'} />
-          <Text mt={2} fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
-            Memuat data...
-          </Text>
-        </Center>
+        <LoadingHauler
+          message="Memuat data..."
+          subMessage="Mengambil data item untuk validasi"
+          type="default"
+        />
       </AppScreen>
     );
   }
@@ -294,7 +293,7 @@ export default function PurchaseRequestValidate() {
         onBack={() => router.back()} 
         onThemes={true}
       />
-      
+
       <ScrollView
         flex={1}
         bg={backgroundColor}

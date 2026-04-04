@@ -5,7 +5,7 @@
   },
   "build": {
     "development": {
-      "developmentClient": true,
+      "developmentClient": false,
       "distribution": "internal",
       "ios": {
         "simulator": true
@@ -22,15 +22,23 @@
     },
     "production": {
       "android": {
-        "buildType": "apk",
+        "buildType": "app-bundle",
         "credentialsSource": "remote"
       },
       "ios": {
-        "simulator": false
+        "credentialsSource": "remote"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "track": "production",
+        "releaseStatus": "draft"
+      },
+      "ios": {
+        "appleTeamId": "ZZXA4KQS76"
+      }
+    }
   }
 }

@@ -69,10 +69,11 @@ class SQLiteService {
           await this.db.getFirstAsync('PRAGMA synchronous = NORMAL');
           await this.db.getFirstAsync('PRAGMA busy_timeout = 5000');
 
-          await this.createTables();
-          this.initialized = true;
-          console.log(`[SQLiteService] ✅ Database initialized (attempt ${attempt})`);
-          return; // Success, exit retry loop
+await this.createTables();
+      await this.upgradeTables(); // Add this line for table upgrades
+      this.initialized = true;
+      console.log(`[SQLiteService] ✅ Database initialized (attempt ${attempt})`);
+      return; // Success, exit retry loop
         } catch (error) {
           console.warn(`[SQLiteService] Init attempt ${attempt}/${MAX_RETRIES} failed:`, error?.message);
           this.db = null;
@@ -215,6 +216,16 @@ class SQLiteService {
         updated_at INTEGER DEFAULT (strftime('%s', 'now'))
       )`,
 
+      `CREATE TABLE IF NOT EXISTS master_cabang (
+        id TEXT PRIMARY KEY,
+        kode TEXT NOT NULL,
+        nama TEXT NOT NULL,
+        area TEXT,
+        aktif TEXT DEFAULT 'Y',
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+      )`,
+
       `CREATE TABLE IF NOT EXISTS master_karyawan (
         id TEXT PRIMARY KEY,
         nama TEXT NOT NULL,
@@ -224,6 +235,7 @@ class SQLiteService {
         cabang_id TEXT,
         phone TEXT,
         email TEXT,
+        area TEXT,
         aktif TEXT DEFAULT 'Y',
         created_at INTEGER DEFAULT (strftime('%s', 'now')),
         updated_at INTEGER DEFAULT (strftime('%s', 'now'))
@@ -245,6 +257,59 @@ class SQLiteService {
     }
 
     console.log('[SQLiteService] ✅ All tables created');
+  }
+
+  /**
+   * Upgrade tables for new columns (ALTER TABLE operations)
+   */
+  async upgradeTables() {
+    try {
+      const upgrades = [
+        {
+          table: 'master_karyawan',
+          columns: [
+            { name: 'area', type: 'TEXT', default: null }
+          ]
+        }
+      ];
+
+      for (const upgrade of upgrades) {
+        for (const column of upgrade.columns) {
+          await this.addColumnIfNotExists(upgrade.table, column.name, column.type, column.default);
+        }
+      }
+      
+      console.log('[SQLiteService] ✅ All tables upgraded');
+    } catch (error) {
+      console.error('[SQLiteService] ❌ Error upgrading tables:', error);
+    }
+  }
+
+  /**
+   * Add column to table if it doesn't exist
+   */
+  async addColumnIfNotExists(tableName, columnName, columnType, defaultValue = null) {
+    try {
+      const db = await this.getDb();
+      
+      // Check if column exists
+      const tableInfo = await db.getAllAsync(`PRAGMA table_info(${tableName})`);
+      const columnExists = tableInfo.some(column => column.name === columnName);
+      
+      if (!columnExists) {
+        const sql = `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnType}`;
+        if (defaultValue !== null) {
+          sql += ` DEFAULT ${defaultValue}`;
+        }
+        await db.runAsync(sql);
+        console.log(`[SQLiteService] ✅ Added column ${columnName} to table ${tableName}`);
+      } else {
+        console.log(`[SQLiteService] ℹ️ Column ${columnName} already exists in table ${tableName}`);
+      }
+    } catch (error) {
+      console.error(`[SQLiteService] ❌ Error adding column ${columnName} to ${tableName}:`, error);
+      // Don't throw error - continue with existing structure
+    }
   }
 
   /**
@@ -502,10 +567,157 @@ class SQLiteService {
   // ============================================
 
   /**
-   * Get barang from SQLite
+   * Sync barang from API to SQLite - Optimized for large datasets
    */
-  async getBarang() {
-    return await this.getAll('master_barang');
+  async syncBarang(data) {
+    console.log('[SQLiteService] syncBarang called with', data?.length || 0, 'items');
+    console.log('[SQLiteService] Using optimized method for large datasets');
+    
+    return this._syncBarangOptimized(data);
+  }
+
+  /**
+   * Optimized barang sync for large datasets - Simplified approach
+   */
+  async _syncBarangOptimized(data) {
+    const columns = ['id', 'nama', 'kode', 'kategori', 'satuan', 'stok', 'aktif'];
+    
+    return this._enqueue(async () => {
+      if (!Array.isArray(data) || data.length === 0) {
+        return { successCount: 0, errorCount: 0, errors: [] };
+      }
+
+      console.log(`[SQLiteService] Sync barang: ${data.length} items (optimized mode)`);
+
+      // Ensure DB is ready
+      console.log('[SQLiteService] Ensuring database is initialized...');
+      await this.ensureInitialized();
+      console.log('[SQLiteService] Database initialized successfully');
+
+      let successCount = 0;
+      let errorCount = 0;
+      const errors = [];
+      
+      // Clear table first for faster INSERT (instead of UPDATE)
+      try {
+        console.log('[SQLiteService] STEP 1: Clearing master_barang table...');
+        const clearStart = Date.now();
+        await this.db.runAsync('DELETE FROM master_barang');
+        const clearTime = Date.now() - clearStart;
+        console.log(`[SQLiteService] Table cleared successfully in ${clearTime}ms`);
+      } catch (clearError) {
+        console.warn('[SQLiteService] Failed to clear table:', clearError.message);
+        // Continue even if clear fails
+      }
+
+      // Build the SQL template once
+      const colList = columns.join(', ');
+      const placeholders = columns.map(() => '?').join(', ');
+      const sql = `INSERT INTO master_barang (${colList}, updated_at) VALUES (${placeholders}, strftime('%s', 'now'))`;
+      console.log(`[SQLiteService] SQL template: ${sql}`);
+
+      // Use very small batches for large dataset
+      const BATCH_SIZE = 100; // Smaller batches = more responsive
+      const totalBatches = Math.ceil(data.length / BATCH_SIZE);
+      
+      console.log(`[SQLiteService] STEP 2: Processing in ${totalBatches} batches of ${BATCH_SIZE} items each...`);
+
+      // Process in batches
+      for (let batchNum = 0; batchNum < totalBatches; batchNum++) {
+        const batchStart = batchNum * BATCH_SIZE;
+        const batchEnd = Math.min(batchStart + BATCH_SIZE, data.length);
+        const batch = data.slice(batchStart, batchEnd);
+        
+        console.log(`[SQLiteService] Processing batch ${batchNum + 1}/${totalBatches}: items ${batchStart + 1}-${batchEnd}`);
+        
+        try {
+          console.log(`[SQLiteService] STEP 3.${batchNum + 1}: Mapping ${batch.length} items...`);
+          const mappingStart = Date.now();
+          
+          // Build batch data arrays
+          const allParams = [];
+          const validItems = [];
+          
+          for (let i = 0; i < batch.length; i++) {
+            const item = batch[i];
+            const rowData = this._mapBarangItem(item, batchStart + i);
+            
+            if (!rowData) {
+              errorCount++;
+              continue;
+            }
+            
+            // Build params array matching column order
+            const params = columns.map(col => {
+              const val = rowData[col];
+              if (val === null || val === undefined) return null;
+              if (typeof val === 'number') return isNaN(val) || !isFinite(val) ? 0 : val;
+              if (typeof val === 'boolean') return val ? 1 : 0;
+              return String(val);
+            });
+            
+            allParams.push(...params);
+            validItems.push(rowData);
+          }
+          
+          const mappingTime = Date.now() - mappingStart;
+          console.log(`[SQLiteService] Mapping completed in ${mappingTime}ms. Valid items: ${validItems.length}/${batch.length}`);
+          
+          if (allParams.length === 0) {
+            console.log(`[SQLiteService] Batch ${batchNum + 1}: No valid items to insert`);
+            continue;
+          }
+          
+          // Execute batch insert using transaction
+          await this.db.withTransactionAsync(async () => {
+            for (let i = 0; i < validItems.length; i++) {
+              const paramStart = i * columns.length;
+              const itemParams = allParams.slice(paramStart, paramStart + columns.length);
+              
+              try {
+                await this.db.runAsync(sql, itemParams);
+                successCount++;
+              } catch (err) {
+                const errMsg = err?.message || '';
+                errorCount++;
+                
+                if (errors.length < 5) {
+                  errors.push(`Batch ${batchNum + 1}, item ${i + 1}: ${errMsg.substring(0, 80)}`);
+                }
+                
+                console.warn(`[SQLiteService] Batch ${batchNum + 1}, item ${i + 1} failed: ${errMsg}`);
+              }
+            }
+          });
+          
+          console.log(`[SQLiteService] Batch ${batchNum + 1}/${totalBatches} completed: ${successCount} total, ${errorCount} errors`);
+          
+          // Progress tracking
+          const progress = ((batchNum + 1) / totalBatches * 100).toFixed(1);
+          console.log(`[SQLiteService] Overall progress: ${progress}% (${successCount}/${data.length} items)`);
+          
+          // Add delay between batches to prevent database lock
+          if (batchNum < totalBatches - 1) {
+            const delay = Math.min(100, 20 + (batchNum * 2)); // Progressive delay
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+          
+        } catch (batchError) {
+          console.error(`[SQLiteService] Batch ${batchNum + 1} failed:`, batchError);
+          errorCount += batch.length;
+          
+          if (errors.length < 5) {
+            errors.push(`Batch ${batchNum + 1}: ${batchError.message?.substring(0, 80)}`);
+          }
+          
+          // Add extra delay on error
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+
+      console.log(`[SQLiteService] Barang sync completed: ✅ ${successCount} synced, ❌ ${errorCount} errors`);
+      return { successCount, errorCount, errors };
+    });
   }
 
   /**
@@ -550,6 +762,12 @@ class SQLiteService {
       const errors = [];
       let consecutiveErrors = 0;
       const MAX_CONSECUTIVE_ERRORS = 10; // Abort if 10 failures in a row
+      
+      // Timeout protection for large datasets
+      const TIMEOUT_MS = Math.max(30000, data.length * 10); // 30s minimum + 10ms per item
+      const startTime = Date.now();
+      
+      console.log(`[SQLiteService] ${tableName}: Timeout set to ${TIMEOUT_MS}ms`);
 
       // Build the SQL template once (with ? placeholders)
       const colList = columns.join(', ');
@@ -557,6 +775,14 @@ class SQLiteService {
       const sql = `INSERT OR REPLACE INTO ${tableName} (${colList}, updated_at) VALUES (${placeholders}, strftime('%s', 'now'))`;
 
       for (let i = 0; i < data.length; i++) {
+        // Check timeout
+        if (Date.now() - startTime > TIMEOUT_MS) {
+          console.error(`[SQLiteService] ${tableName}: Timeout after ${TIMEOUT_MS}ms. ${successCount}/${data.length} done`);
+          errorCount += (data.length - i - 1);
+          errors.push(`Timeout: Aborted after ${TIMEOUT_MS}ms`);
+          break;
+        }
+
         const item = data[i];
         if (!item) { errorCount++; continue; }
 
@@ -587,7 +813,8 @@ class SQLiteService {
 
           // Connection issue - reinitialize and retry
           if (errMsg.includes('NullPointer') || errMsg.includes('not open') || 
-              errMsg.includes('database is locked') || errMsg.includes('prepare')) {
+              errMsg.includes('database is locked') || errMsg.includes('prepare') ||
+              errMsg.includes('timeout') || errMsg.includes('busy')) {
             console.warn(`[SQLiteService] ${tableName}[${i}]: Connection issue, reinitializing...`);
             this.initialized = false;
             this.db = null;
@@ -596,13 +823,16 @@ class SQLiteService {
               await this.init();
               consecutiveErrors = 0;
 
+              // Wait a bit after reinit
+              await new Promise(resolve => setTimeout(resolve, 100));
+
               // Retry this item after reinit
               try {
                 await this.db.runAsync(sql, params);
                 successCount++;
                 errorCount--; // Undo error count
               } catch (retryErr) {
-                // Give up on this item, continue to next
+                console.warn(`[SQLiteService] ${tableName}[${i}]: Retry failed, skipping...`);
               }
             } catch (reinitErr) {
               console.error(`[SQLiteService] ${tableName}: Reinit failed, aborting. ${successCount}/${data.length} done`);
@@ -626,25 +856,126 @@ class SQLiteService {
   }
 
   /**
-   * Sync barang from API to SQLite
+   * Sync barang from API to SQLite - Optimized for large datasets
    */
   async syncBarang(data) {
+    console.log('[SQLiteService] syncBarang called with', data?.length || 0, 'items');
+    console.log('[SQLiteService] Using optimized method for large datasets');
     const columns = ['id', 'nama', 'kode', 'kategori', 'satuan', 'stok', 'aktif'];
     
-    return this._batchSync('master_barang', data, (item, index) => {
-      const itemId = item.id ?? item.barang_id ?? item.ID ?? item.Id;
-      if (itemId === null || itemId === undefined) return null;
+    return this._enqueue(async () => {
+      if (!Array.isArray(data) || data.length === 0) {
+        return { successCount: 0, errorCount: 0, errors: [] };
+      }
 
-      return {
-        id: String(itemId),
-        nama: item.nama || item.name || item.nama_barang || item.namaBarang || '',
-        kode: item.kode || item.code || item.kode_barang || item.kodeBarang || '',
-        kategori: item.kategori || item.category || item.kategori_barang || item.jenis || item.type || '',
-        satuan: item.satuan || item.unit || item.satuan_barang || item.uom || '',
-        stok: parseInt(item.stok || item.stock || item.qty || 0) || 0,
-        aktif: item.aktif || item.active || item.is_active || item.status || 'Y'
-      };
-    }, columns);
+      console.log(`[SQLiteService] Sync barang: ${data.length} items (optimized mode)`);
+
+      // Ensure DB is ready
+      await this.ensureInitialized();
+
+      let successCount = 0;
+      let errorCount = 0;
+      const errors = [];
+      
+      // For large datasets, use batch processing
+      const BATCH_SIZE = 200; // Process 200 items at a time
+      const DELAY_MS = 50; // 50ms delay between batches
+      
+      // Build the SQL template once
+      const colList = columns.join(', ');
+      const placeholders = columns.map(() => '?').join(', ');
+      const sql = `INSERT OR REPLACE INTO master_barang (${colList}, updated_at) VALUES (${placeholders}, strftime('%s', 'now'))`;
+
+      console.log(`[SQLiteService] Processing in ${Math.ceil(data.length / BATCH_SIZE)} batches...`);
+
+      // Process in batches
+      for (let batchStart = 0; batchStart < data.length; batchStart += BATCH_SIZE) {
+        const batchEnd = Math.min(batchStart + BATCH_SIZE, data.length);
+        const batch = data.slice(batchStart, batchEnd);
+        
+        console.log(`[SQLiteService] Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}: items ${batchStart + 1}-${batchEnd}`);
+        
+        // Use transaction for each batch
+        try {
+          await this.db.withTransactionAsync(async () => {
+            for (let i = 0; i < batch.length; i++) {
+              const item = batch[i];
+              const globalIndex = batchStart + i;
+              
+              if (!item) {
+                errorCount++;
+                continue;
+              }
+
+              const rowData = this._mapBarangItem(item, globalIndex);
+              if (!rowData) {
+                errorCount++;
+                continue;
+              }
+
+              // Build params array
+              const params = columns.map(col => {
+                const val = rowData[col];
+                if (val === null || val === undefined) return null;
+                if (typeof val === 'number') return isNaN(val) || !isFinite(val) ? 0 : val;
+                if (typeof val === 'boolean') return val ? 1 : 0;
+                return String(val);
+              });
+
+              try {
+                await this.db.runAsync(sql, params);
+                successCount++;
+              } catch (err) {
+                const errMsg = err?.message || '';
+                errorCount++;
+                
+                if (errors.length < 5) {
+                  errors.push(`[${globalIndex}]: ${errMsg.substring(0, 80)}`);
+                }
+                
+                console.warn(`[SQLiteService] Barang item ${globalIndex} failed: ${errMsg}`);
+              }
+            }
+          });
+          
+          console.log(`[SQLiteService] Batch ${Math.floor(batchStart / BATCH_SIZE) + 1} completed: ${successCount} total`);
+          
+          // Add delay between batches to prevent database lock
+          if (batchEnd < data.length) {
+            await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+          }
+          
+        } catch (batchError) {
+          console.error(`[SQLiteService] Batch ${Math.floor(batchStart / BATCH_SIZE) + 1} failed:`, batchError);
+          errorCount += batch.length;
+          
+          if (errors.length < 5) {
+            errors.push(`Batch ${Math.floor(batchStart / BATCH_SIZE) + 1}: ${batchError.message?.substring(0, 80)}`);
+          }
+        }
+      }
+
+      console.log(`[SQLiteService] Barang sync completed: ✅ ${successCount} synced, ❌ ${errorCount} errors`);
+      return { successCount, errorCount, errors };
+    });
+  }
+
+  /**
+   * Helper function to map barang item
+   */
+  _mapBarangItem(item, index) {
+    const itemId = item.id ?? item.barang_id ?? item.ID ?? item.Id;
+    if (itemId === null || itemId === undefined) return null;
+
+    return {
+      id: String(itemId),
+      nama: item.nama || item.name || item.nama_barang || item.namaBarang || '',
+      kode: item.kode || item.code || item.kode_barang || item.kodeBarang || '',
+      kategori: item.kategori || item.category || item.kategori_barang || item.jenis || item.type || '',
+      satuan: item.satuan || item.unit || item.satuan_barang || item.uom || '',
+      stok: parseInt(item.stok || item.stock || item.qty || 0) || 0,
+      aktif: item.aktif || item.active || item.is_active || item.status || 'Y'
+    };
   }
 
   /**
@@ -875,10 +1206,27 @@ class SQLiteService {
   }
 
   /**
+   * Get karyawan with area information from SQLite
+   */
+  async getKaryawanWithArea() {
+    try {
+      const karyawan = await this.getKaryawan();
+      // Area field sudah ditambahkan saat sync, jadi tinggal return
+      return karyawan.map(item => ({
+        ...item,
+        area: item.area || ''
+      }));
+    } catch (error) {
+      console.error('[SQLiteService] Error getting karyawan with area:', error);
+      return [];
+    }
+  }
+
+  /**
    * Sync karyawan from API to SQLite
    */
   async syncKaryawan(data) {
-    const columns = ['id', 'nama', 'nik', 'jabatan', 'departemen', 'cabang_id', 'phone', 'email', 'aktif'];
+    const columns = ['id', 'nama', 'nik', 'jabatan', 'departemen', 'cabang_id', 'phone', 'email', 'area', 'aktif'];
     
     return this._batchSync('master_karyawan', data, (item) => {
       const itemId = item.id ?? item.karyawan_id;
@@ -892,6 +1240,7 @@ class SQLiteService {
         cabang_id: item.cabang_id ? String(item.cabang_id) : '',
         phone: item.phone || item.telepon || item.hp || '',
         email: item.email || '',
+        area: item.area || (item.cabang?.area) || '',
         aktif: item.aktif || item.active || item.status || 'Y'
       };
     }, columns);

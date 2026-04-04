@@ -556,49 +556,12 @@ const OprDrvBottomSheet = ({ visible, onClose, onSelect, mode }) => {
       }
     }
     
-    console.log('========================================');
-    console.log('OprDrv Filter - Debug Info');
-    console.log('========================================');
-    console.log('Total data:', list.length);
-    console.log('User Type:', userType);
-    console.log('Is Developer:', isDeveloper);
-    console.log('Auth structure:');
-    console.log('- auth.user?.karyawan?.area:', auth?.user?.karyawan?.area);
-    console.log('- auth.karyawan?.area:', auth?.karyawan?.area);
-    console.log('- auth.karyawan?.cabang?.area:', auth?.karyawan?.cabang?.area);
-    console.log('Final userArea used for filter:', userArea);
-    
-    if (list.length > 0) {
-      console.log('Sample data structure (first item):');
-      const sample = list[0];
-      console.log('- item.nama:', sample.nama);
-      console.log('- item.cabang:', sample.cabang);
-      console.log('- item.cabang?.area:', sample.cabang?.area);
-      console.log('- item.cabang?.nama:', sample.cabang?.nama);
-      console.log('- item.mas_cabang:', sample.mas_cabang);
-      console.log('- item.area:', sample.area);
-      console.log('Full first item:', JSON.stringify(sample, null, 2));
-    }
-    
-    if (isDeveloper) {
-      console.log('✅ User is Developer - Showing all data (bypass filter)');
-      console.log('========================================');
-      return list;
-    }
-    
-    if (!userArea) {
-      console.log('⚠️  No user area found, showing all data');
-      console.log('========================================');
-      return list;
-    }
-    
     const normalizeArea = (area) => {
       if (!area) return '';
       return String(area).trim().toUpperCase();
     };
     
     const normalizedUserArea = normalizeArea(userArea);
-    console.log('Normalized user area for comparison:', normalizedUserArea);
     
     const filtered = list.filter(item => {
       const itemArea = item.cabang?.area || 
@@ -609,20 +572,8 @@ const OprDrvBottomSheet = ({ visible, onClose, onSelect, mode }) => {
       const normalizedItemArea = normalizeArea(itemArea);
       const matches = normalizedItemArea === normalizedUserArea;
       
-      if (list.indexOf(item) < 3) {
-        console.log(`Item ${list.indexOf(item)} - ${item.nama}:`);
-        console.log('  - itemArea (raw):', itemArea);
-        console.log('  - itemArea (normalized):', normalizedItemArea);
-        console.log('  - userArea (normalized):', normalizedUserArea);
-        console.log('  - matches:', matches);
-      }
-      
       return matches;
     });
-    
-    console.log('✅ Filtered data count:', filtered.length);
-    console.log('Filter result:', filtered.map(f => ({ nama: f.nama, area: f.cabang?.area || f.area })));
-    console.log('========================================');
     return filtered;
   }, [oprdrvRedux?.data, userArea, isDeveloper, userType]);
 
@@ -1317,52 +1268,20 @@ const LokasiKerjaBottomSheet = ({ visible, onClose, onSelect, mode }) => {
       }
     }
     
-    console.log('========================================');
-    console.log('Lokasi Kerja Filter - Debug Info');
-    console.log('========================================');
-    console.log('Total data:', list.length);
-    console.log('User Type:', userType);
-    console.log('Is Developer:', isDeveloper);
-    console.log('User area:', userArea);
-    
-    if (isDeveloper) {
-      console.log('✅ User is Developer - Showing all data (bypass filter)');
-      console.log('========================================');
-      return list;
-    }
-    
-    if (!userArea) {
-      console.log('⚠️  No user area found, showing all data');
-      console.log('========================================');
-      return list;
-    }
-    
     const normalizeArea = (area) => {
       if (!area) return '';
       return String(area).trim().toUpperCase();
     };
     
     const normalizedUserArea = normalizeArea(userArea);
-    console.log('Normalized user area for comparison:', normalizedUserArea);
     
     const filtered = list.filter(item => {
       const itemArea = item.cabang?.area || item.area || '';
       const normalizedItemArea = normalizeArea(itemArea);
       const matches = normalizedItemArea === normalizedUserArea;
       
-      if (list.indexOf(item) < 3) {
-        console.log(`Item ${list.indexOf(item)} - ${item.nama_lokasi || item.nama}:`);
-        console.log('  - itemArea (raw):', itemArea);
-        console.log('  - itemArea (normalized):', normalizedItemArea);
-        console.log('  - userArea (normalized):', normalizedUserArea);
-        console.log('  - matches:', matches);
-      }
-      
       return matches;
     });
-    
-    console.log('✅ Filtered data count:', filtered.length);
-    console.log('========================================');
     return filtered;
   }, [lokasikerjaRedux?.data, userArea, isDeveloper, userType]);
 

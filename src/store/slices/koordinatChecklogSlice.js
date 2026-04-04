@@ -11,77 +11,33 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const getKoordinatChecklog = createAsyncThunk(
   'koordinatChecklog/getKoordinatChecklog',
-  async (_, { rejectWithValue }) => {
+  async (forceRefresh = false, { rejectWithValue }) => {
     try {
-      console.log('[KoordinatChecklog] Fetching from API...');
+      if (!forceRefresh) {
+        const cached = await AsyncStorage.getItem('@koordinatChecklog');
+        if (cached) {
+          console.log('Using cached koordinat checklog data');
+          return { data: JSON.parse(cached) };
+        }
+      }
 
-      // Try to fetch from API first
+      console.log('Fetching koordinat checklog from API...');
       const response = await apiClient.get(API_ENDPOINTS.CHECKLOG.LOCATIONS);
-      const apiData = response.data?.rows || response.data?.data || response.data || [];
+      const data = response.data?.rows || response.data?.data || response.data || [];
+      
+      console.log('[KoordinatChecklog] API response:', data.length, 'items');
 
-      console.log('[KoordinatChecklog] API response:', apiData.length, 'items');
-
-      if (apiData.length > 0) {
-        // Sync to SQLite
-        const syncResult = await database.syncKoordinatChecklog(apiData);
-        console.log('[KoordinatChecklog] Synced to SQLite:', syncResult.successCount, 'items');
-
-        // Save to AsyncStorage as additional fallback
-        try {
-          await AsyncStorage.setItem('@koordinatChecklog', JSON.stringify(apiData));
-        } catch (e) {
-          console.warn('[KoordinatChecklog] Failed to save to AsyncStorage:', e.message);
-        }
-
-        return apiData;
+      if (data && Array.isArray(data) && data.length > 0) {
+        await AsyncStorage.setItem('@koordinatChecklog', JSON.stringify(data));
       }
-
-      // If API returns empty, try SQLite fallback
-      console.log('[KoordinatChecklog] API empty, trying SQLite fallback...');
-      const dbData = await database.getKoordinatChecklog();
-      if (dbData.length > 0) {
-        console.log('[KoordinatChecklog] Loaded from SQLite:', dbData.length, 'items');
-        return dbData;
-      }
-
-      // Final fallback: AsyncStorage
-      console.log('[KoordinatChecklog] SQLite empty, trying AsyncStorage fallback...');
-      const storageData = await AsyncStorage.getItem('@koordinatChecklog');
-      if (storageData) {
-        const parsed = JSON.parse(storageData);
-        console.log('[KoordinatChecklog] Loaded from AsyncStorage:', parsed.length, 'items');
-        return parsed;
-      }
-
-      console.warn('[KoordinatChecklog] No data found from any source');
-      return [];
-
+      
+      return { data };
     } catch (error) {
-      console.error('[KoordinatChecklog] Error fetching from API:', error?.message || error);
-
-      // Try SQLite fallback on error
-      try {
-        const dbData = await database.getKoordinatChecklog();
-        if (dbData.length > 0) {
-          console.log('[KoordinatChecklog] Loaded from SQLite (error fallback):', dbData.length, 'items');
-          return dbData;
-        }
-      } catch (dbError) {
-        console.error('[KoordinatChecklog] SQLite fallback failed:', dbError?.message);
+      console.error('Error fetching koordinat checklog:', error);
+      const cached = await AsyncStorage.getItem('@koordinatChecklog');
+      if (cached) {
+        return { data: JSON.parse(cached) };
       }
-
-      // Try AsyncStorage fallback on error
-      try {
-        const storageData = await AsyncStorage.getItem('@koordinatChecklog');
-        if (storageData) {
-          const parsed = JSON.parse(storageData);
-          console.log('[KoordinatChecklog] Loaded from AsyncStorage (error fallback):', parsed.length, 'items');
-          return parsed;
-        }
-      } catch (storageError) {
-        console.error('[KoordinatChecklog] AsyncStorage fallback failed:', storageError?.message);
-      }
-
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
@@ -180,11 +136,9 @@ export const selectNearestChecklogLocation = (state, userLocation) => {
 };
 
 const initialState = {
-  data: [],
   loading: false,
   error: null,
-  lastSync: null,
-  offlineMode: false
+  data: null,
 };
 
 const koordinatChecklogSlice = createSlice({
@@ -212,8 +166,7 @@ const koordinatChecklogSlice = createSlice({
       })
       .addCase(getKoordinatChecklog.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
-        state.lastSync = Date.now();
+        state.data = action.payload.data;
         state.error = null;
       })
       .addCase(getKoordinatChecklog.rejected, (state, action) => {

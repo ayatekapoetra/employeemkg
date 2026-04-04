@@ -8,3 +8,4 @@ export { default as DatePickerModal } from './DatePickerModal';
 export { default as PickerModal } from './PickerModal';
 export { default as StatCard } from './StatCard';
 export { default as CustomAlert } from './CustomAlert';
+export { default as BottomSheetSelect } from './BottomSheetSelect';

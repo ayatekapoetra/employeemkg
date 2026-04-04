@@ -22,10 +22,12 @@ export default function ListAbsensi({ item, onPress }) {
   const images = useMemo(() => (previewUri ? [{ uri: previewUri }] : []), [previewUri]);
 
   const dateLabel = useMemo(() => {
+    
     const src = item.checklog_in || item.date_ops;
-    const m = moment(src, ['YYYY-MM-DD HH:mm:ss', 'DD/MM/YYYY HH:mm:ss', 'YYYY-MM-DD', 'DD/MM/YYYY']).locale('id');
+    const m = moment(src).locale('id');
+
     return m.isValid() ? m.format('dddd, DD MMMM YYYY') : String(src || '');
-  }, [item.checklog_in, item.date_ops]);
+  }, [item.checklog_in, item.date_ops, item.date_att]);
 
   const inLabel = useMemo(() => {
     if (!item.checklog_in) return '??:??';
@@ -43,8 +45,6 @@ export default function ListAbsensi({ item, onPress }) {
 
   const imgIn = item.photo_in ? (item.photo_in.startsWith('http') ? item.photo_in : `${PHOTO_BASE_URL.replace(/\/$/, '')}/${item.photo_in.replace(/^\//,'')}`) : null;
   const imgOut = item.photo_out ? (item.photo_out.startsWith('http') ? item.photo_out : `${PHOTO_BASE_URL.replace(/\/$/, '')}/${item.photo_out.replace(/^\//,'')}`) : null;
-
-  console.log(item);
   
   return (
     <TouchableOpacity onPress={() => onPress && onPress(item)}>

@@ -2,67 +2,38 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../services/api/client';
 import { API_ENDPOINTS } from '../../services/api/endpoints';
-import database from '../../database/SQLiteService';
 
 const CACHE_KEY = '@penyewa';
 
 export const getPenyewa = createAsyncThunk(
   'penyewa/getList',
-  async (params = {}, { rejectWithValue }) => {
+  async (forceRefresh = false, { rejectWithValue }) => {
     try {
-      console.log('[Penyewa] Fetching from API...', params);
-
-      // 1. FETCH FROM API
-      const resp = await apiClient.get(API_ENDPOINTS.PENYEWA.LIST, { params });
-      const apiData = resp.data?.rows || resp.data?.data || [];
-      console.log('[Penyewa] API response:', apiData.length, 'items');
-
-      if (Array.isArray(apiData) && apiData.length > 0) {
-        // 2. SYNC TO SQLITE (Primary Storage)
-        try {
-          const syncResult = await database.syncPenyewa(apiData);
-          console.log('[Penyewa] Synced to SQLite:', syncResult.successCount, 'items');
-        } catch (sqliteError) {
-          console.warn('[Penyewa] SQLite sync failed:', sqliteError.message);
-        }
-
-        // 3. SAVE TO ASYNCSTORAGE (Fallback)
-        try {
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(apiData));
-          console.log('[Penyewa] Saved to AsyncStorage');
-        } catch (storageError) {
-          console.warn('[Penyewa] AsyncStorage save failed:', storageError.message);
-        }
-      }
-
-      // 4. RETURN TO REDUX (Runtime)
-      return { data: apiData, source: 'api' };
-    } catch (error) {
-      console.error('[Penyewa] Error fetching from API:', error);
-
-      // FALLBACK: Try SQLite first
-      try {
-        const dbData = await database.getPenyewa();
-        if (dbData && dbData.length > 0) {
-          console.log('[Penyewa] Loaded from SQLite fallback:', dbData.length, 'items');
-          return { data: dbData, source: 'sqlite' };
-        }
-      } catch (dbError) {
-        console.warn('[Penyewa] SQLite fallback failed:', dbError.message);
-      }
-
-      // FALLBACK: Try AsyncStorage
-      try {
+      if (!forceRefresh) {
         const cached = await AsyncStorage.getItem(CACHE_KEY);
         if (cached) {
-          const parsed = JSON.parse(cached);
-          console.log('[Penyewa] Loaded from AsyncStorage fallback:', parsed.length, 'items');
-          return { data: parsed, source: 'asyncstorage' };
+          console.log('Using cached penyewa data');
+          return { data: JSON.parse(cached) };
         }
-      } catch (storageError) {
-        console.warn('[Penyewa] AsyncStorage fallback failed:', storageError.message);
       }
 
+      console.log('Fetching penyewa from API...');
+      const resp = await apiClient.get(API_ENDPOINTS.PENYEWA.LIST);
+      const data = resp.data?.rows || resp.data?.data || resp.data || [];
+      
+      console.log('[Penyewa] API response:', data.length, 'items');
+
+      if (data && Array.isArray(data) && data.length > 0) {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      }
+      
+      return { data };
+    } catch (error) {
+      console.error('Error fetching penyewa:', error);
+      const cached = await AsyncStorage.getItem(CACHE_KEY);
+      if (cached) {
+        return { data: JSON.parse(cached) };
+      }
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
@@ -114,9 +85,7 @@ export const clearPenyewaCache = createAsyncThunk(
 const initialState = {
   loading: false,
   error: null,
-  data: [],
-  lastSync: null,
-  dataSource: 'none', // 'api' | 'sqlite' | 'asyncstorage' | 'none'
+  data: null,
 };
 
 const penyewaSlice = createSlice({
@@ -137,10 +106,8 @@ const penyewaSlice = createSlice({
       })
       .addCase(getPenyewa.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload.data || [];
-        state.dataSource = action.payload.source || 'api';
+        state.data = action.payload.data;
         state.error = null;
-        state.lastSync = Date.now();
       })
       .addCase(getPenyewa.rejected, (state, action) => {
         state.loading = false;

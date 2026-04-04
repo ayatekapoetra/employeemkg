@@ -9,7 +9,7 @@ import { getEquipment } from '../../../src/store/slices/equipmentSlice';
 import { getShift } from '../../../src/store/slices/shiftSlice';
 import { getOprDrv } from '../../../src/store/slices/oprdrvSlice';
 import { Calendar, Clock, User, TickCircle, CloseCircle, TruckFast, Filter } from 'iconsax-react-native';
-import { View, RefreshControl, Alert, StyleSheet } from 'react-native';
+import { View, RefreshControl, Alert } from 'react-native';
 import moment from 'moment';
 import 'moment/locale/id';
 import apiClient from '../../../src/services/api/client';
@@ -25,7 +25,7 @@ export default function ApprovalTimesheet() {
   const mode = useSelector(state => state.themes)?.value || 'light';
   const { user } = useSelector(state => state.auth);
 
-  // Redux state for debugging filter options
+  // Redux state for filter options
   const penyewaState = useSelector(state => state.penyewa);
   const equipmentState = useSelector(state => state.equipment);
   const shiftState = useSelector(state => state.shift);
@@ -35,7 +35,7 @@ export default function ApprovalTimesheet() {
   const [refreshing, setRefreshing] = useState(false);
   const [approvalList, setApprovalList] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
-  const [actionLoading, setActionLoading] = useState(null);
+
   const [showFilter, setShowFilter] = useState(false);
   const [filterParams, setFilterParams] = useState({
     status: 'W',
@@ -64,8 +64,6 @@ export default function ApprovalTimesheet() {
 
   const fetchCount = useCallback(async () => {
     try {
-      console.log('🔢 Fetching pending count...');
-
       // Build query params with filters
       const params = { ...filterParams };
 
@@ -78,10 +76,8 @@ export default function ApprovalTimesheet() {
 
       const response = await apiClient.get(API_ENDPOINTS.TIMESHEET.APPROVAL_LIST_COUNT, { params });
       const count = response.data?.count || 0;
-      console.log('🔢 Pending count:', count);
       setPendingCount(count);
     } catch (error) {
-      console.error('❌ Error fetching pending count:', error);
       // Fallback to local count if API fails
       setPendingCount(approvalList.length);
     }
@@ -90,10 +86,7 @@ export default function ApprovalTimesheet() {
   const fetchApprovals = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔍 Fetching timesheet approvals for supervisor:', user?.karyawan?.id);
-      console.log('📋 Current filterParams:', filterParams);
 
-      // OPTION 1: Try API endpoint
       try {
         // Build query params with filters
         const params = { ...filterParams };
@@ -105,61 +98,13 @@ export default function ApprovalTimesheet() {
           }
         });
 
-        console.log('🔍 Final params sent to API:', params);
-        console.log('🌐 API Endpoint:', API_ENDPOINTS.TIMESHEET.APPROVAL_LIST);
-        console.log('🌐 Full Request URL:', `${API_ENDPOINTS.TIMESHEET.APPROVAL_LIST}?${new URLSearchParams(params).toString()}`);
-
         const response = await apiClient.get(API_ENDPOINTS.TIMESHEET.APPROVAL_LIST, { params });
-
         const data = response.data?.data || response.data?.rows?.data || response.data?.rows || [];
-        console.log('📊 Timesheet approvals found:', data.length);
-        console.log('📊 Full Response Structure:', {
-          'response.data?.data': !!response.data?.data,
-          'response.data?.rows?.data': !!response.data?.rows?.data,
-          'response.data?.rows': !!response.data?.rows,
-          'dataLength': data.length
-        });
-
-        if (data.length > 0) {
-          console.log('📄 Sample data (first item):', JSON.stringify(data[0], null, 2));
-
-          // Log karyawan_id comparison if filter is active
-          if (params.karyawan_id) {
-            console.log('🔍 Filter karyawan_id:', params.karyawan_id, '(Type:', typeof params.karyawan_id, ')');
-            data.forEach((item, idx) => {
-              const itemKaryawanId = item.karyawan?.id || item.karyawan_id;
-              const itemKaryawanIdType = typeof itemKaryawanId;
-              const match = itemKaryawanId?.toString() === params.karyawan_id?.toString();
-              console.log(`📋 Item ${idx + 1}:`, {
-                nama: item.karyawan?.nama || item.nama_karyawan,
-                karyawan_id: itemKaryawanId,
-                idType: itemKaryawanIdType,
-                matches: match,
-                'item.karyawan_id.toString()': itemKaryawanId?.toString(),
-                'params.karyawan_id.toString()': params.karyawan_id?.toString()
-              });
-            });
-          }
-        } else {
-          console.warn('⚠️ No data returned from API with the following filters:');
-          console.warn('⚠️ Filters:', JSON.stringify(params, null, 2));
-        }
 
         setApprovalList(data);
       } catch (apiError) {
-        console.error('═══════════════════════════════════════════════════════════════');
-        console.error('❌ API ERROR DETAILS:');
-        console.error('❌ Error Message:', apiError.message);
-        console.error('❌ Error Response:', apiError.response?.data);
-        console.error('❌ Error Status:', apiError.response?.status);
-        console.error('❌ Request URL:', apiError.config?.url);
-        console.error('❌ Request Params:', apiError.config?.params);
-        console.error('═══════════════════════════════════════════════════════════════');
-        console.warn('⚠️ API endpoint not ready, using dummy data');
-        console.warn('⚠️ API Error:', apiError.response?.data?.error?.message);
-
-        // OPTION 2: Dummy data fallback (comment out when API is ready)
-        const dummyData = [
+        // Fallback data for development
+        const fallbackData = [
           {
             id: 1,
             kode: 'TS-2024-001',
@@ -186,44 +131,17 @@ export default function ApprovalTimesheet() {
               nama: 'Shift 1 (Pagi)',
             },
           },
-          {
-            id: 2,
-            kode: 'TS-2024-002',
-            tanggal: moment().format('YYYY-MM-DD'),
-            date_ops: moment().format('YYYY-MM-DD'),
-            starttime: moment().set({hour: 7, minute: 30}).toISOString(),
-            endtime: moment().set({hour: 16, minute: 0}).toISOString(),
-            status: 'W',
-            karyawan: {
-              id: 2,
-              nama: 'Budi Operator EX-001',
-            },
-            penyewa: {
-              id: 1,
-              nama: 'PT Maju Jaya Mining',
-            },
-            equipment: {
-              id: 2,
-              kode: 'EX-001',
-              model: 'Komatsu PC200',
-            },
-            shift: {
-              id: 1,
-              nama: 'Shift 1 (Pagi)',
-            },
-          },
         ];
 
-        setApprovalList(dummyData);
+        setApprovalList(fallbackData);
 
         toast.show({
-          description: 'Menggunakan data dummy - Backend belum siap',
+          description: 'Menggunakan data fallback - Backend error',
           duration: 2000,
           bg: 'orange.500',
         });
       }
     } catch (error) {
-      console.error('❌ Error fetching timesheet approvals:', error);
       setApprovalList([]);
     } finally {
       setLoading(false);
@@ -243,7 +161,6 @@ export default function ApprovalTimesheet() {
     // Initialize karyawan_id with active user on mount
     if (user?.karyawan?.id) {
       const activeKaryawanId = user.karyawan.id.toString();
-      console.log('👤 Initializing filter with active user:', activeKaryawanId);
       setFilterParams(prev => ({
         ...prev,
         karyawan_id: activeKaryawanId,
@@ -261,108 +178,7 @@ export default function ApprovalTimesheet() {
     fetchCount();
   }, [filterParams, fetchApprovals, fetchCount]);
 
-  const handleApprove = async (item) => {
-    Alert.alert(
-      'Konfirmasi Approval',
-      `Setujui timesheet ${item.karyawan?.nama || 'karyawan ini'}?`,
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Setujui',
-          onPress: async () => {
-            try {
-              setActionLoading(item.id);
-              console.log('✅ Approving timesheet:', item.id);
 
-              try {
-                await apiClient.put(API_ENDPOINTS.TIMESHEET.APPROVE(item.id), {
-                  status: 'A', // A = Approved
-                  approved_by: user?.karyawan?.id,
-                });
-
-                toast.show({
-                  description: 'Timesheet berhasil disetujui',
-                  duration: 2000,
-                  bg: 'green.500',
-                });
-              } catch (apiError) {
-                console.warn('⚠️ API approve endpoint not ready');
-                // Simulate success for dummy data
-                toast.show({
-                  description: '[DEMO] Timesheet approved (API belum siap)',
-                  duration: 2000,
-                  bg: 'blue.500',
-                });
-              }
-
-              fetchApprovals();
-            } catch (error) {
-              console.error('❌ Error approving timesheet:', error);
-              toast.show({
-                description: error.response?.data?.message || 'Gagal menyetujui timesheet',
-                duration: 3000,
-                bg: 'red.500',
-              });
-            } finally {
-              setActionLoading(null);
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  const handleReject = async (item) => {
-    Alert.alert(
-      'Konfirmasi Penolakan',
-      `Tolak timesheet ${item.karyawan?.nama || 'karyawan ini'}?\nTimesheet akan dikembalikan untuk diperbaiki.`,
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Tolak',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setActionLoading(item.id);
-              console.log('❌ Rejecting timesheet:', item.id);
-
-              try {
-                await apiClient.put(API_ENDPOINTS.TIMESHEET.REJECT(item.id), {
-                  status: 'R', // R = Retry/Rejected
-                  rejected_by: user?.karyawan?.id,
-                });
-
-                toast.show({
-                  description: 'Timesheet ditolak, operator/driver akan memperbaiki',
-                  duration: 2000,
-                  bg: 'orange.500',
-                });
-              } catch (apiError) {
-                console.warn('⚠️ API reject endpoint not ready');
-                // Simulate success for dummy data
-                toast.show({
-                  description: '[DEMO] Timesheet rejected (API belum siap)',
-                  duration: 2000,
-                  bg: 'blue.500',
-                });
-              }
-
-              fetchApprovals();
-            } catch (error) {
-              console.error('❌ Error rejecting timesheet:', error);
-              toast.show({
-                description: error.response?.data?.message || 'Gagal menolak timesheet',
-                duration: 3000,
-                bg: 'red.500',
-              });
-            } finally {
-              setActionLoading(null);
-            }
-          }
-        }
-      ]
-    );
-  };
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -371,35 +187,6 @@ export default function ApprovalTimesheet() {
   };
 
   const handleOpenFilter = () => {
-    console.log('═══════════════════════════════════════════════════════════════');
-    console.log('🔽 OPENING FILTER MODAL');
-    console.log('📋 Current filterParams:', filterParams);
-
-    // Log Redux state for debugging
-    console.log('🏢 Penyewa Redux State:', {
-      loading: penyewaState?.loading,
-      dataCount: penyewaState?.data?.length || 0,
-      sample: penyewaState?.data?.slice(0, 3).map(p => ({ id: p.id, idType: typeof p.id, nama: p.nama }))
-    });
-    console.log('🚜 Equipment Redux State:', {
-      loading: equipmentState?.loading,
-      dataCount: equipmentState?.data?.length || 0,
-      sample: equipmentState?.data?.slice(0, 3).map(e => ({ id: e.id, idType: typeof e.id, kode: e.kode }))
-    });
-    console.log('⏰ Shift Redux State:', {
-      loading: shiftState?.loading,
-      dataCount: shiftState?.data?.length || 0,
-      sample: shiftState?.data?.slice(0, 3).map(s => ({ id: s.id, idType: typeof s.id, nama: s.nama }))
-    });
-    console.log('👤 OprDrv Redux State:', {
-      loading: oprdrvState?.loading,
-      dataCount: oprdrvState?.data?.length || 0,
-      sample: oprdrvState?.data?.slice(0, 5).map(o => ({ id: o.id, idType: typeof o.id, nama: o.nama }))
-    });
-
-    console.log('📋 Setting tempFilter to:', { ...filterParams });
-    console.log('═══════════════════════════════════════════════════════════════');
-
     setTempFilter({ ...filterParams });
     setShowFilter(true);
   };
@@ -411,41 +198,6 @@ export default function ApprovalTimesheet() {
       startdate: tempFilter.startdate,
       enddate: tempFilter.enddate,
     };
-
-    console.log('═══════════════════════════════════════════════════════════════');
-    console.log('🔍 APPLYING FILTER - Details:');
-    console.log('🔍 Status:', appliedFilter.status);
-    console.log('🔍 Start Date:', appliedFilter.startdate);
-    console.log('🔍 End Date:', appliedFilter.enddate);
-    console.log('🔍 Penyewa ID:', appliedFilter.penyewa_id, '(Type:', typeof appliedFilter.penyewa_id, ')');
-    console.log('🔍 Equipment ID:', appliedFilter.equipment_id, '(Type:', typeof appliedFilter.equipment_id, ')');
-    console.log('🔍 Shift ID:', appliedFilter.shift_id, '(Type:', typeof appliedFilter.shift_id, ')');
-    console.log('🔍 Karyawan ID:', appliedFilter.karyawan_id, '(Type:', typeof appliedFilter.karyawan_id, ')');
-
-    // Log the actual selected items from Redux
-    const penyewa = penyewaState?.data || [];
-    const equipment = equipmentState?.data || [];
-    const shift = shiftState?.data || [];
-    const oprdrv = oprdrvState?.data || [];
-
-    if (appliedFilter.penyewa_id) {
-      const selectedPenyewa = penyewa.find(p => p.id.toString() === appliedFilter.penyewa_id.toString());
-      console.log('🏢 Selected Penyewa:', selectedPenyewa);
-    }
-    if (appliedFilter.equipment_id) {
-      const selectedEquipment = equipment.find(e => e.id.toString() === appliedFilter.equipment_id.toString());
-      console.log('🚜 Selected Equipment:', selectedEquipment);
-    }
-    if (appliedFilter.shift_id) {
-      const selectedShift = shift.find(s => s.id.toString() === appliedFilter.shift_id.toString());
-      console.log('⏰ Selected Shift:', selectedShift);
-    }
-    if (appliedFilter.karyawan_id) {
-      const selectedKaryawan = oprdrv.find(k => k.id.toString() === appliedFilter.karyawan_id.toString());
-      console.log('👤 Selected Karyawan:', selectedKaryawan);
-    }
-
-    console.log('═══════════════════════════════════════════════════════════════');
 
     setFilterParams(appliedFilter);
     setShowFilter(false);
@@ -473,7 +225,6 @@ export default function ApprovalTimesheet() {
       karyawan_id: activeKaryawanId,
     };
 
-    console.log('🔄 Resetting filter to active user:', activeKaryawanId);
     setTempFilter(defaultTempFilter);
     setFilterParams(defaultFilterParams);
     setShowFilter(false);
@@ -650,7 +401,6 @@ export default function ApprovalTimesheet() {
               <HStack px={4} py={2} justifyContent="flex-end">
         <Pressable
           onPress={handleOpenFilter}
-          style={styles.filterButton}
           bg={getActiveFilterCount() > 0 ? (mode === 'dark' ? '#3b82f6' : '#2563eb') : 'transparent'}
           borderWidth={1}
           borderColor={mode === 'dark' ? '#3b82f6' : '#2563eb'}
@@ -722,8 +472,4 @@ export default function ApprovalTimesheet() {
   );
 }
 
-const styles = StyleSheet.create({
-  filterButton: {
-    // styles handled by NativeBase props
-  },
-});
+

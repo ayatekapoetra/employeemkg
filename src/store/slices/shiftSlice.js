@@ -2,72 +2,42 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../services/api/client';
 import { API_ENDPOINTS } from '../../services/api/endpoints';
-import database from '../../database/SQLiteService';
 
 const CACHE_KEY = '@shift';
 
 export const getShift = createAsyncThunk(
   'shift/getShift',
-  async (_, { rejectWithValue }) => {
+  async (forceRefresh = false, { rejectWithValue }) => {
     try {
-      console.log('[Shift] Fetching from API...');
+      if (!forceRefresh) {
+        const cached = await AsyncStorage.getItem(CACHE_KEY);
+        if (cached) {
+          console.log('Using cached shift data');
+          return { data: JSON.parse(cached) };
+        }
+      }
 
-      // 1. FETCH FROM API
+      console.log('Fetching shift from API...');
       const response = await apiClient.get(API_ENDPOINTS.SHIFT.LIST);
-      const apiData = response.data?.rows || response.data?.data || [];
-
-      console.log('[Shift] API response:', apiData.length, 'items');
+      const data = response.data?.rows || response.data?.data || response.data || [];
+      
+      console.log('[Shift] API response:', data.length, 'items');
 
       if (response.data?.diagnostic?.error) {
         return rejectWithValue(response.data.diagnostic.message || 'Gagal mengambil data shift');
       }
 
-      if (Array.isArray(apiData) && apiData.length > 0) {
-        // 2. SYNC TO SQLITE (Primary Storage)
-        try {
-          const syncResult = await database.syncShift(apiData);
-          console.log('[Shift] Synced to SQLite:', syncResult.successCount, 'items');
-        } catch (sqliteError) {
-          console.warn('[Shift] SQLite sync failed:', sqliteError.message);
-        }
-
-        // 3. SAVE TO ASYNCSTORAGE (Fallback)
-        try {
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(apiData));
-          console.log('[Shift] Saved to AsyncStorage');
-        } catch (storageError) {
-          console.warn('[Shift] AsyncStorage save failed:', storageError.message);
-        }
+      if (data && Array.isArray(data) && data.length > 0) {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
       }
-
-      // 4. RETURN TO REDUX (Runtime)
-      return { data: apiData, source: 'api' };
+      
+      return { data };
     } catch (error) {
-      console.error('[Shift] Error fetching from API:', error);
-
-      // FALLBACK: Try SQLite first
-      try {
-        const dbData = await database.getShift();
-        if (dbData && dbData.length > 0) {
-          console.log('[Shift] Loaded from SQLite fallback:', dbData.length, 'items');
-          return { data: dbData, source: 'sqlite' };
-        }
-      } catch (dbError) {
-        console.warn('[Shift] SQLite fallback failed:', dbError.message);
+      console.error('Error fetching shift:', error);
+      const cached = await AsyncStorage.getItem(CACHE_KEY);
+      if (cached) {
+        return { data: JSON.parse(cached) };
       }
-
-      // FALLBACK: Try AsyncStorage
-      try {
-        const cached = await AsyncStorage.getItem(CACHE_KEY);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          console.log('[Shift] Loaded from AsyncStorage fallback:', parsed.length, 'items');
-          return { data: parsed, source: 'asyncstorage' };
-        }
-      } catch (storageError) {
-        console.warn('[Shift] AsyncStorage fallback failed:', storageError.message);
-      }
-
       return rejectWithValue(
         error.response?.data?.diagnostic?.message ||
         error.response?.data?.message ||
@@ -121,11 +91,9 @@ export const clearShiftCache = createAsyncThunk(
 );
 
 const initialState = {
-  data: [],
   loading: false,
   error: null,
-  lastSync: null,
-  dataSource: 'none' // 'api' | 'sqlite' | 'asyncstorage' | 'none'
+  data: null,
 };
 
 const shiftSlice = createSlice({
@@ -149,10 +117,8 @@ const shiftSlice = createSlice({
       })
       .addCase(getShift.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload.data || [];
-        state.dataSource = action.payload.source || 'api';
+        state.data = action.payload.data;
         state.error = null;
-        state.lastSync = Date.now();
       })
       .addCase(getShift.rejected, (state, action) => {
         state.loading = false;

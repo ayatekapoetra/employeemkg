@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import apiClient from '../../services/api/client';
 import { API_ENDPOINTS } from '../../services/api/endpoints';
-import database from '../../database/SQLiteService';
 
 const CACHE_KEY = '@equipment';
 
@@ -10,60 +9,31 @@ export const getEquipment = createAsyncThunk(
   'equipment/getList',
   async (forceRefresh = false, { rejectWithValue }) => {
     try {
-      console.log('[Equipment] Fetching from API...');
-
-      // 1. FETCH FROM API
-      const resp = await apiClient.get(API_ENDPOINTS.EQUIPMENT.LIST);
-      const apiData = resp.data?.rows || resp.data?.data || resp.data || [];
-
-      console.log('[Equipment] API response:', apiData.length, 'items');
-
-      if (Array.isArray(apiData) && apiData.length > 0) {
-        // 2. SYNC TO SQLITE (Primary Storage)
-        try {
-          const syncResult = await database.syncEquipment(apiData);
-          console.log('[Equipment] Synced to SQLite:', syncResult.successCount, 'items');
-        } catch (sqliteError) {
-          console.warn('[Equipment] SQLite sync failed:', sqliteError.message);
-        }
-
-        // 3. SAVE TO ASYNCSTORAGE (Fallback)
-        try {
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(apiData));
-          console.log('[Equipment] Saved to AsyncStorage');
-        } catch (storageError) {
-          console.warn('[Equipment] AsyncStorage save failed:', storageError.message);
-        }
-      }
-
-      // 4. RETURN TO REDUX (Runtime)
-      return { data: apiData, source: 'api' };
-    } catch (error) {
-      console.error('[Equipment] Error fetching from API:', error);
-
-      // FALLBACK: Try SQLite first
-      try {
-        const dbData = await database.getEquipment();
-        if (dbData && dbData.length > 0) {
-          console.log('[Equipment] Loaded from SQLite fallback:', dbData.length, 'items');
-          return { data: dbData, source: 'sqlite' };
-        }
-      } catch (dbError) {
-        console.warn('[Equipment] SQLite fallback failed:', dbError.message);
-      }
-
-      // FALLBACK: Try AsyncStorage
-      try {
+      if (!forceRefresh) {
         const cached = await AsyncStorage.getItem(CACHE_KEY);
         if (cached) {
-          const parsed = JSON.parse(cached);
-          console.log('[Equipment] Loaded from AsyncStorage fallback:', parsed.length, 'items');
-          return { data: parsed, source: 'asyncstorage' };
+          console.log('Using cached equipment data');
+          return { data: JSON.parse(cached) };
         }
-      } catch (storageError) {
-        console.warn('[Equipment] AsyncStorage fallback failed:', storageError.message);
       }
 
+      console.log('Fetching equipment from API...');
+      const resp = await apiClient.get(API_ENDPOINTS.EQUIPMENT.LIST);
+      const data = resp.data?.rows || resp.data?.data || resp.data || [];
+      
+      console.log('[Equipment] API response:', data.length, 'items');
+
+      if (data && Array.isArray(data) && data.length > 0) {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      }
+      
+      return { data };
+    } catch (error) {
+      console.error('Error fetching equipment:', error);
+      const cached = await AsyncStorage.getItem(CACHE_KEY);
+      if (cached) {
+        return { data: JSON.parse(cached) };
+      }
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
@@ -115,9 +85,7 @@ export const clearEquipmentCache = createAsyncThunk(
 const initialState = {
   loading: false,
   error: null,
-  data: [],
-  lastSync: null,
-  dataSource: 'none' // 'api' | 'sqlite' | 'asyncstorage' | 'none'
+  data: null,
 };
 
 const equipmentSlice = createSlice({
@@ -129,6 +97,14 @@ const equipmentSlice = createSlice({
       state.error = null;
       state.dataSource = 'none';
     },
+    // Add a direct data setter for Redux injector
+    setEquipmentData: (state, action) => {
+      state.loading = false;
+      state.error = null;
+      state.data = action.payload || [];
+      state.dataSource = 'redux-injector';
+      state.lastSync = Date.now();
+    },
   },
   extraReducers: builder => {
     builder
@@ -138,10 +114,8 @@ const equipmentSlice = createSlice({
       })
       .addCase(getEquipment.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload.data || [];
-        state.dataSource = action.payload.source || 'api';
+        state.data = action.payload.data;
         state.error = null;
-        state.lastSync = Date.now();
       })
       .addCase(getEquipment.rejected, (state, action) => {
         state.loading = false;

@@ -1,0 +1,260 @@
+import React, { useEffect, useMemo, useState } from 'react'
+import { ScrollView, TouchableOpacity, View, Modal } from 'react-native'
+import { HStack, VStack, Text, Divider } from 'native-base'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useDispatch, useSelector } from 'react-redux'
+import moment from 'moment'
+import { Calendar, Clock, TickCircle } from 'iconsax-react-native'
+
+import { AppScreen, HeaderScreen } from '../../../src/components/common'
+import { COLORS } from '../../../src/constants/colors'
+import { getWorkOrderList, updateWorkOrderStatus } from '../../../src/store/slices/workOrderSlice'
+import DateTimePickerModal from 'react-native-modal-datetime-picker'
+
+const STATUS_OPTIONS = {
+  WT: { label: 'Wait Teknisi', color: '#fbbf24' },
+  WS: { label: 'Wait Services', color: '#f472b6' },
+  WP: { label: 'Wait Part', color: '#f59e0b' },
+  WV: { label: 'Wait Vendor', color: '#c084fc' },
+  WTT: { label: 'Wait Transport', color: '#a78bfa' },
+  IP: { label: 'In Progress', color: '#60a5fa' },
+  DONE: { label: 'Selesai', color: '#34d399' },
+}
+
+export default function WorkOrderDetailScreen() {
+  const params = useLocalSearchParams()
+  const router = useRouter()
+  const dispatch = useDispatch()
+  const mode = useSelector((state) => state.themes)?.value || 'light'
+  const { data, loading } = useSelector((state) => state.workorder)
+
+  const [statusPicker, setStatusPicker] = useState(false)
+  const [selectedStatus, setSelectedStatus] = useState('')
+  const [datePicker, setDatePicker] = useState({ visible: false, field: null })
+  const [form, setForm] = useState({ services_at: null, ready_at: null })
+  const [updating, setUpdating] = useState(false)
+
+  const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1]
+  const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280'
+  const cardBg = mode === 'dark' ? '#2a2c3e' : '#ffffff'
+  const cardBorder = mode === 'dark' ? '#3a3c4e' : '#e5e7eb'
+
+  useEffect(() => {
+    if (!data || data.length === 0) {
+      dispatch(getWorkOrderList())
+    }
+  }, [data, dispatch])
+
+  const item = useMemo(() => data.find((it) => it.id?.toString() === params.id?.toString()), [data, params.id])
+
+  const statusInfo = STATUS_OPTIONS[item?.status] || { label: item?.status || '-', color: '#e5e7eb' }
+
+  useEffect(() => {
+    if (item) {
+      setSelectedStatus(item.status || '')
+      setForm({
+        services_at: item.services_at || null,
+        ready_at: item.ready_at || null,
+      })
+    }
+  }, [item])
+
+  return (
+    <AppScreen>
+      <HeaderScreen title="Work Order Detail" onBack={() => router.back()} onThemes onNotification />
+      <ScrollView
+        style={{ flex: 1, backgroundColor: mode === 'dark' ? COLORS.container.dark : COLORS.container.light }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <VStack space={3} bg={cardBg} borderRadius={14} borderWidth={1} borderColor={cardBorder} p={4} shadow={1}
+          style={{ shadowColor: mode === 'dark' ? '#000' : '#d1d5db', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 2 }}
+        >
+          <HStack justifyContent="space-between" alignItems="center">
+            <VStack space={1} flex={1}>
+              <Text fontFamily="Quicksand-Bold" fontSize="md" color={textColor}>
+                {item?.kode_wo || '-'}
+              </Text>
+              <Text fontFamily="Poppins-Regular" fontSize="xs" color={subtitleColor}>
+                {item?.equipment?.kode || item?.unit || '-'}
+              </Text>
+            </VStack>
+            <HStack px={3} py={1} borderRadius={12} borderWidth={1} borderColor={statusInfo.color} bg={statusInfo.color + '33'}>
+              <Text fontSize="xs" fontFamily="Poppins-SemiBold" color={mode === 'dark' ? '#fff' : '#0f172a'}>
+                {statusInfo.label}
+              </Text>
+            </HStack>
+          </HStack>
+
+          <Text fontFamily="Poppins-SemiBold" fontSize="sm" color={textColor}>
+            {item?.problem_issue || '-'}
+          </Text>
+
+          <HStack space={3} alignItems="center">
+            <Calendar size={16} color={subtitleColor} />
+            <Text fontSize="xs" fontFamily="Poppins-Regular" color={subtitleColor}>
+              Issue: {item?.breakdown?.date_issue ? moment(item.breakdown.date_issue).format('DD MMM YYYY') : '-'}
+            </Text>
+          </HStack>
+          <HStack space={3} alignItems="center">
+            <Clock size={16} color={subtitleColor} />
+            <Text fontSize="xs" fontFamily="Poppins-Regular" color={subtitleColor}>
+              Start: {item?.services_at ? moment(item.services_at).format('DD MMM, HH:mm') : '-'} | Ready: {item?.ready_at ? moment(item.ready_at).format('DD MMM, HH:mm') : '-'}
+            </Text>
+          </HStack>
+        </VStack>
+
+        <VStack mt={4} space={3} bg={cardBg} borderRadius={14} borderWidth={1} borderColor={cardBorder} p={4}>
+          <HStack justifyContent="space-between" alignItems="center" mb={1}>
+            <Text fontFamily="Quicksand-Bold" fontSize="md" color={textColor}>Aktivitas Teknisi</Text>
+            <Text fontFamily="Poppins-Regular" fontSize="xs" color={subtitleColor}>{item?.actions?.length || 0} catatan</Text>
+          </HStack>
+          {item?.actions?.length ? item.actions.map((act, idx) => (
+            <React.Fragment key={act.id || idx}>
+              {idx > 0 && <Divider bg={cardBorder} my={2} />}
+              <VStack space={1}>
+                <Text fontFamily="Poppins-SemiBold" fontSize="sm" color={textColor}>
+                  {act.karyawan?.nama || 'Teknisi'}
+                </Text>
+                <Text fontFamily="Poppins-Regular" fontSize="xs" color={subtitleColor}>
+                  {act.starttime ? moment(act.starttime).format('DD MMM, HH:mm') : '-'}
+                  {act.endtime ? ` - ${moment(act.endtime).format('DD MMM, HH:mm')}` : ''}
+                </Text>
+                <Text fontFamily="Poppins-Regular" fontSize="sm" color={textColor}>
+                  {act.narasi || '-'}
+                </Text>
+              </VStack>
+            </React.Fragment>
+          )) : (
+            <Text fontFamily="Poppins-Regular" fontSize="sm" color={subtitleColor}>Belum ada catatan teknisi.</Text>
+          )}
+        </VStack>
+
+        <VStack mt={4} space={3} bg={cardBg} borderRadius={14} borderWidth={1} borderColor={cardBorder} p={4}
+          shadow={1} style={{ shadowColor: mode === 'dark' ? '#000' : '#d1d5db', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 2 }}
+        >
+          <Text fontFamily="Quicksand-Bold" fontSize="md" color={textColor}>Update Status</Text>
+          <TouchableOpacity
+            onPress={() => setStatusPicker(true)}
+            style={{ borderWidth: 1, borderColor: cardBorder, borderRadius: 12, padding: 12, backgroundColor: mode === 'dark' ? '#1f2937' : '#f9fafb' }}
+          >
+            <Text fontFamily="Poppins-SemiBold" fontSize="sm" color={textColor}>{selectedStatus || 'Pilih status'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setDatePicker({ visible: true, field: 'services_at' })}
+            style={{ borderWidth: 1, borderColor: cardBorder, borderRadius: 12, padding: 12, backgroundColor: mode === 'dark' ? '#1f2937' : '#f9fafb' }}
+          >
+            <Text fontFamily="Poppins-Regular" fontSize="xs" color={subtitleColor}>Mulai ditangani</Text>
+            <Text fontFamily="Poppins-SemiBold" fontSize="sm" color={textColor}>{form.services_at ? moment(form.services_at).format('DD MMM YYYY, HH:mm') : 'Set waktu mulai'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setDatePicker({ visible: true, field: 'ready_at' })}
+            style={{ borderWidth: 1, borderColor: cardBorder, borderRadius: 12, padding: 12, backgroundColor: mode === 'dark' ? '#1f2937' : '#f9fafb' }}
+          >
+            <Text fontFamily="Poppins-Regular" fontSize="xs" color={subtitleColor}>Selesai diperbaiki</Text>
+            <Text fontFamily="Poppins-SemiBold" fontSize="sm" color={textColor}>{form.ready_at ? moment(form.ready_at).format('DD MMM YYYY, HH:mm') : 'Set waktu selesai'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            disabled={updating}
+            onPress={async () => {
+              if (!selectedStatus) return
+              setUpdating(true)
+              try {
+                await dispatch(updateWorkOrderStatus({
+                  id: item.id,
+                  data: {
+                    status: selectedStatus,
+                    services_at: form.services_at,
+                    ready_at: form.ready_at,
+                  },
+                })).unwrap()
+              } catch (err) {
+                console.log('[WorkOrderDetail] update error', err)
+              } finally {
+                setUpdating(false)
+              }
+            }}
+            style={{
+              backgroundColor: updating ? '#9ca3af' : (mode === 'dark' ? '#2563eb' : '#2563eb'),
+              padding: 14,
+              borderRadius: 12,
+              alignItems: 'center',
+            }}
+          >
+            <Text fontFamily="Quicksand-Bold" fontSize="md" color="#ffffff">{updating ? 'Menyimpan...' : 'Update Status'}</Text>
+          </TouchableOpacity>
+        </VStack>
+      </ScrollView>
+
+      <StatusPickerModal
+        visible={statusPicker}
+        onClose={() => setStatusPicker(false)}
+        value={selectedStatus}
+        onSelect={(val) => { setSelectedStatus(val); setStatusPicker(false) }}
+        mode={mode}
+      />
+
+      <DateTimePickerModal
+        isVisible={datePicker.visible}
+        mode="datetime"
+        date={form[datePicker.field] ? moment(form[datePicker.field]).toDate() : new Date()}
+        onConfirm={(date) => {
+          setDatePicker({ visible: false, field: null })
+          setForm((prev) => ({ ...prev, [datePicker.field]: moment(date).format('YYYY-MM-DD HH:mm:ss') }))
+        }}
+        onCancel={() => setDatePicker({ visible: false, field: null })}
+      />
+    </AppScreen>
+  )
+}
+
+function StatusPickerModal({ visible, onClose, value, onSelect, mode }) {
+  const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1]
+  const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280'
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={onClose}
+        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
+      >
+        <View style={{ backgroundColor: mode === 'dark' ? '#1f2937' : '#ffffff', width: '85%', borderRadius: 14, padding: 16 }}>
+          <Text style={{ fontFamily: 'Quicksand-Bold', fontSize: 16, color: textColor, marginBottom: 12 }}>Pilih Status</Text>
+          {Object.keys(STATUS_OPTIONS).map((code) => {
+            const opt = STATUS_OPTIONS[code]
+            const active = value === code
+            return (
+              <TouchableOpacity
+                key={code}
+                onPress={() => onSelect(code)}
+                style={{
+                  paddingVertical: 10,
+                  paddingHorizontal: 12,
+                  borderRadius: 12,
+                  borderWidth: active ? 2 : 1,
+                  borderColor: active ? opt.color : '#e5e7eb',
+                  marginBottom: 8,
+                  backgroundColor: active ? opt.color + '22' : (mode === 'dark' ? '#111827' : '#f9fafb'),
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Text style={{ fontFamily: 'Poppins-SemiBold', color: textColor }}>{code} • {opt.label}</Text>
+                {active ? <TickCircle size={18} color={opt.color} variant="Bold" /> : null}
+              </TouchableOpacity>
+            )
+          })}
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  )
+}

@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
 import { VStack, HStack, Text, Center, Modal, Button } from 'native-base';
 import { AppScreen } from '../../src/components/common';
@@ -24,6 +25,7 @@ import {
   downloadAllMasterData,
   clearDownloadStatus,
 } from '../../src/store/slices/downloadSlice';
+import { loadSQLiteDataToRedux } from '../../src/store/slices/appSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function DownloadDataScreen() {
@@ -89,17 +91,20 @@ export default function DownloadDataScreen() {
     }
   };
 
-  // Clear download timestamp to force refresh on next app start
+  // Clear download timestamp to force refresh and show progress bar
   const handleClearTimestamp = async () => {
     try {
       await AsyncStorage.removeItem('@masterDataLastFetch');
+      await AsyncStorage.setItem('@masterDataAutoSyncDisabled', 'false');
+      console.log('🔄 Manual trigger: Emitting masterDataAutoSyncReset event');
+      DeviceEventEmitter.emit('masterDataAutoSyncReset');
       Alert.alert(
-        'Berhasil', 
-        'Timestamp dihapus. Progress bar akan muncul saat restart app atau kembali ke Home.',
+        'Auto-Sync Diaktifkan', 
+        'Progress bar akan muncul dan mulai mendownload data. Kembali ke Home untuk melihat progress.',
         [{ text: 'OK' }]
       );
     } catch (error) {
-      Alert.alert('Error', 'Gagal menghapus timestamp');
+      Alert.alert('Error', 'Gagal mengaktifkan auto-sync');
     }
   };
 
@@ -291,7 +296,7 @@ export default function DownloadDataScreen() {
               </HStack>
             </TouchableOpacity>
 
-            {/* Reset Auto-Sync Button - untuk testing progress bar */}
+            {/* Trigger Progress Bar - untuk manual download dengan progress */}
             <TouchableOpacity
               onPress={handleClearTimestamp}
               style={{
@@ -303,13 +308,13 @@ export default function DownloadDataScreen() {
               }}
             >
               <HStack space={3} alignItems="center" justifyContent="center">
-                <Text fontSize={18}>🔄</Text>
+                <Text fontSize={18}>📊</Text>
                 <VStack>
                   <Text fontSize="sm" fontFamily="Quicksand-Bold" color={mode === 'dark' ? '#fed7aa' : '#9a3412'}>
-                    Reset Auto-Sync Timer
+                    Download dengan Progress Bar
                   </Text>
                   <Text fontSize="xs" fontFamily="Poppins-Light" color={mode === 'dark' ? '#fdba74' : '#c2410c'}>
-                    Progress bar akan muncul saat kembali ke Home
+                    Tampilkan progress bar di halaman Home
                   </Text>
                 </VStack>
               </HStack>
@@ -415,7 +420,7 @@ export default function DownloadDataScreen() {
           </Modal.Content>
         </Modal>
 
-        {/* Footer - SQLite Query Button */}
+        {/* Footer - Action Buttons */}
         <VStack
           position="absolute"
           bottom={0}
@@ -426,7 +431,56 @@ export default function DownloadDataScreen() {
           borderTopColor={borderColor}
           p={4}
           shadow={6}
+          space={2}
         >
+          {/* Load Data to Redux Button */}
+          <TouchableOpacity
+            onPress={async () => {
+              try {
+                Alert.alert(
+                  'Load Data ke Redux',
+                  'Akan memuat data dari SQLite ke Redux state. Lanjutkan?',
+                  [
+                    { text: 'Batal', style: 'cancel' },
+                    { 
+                      text: 'Load', 
+                      onPress: async () => {
+                        try {
+                          // Load data from SQLite to Redux
+                          const success = await dispatch(loadSQLiteDataToRedux()).unwrap();
+                          Alert.alert('Berhasil', `${success} tipe data berhasil dimuat ke Redux`);
+                        } catch (error) {
+                          Alert.alert('Error', 'Gagal memuat data ke Redux');
+                        }
+                      }
+                    }
+                  ]
+                );
+              } catch (error) {
+                Alert.alert('Error', 'Gagal memuat data ke Redux');
+              }
+            }}
+            style={{
+              backgroundColor: mode === 'dark' ? '#059669' : '#10b981',
+              paddingVertical: 14,
+              borderRadius: 12,
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <VStack flex={1} alignItems="center">
+              <Text fontSize="md" fontFamily="Quicksand-Bold" color="#ffffff">
+                🔄 Load Data ke Redux
+              </Text>
+              <Text fontSize="xs" fontFamily="Poppins-Light" color="#d1fae5">
+                Muat data dari SQLite ke Redux state
+              </Text>
+            </VStack>
+          </TouchableOpacity>
+
+          {/* SQLite Query Button */}
           <TouchableOpacity
             onPress={() => router.push('/setting/sqlite-query-screen')}
             style={{

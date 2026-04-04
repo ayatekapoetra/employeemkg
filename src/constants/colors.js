@@ -1,7 +1,41 @@
 const appcolor = {
+  primary: '#1d4ed8',
+  success: '#15803d',
+  warning: '#f59e0b',
+  danger: '#dc2626',
+  info: '#0284c7',
+  gray: '#6b7280',
+  main: {
+    primary: '#1d4ed8',
+    success: '#15803d',
+    warning: '#f59e0b',
+    danger: '#dc2626',
+    info: '#0284c7',
+    gray: '#6b7280',
+    dark: {
+      primary: '#3b82f6',
+      success: '#22c55e',
+      warning: '#fbbf24',
+      danger: '#ef4444',
+      info: '#38bdf8',
+      gray: '#9ca3af',
+    },
+    light: {
+      primary: '#1e40af',
+      success: '#15803d',
+      warning: '#d97706',
+      danger: '#b91c1c',
+      info: '#0369a1',
+      gray: '#4b5563',
+    }
+  },
   container: {
     dark: "#2f313e",
     light: "#F5F5F5"
+  },
+  card: {
+    dark: "#2a2c3e",
+    light: "#ffffff"
   },
   box: {
     dark: "#697689",

@@ -13,24 +13,24 @@ export const getGudang = createAsyncThunk(
         const cached = await AsyncStorage.getItem(CACHE_KEY);
         if (cached) {
           console.log('Using cached gudang data');
-          return { data: JSON.parse(cached), fromCache: true };
+          return { data: JSON.parse(cached) };
         }
       }
 
       console.log('Fetching gudang from API...');
-      const resp = await apiClient.get('/master/gudang/list');
-      
-       const rows = resp.data?.rows ?? resp.data?.data ?? [];
-      if (Array.isArray(rows)) {
-        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(rows));
+      const resp = await apiClient.get(API_ENDPOINTS.GUDANG.LIST);
+      const data = resp.data?.rows || resp.data?.data || resp.data || [];
+       
+      if (data && Array.isArray(data) && data.length > 0) {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
       }
       
-      return { data: rows };
+      return { data };
     } catch (error) {
       console.error('Error fetching gudang:', error);
       const cached = await AsyncStorage.getItem(CACHE_KEY);
       if (cached) {
-        return { data: JSON.parse(cached), fromCache: true };
+        return { data: JSON.parse(cached) };
       }
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -48,7 +48,7 @@ export const clearGudangCache = createAsyncThunk(
 const initialState = {
   loading: false,
   error: null,
-  data: [],
+  data: null,
 };
 
 const gudangSlice = createSlice({
@@ -58,6 +58,12 @@ const gudangSlice = createSlice({
     clearGudangData: state => {
       state.data = [];
       state.error = null;
+    },
+    // Add a direct data setter for Redux injector
+    setGudangData: (state, action) => {
+      state.loading = false;
+      state.error = null;
+      state.data = action.payload || [];
     },
   },
   extraReducers: builder => {

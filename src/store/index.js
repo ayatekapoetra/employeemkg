@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import logger from 'redux-logger';
+import { setReduxStore } from './reduxInjector';
 
 import authReducer from './slices/authSlice';
 import themeReducer from './slices/themeSlice';
@@ -19,11 +20,18 @@ import kegiatanPitReducer from './slices/kegiatanPitSlice';
 import shiftReducer from './slices/shiftSlice';
 import pemasokReducer from './slices/pemasokSlice';
 import barangRackReducer from './slices/barangRackSlice';
+import cabangReducer from './slices/cabangSlice';
 
 import tugasReducer from './slices/tugasSlice';
 import pengajuanReducer from './slices/pengajuanSlice';
 import koordinatChecklogReducer from './slices/koordinatChecklogSlice';
 import downloadReducer from './slices/downloadSlice';
+import breakdownReducer from './slices/breakdownSlice';
+import workOrderReducer from './slices/workOrderSlice';
+import activityPlanReducer from './slices/activityPlanSlice';
+import crewWorksheetReducer from './slices/crewWorksheetSlice';
+import appReducer from './slices/appSlice';
+import eventReducer from './slices/eventSlice';
 
 const isDevelopment = __DEV__;
 
@@ -47,15 +55,40 @@ const store = configureStore({
     shift: shiftReducer,
     pemasok: pemasokReducer,
     barangrack: barangRackReducer,
+    cabang: cabangReducer,
     tugas: tugasReducer,
     datapengajuan: pengajuanReducer,
     koordinatChecklog: koordinatChecklogReducer,
     download: downloadReducer,
+    breakdown: breakdownReducer,
+    workorder: workOrderReducer,
+    activityPlan: activityPlanReducer,
+    crewWorksheet: crewWorksheetReducer,
+    app: appReducer,
+    event: eventReducer,
   },
   middleware: (getDefaultMiddleware) => {
     const middleware = getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['auth/login/fulfilled', 'auth/restoreSession/fulfilled'],
+        ignoredActions: [
+          'auth/login/fulfilled', 
+          'auth/restoreSession/fulfilled',
+          'auth/loadMasterDataAfterLogin/pending',
+          'auth/loadMasterDataAfterLogin/fulfilled',
+          'auth/loadMasterDataAfterLogin/rejected',
+          'auth/loadSQLiteToReduxAfterSync/pending',
+          'auth/loadSQLiteToReduxAfterSync/fulfilled',
+          'auth/loadSQLiteToReduxAfterSync/rejected',
+          'download/downloadSpecificData/pending',
+          'download/downloadSpecificData/fulfilled',
+          'download/downloadSpecificData/rejected',
+          'download/downloadAllMasterData/pending',
+          'download/downloadAllMasterData/fulfilled',
+          'download/downloadAllMasterData/rejected',
+          'app/loadSQLiteDataToRedux/pending',
+          'app/loadSQLiteDataToRedux/fulfilled',
+          'app/loadSQLiteDataToRedux/rejected',
+        ],
       },
     });
 
@@ -67,5 +100,8 @@ const store = configureStore({
   },
   devTools: isDevelopment,
 });
+
+// Setup Redux injector with store reference
+setReduxStore(store);
 
 export default store;

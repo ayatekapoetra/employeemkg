@@ -313,20 +313,7 @@ export default function PurchaseRequestDetail() {
     const isSelected = selectedItems.includes(item.id);
     const canSelect = canApprove && isValidated;
 
-    console.log('Item Card Debug:', {
-      itemId: item.id,
-      isNew: Boolean(isNew),
-      isValidated: Boolean(isValidated),
-      isApproved: Boolean(isApproved),
-      canValidate: Boolean(canValidate),
-      canApprove: Boolean(canApprove),
-      user_validated: item.user_validated || null,
-      date_validated: item.date_validated || null,
-      user_approved: item.user_approved || null,
-      date_approved: item.date_approved || null,
-      showValidateButton: Boolean(canValidate && isNew),
-      canSelect: Boolean(canSelect)
-    });
+
 
     return (
       <VStack

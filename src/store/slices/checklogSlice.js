@@ -121,76 +121,13 @@ export const checkOut = createAsyncThunk('checklog/checkOut', async (data, { rej
       });
     }
 
-    const payloadDebug = {
-      latitude: data.latitude,
-      longitude: data.longitude,
-      jarak: data.jarak,
-      karyawan_id: employeeId,
-      pin: employeePin,
-      hasPhoto: !!data.photo,
-      photoUri: data.photo?.uri,
-    };
-    
-    console.log('========================================');
-    console.log('CHECK-OUT REQUEST PAYLOAD FOR POSTMAN:');
-    console.log('========================================');
-    console.log('URL: POST https://apinext.makkuragatama.id/api/mobile/check-out/karyawan');
-    console.log('Headers:');
-    console.log('  Content-Type: multipart/form-data');
-    console.log('  Authorization: Bearer <your_token>');
-    console.log('  X-UUID-DEVICE: <your_device_uuid>');
-    console.log('  appsversion: 1.0.1');
-    console.log('');
-    console.log('Form Data (multipart/form-data):');
-    console.log('  latitude:', data.latitude);
-    console.log('  longitude:', data.longitude);
-    console.log('  jarak:', data.jarak);
-    console.log('  karyawan_id:', employeeId);
-    console.log('  pin:', employeePin);
-    console.log('  photo: [File] (image/jpeg)');
-    console.log('');
-    console.log('Postman cURL:');
-    console.log(`curl --location 'https://apinext.makkuragatama.id/api/mobile/check-out/karyawan' \\
---header 'Authorization: Bearer YOUR_TOKEN_HERE' \\
---header 'X-UUID-DEVICE: YOUR_DEVICE_UUID' \\
---header 'appsversion: 1.0.1' \\
---form 'latitude="${data.latitude}"' \\
---form 'longitude="${data.longitude}"' \\
---form 'jarak="${data.jarak}"' \\
---form 'karyawan_id="${employeeId}"' \\
---form 'pin="${employeePin}"' \\
---form 'photo=@"/path/to/your/photo.jpg"'`);
-    console.log('========================================');
-    console.log('Payload object:', payloadDebug);
-    console.log('========================================');
-
     const resp = await apiClient.post(API_ENDPOINTS.CHECKLOG.CHECK_OUT, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-
-    console.log('========================================');
-    console.log('CHECK-OUT FULL RESPONSE:');
-    console.log('========================================');
-    console.log('Status:', resp.status);
-    console.log('Full response data:', JSON.stringify(resp.data, null, 2));
-    console.log('Diagnostic:', resp.data?.diagnostic);
-    console.log('Diagnostic message:', resp.data?.diagnostic?.message);
-    console.log('Diagnostic error:', resp.data?.diagnostic?.error);
-    console.log('========================================');
     return resp.data;
   } catch (error) {
-    console.log('========================================');
-    console.log('CHECK-OUT ERROR RESPONSE:');
-    console.log('========================================');
-    console.error('Error status:', error.response?.status);
-    console.error('Full error response:', JSON.stringify(error.response?.data, null, 2));
-    console.error('Diagnostic:', error.response?.data?.diagnostic);
-    console.error('Diagnostic message:', error.response?.data?.diagnostic?.message);
-    console.error('Diagnostic error flag:', error.response?.data?.diagnostic?.error);
-    console.log('========================================');
-    
     if (error.response?.status === 422 && error.response?.data?.diagnostic) {
       return {
         diagnostic: error.response.data.diagnostic,

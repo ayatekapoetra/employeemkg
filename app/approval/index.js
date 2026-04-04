@@ -80,6 +80,15 @@ export default function ApprovalManagement() {
       iconBgColor: mode === 'dark' ? '#1e3a8a' : '#dbeafe',
     },
     {
+      id: 'worksheet',
+      title: 'Worksheet',
+      description: 'Persetujuan aktifitas kerja crew operasional',
+      icon: require('../../assets/images/absen-tulis.png'),
+      count: counts.worksheet || 0,
+      route: '/approval/worksheet',
+      iconBgColor: mode === 'dark' ? '#31316a' : '#c7c7f0',
+    },
+    {
       id: 'purchase',
       title: 'Purchase Request',
       description: 'Persetujuan permintaan pembelian barang dan jasa',
@@ -98,9 +107,10 @@ export default function ApprovalManagement() {
       route: '/approval/pengajuan-dana',
       iconBgColor: mode === 'dark' ? '#7c2d12' : '#fed7aa',
     },
+    
   ];
 
-  const totalPending = approvalData.reduce((sum, item) => sum + item.count, 0);
+  const totalPending = approvalData.reduce((sum, item) => sum + parseInt(item.count), 0);
 
   return (
     <AppScreen>

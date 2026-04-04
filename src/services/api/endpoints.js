@@ -1,7 +1,7 @@
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: 'signin-employee',
-    LOGIN_MOBILE: '/auth/login-mobile',
+    LOGIN: 'auth/login',
+    LOGIN_MOBILE: 'auth/login-mobile',
     LOGOUT: 'auth/logout',
     REFRESH: 'auth/refresh',
     PROFILE: 'auth/profile',
@@ -46,6 +46,47 @@ export const API_ENDPOINTS = {
   EQUIPMENT: {
     LIST: 'master/equipment/produksi',
     DETAIL: id => `mobile/equipment/${id}`,
+  },
+
+  BREAKDOWN: {
+    LIST: 'operation/daily-breakdown/list',
+    MY_LIST: 'operation/daily-breakdown/my-list',
+    TODAY: 'operation/daily-breakdown/today',
+    STATISTICS: 'operation/daily-breakdown/statistics',
+    DETAIL: id => `operation/daily-breakdown/${id}`,
+    CREATE: 'operation/daily-breakdown/create',
+    UPDATE: id => `operation/daily-breakdown/${id}/update`,
+    DELETE: id => `operation/daily-breakdown/${id}/destroy`
+  },
+
+  ACTIVITY_PLAN: {
+    LIST: 'operation/activity-plan/list',
+    DETAIL: id => `operation/activity-plan/${id}`,
+    CREATE: 'operation/activity-plan/create',
+    BULK_CREATE: 'operation/activity-plan/bulk-create',
+    UPDATE: id => `operation/activity-plan/${id}/update`,
+    DELETE: id => `operation/activity-plan/${id}/destroy`,
+  },
+
+  WORK_ORDER: {
+    LIST: 'operation/work-order/list',
+    SHOW: (id) => `operation/work-order/${id}/show`,
+    UPDATE: (id) => `operation/work-order/${id}/update`,
+    ADD_ACTION: (id) => `operation/work-order/${id}/actions`,
+    DELETE_ACTION: (actionId) => `operation/work-order/actions/${actionId}/delete`,
+  },
+
+  CREW_WORKSHEET: {
+    LIST: 'operation/crew-worksheet/my-list',
+    APPROVAL_LIST: 'operation/crew-worksheet/approval-list',
+    DETAIL: id => `operation/crew-worksheet/${id}`,
+    CREATE: 'operation/crew-worksheet/create',
+    UPDATE: id => `operation/crew-worksheet/${id}/update`,
+    DELETE: id => `operation/crew-worksheet/${id}/destroy`,
+    APPROVE: id => `operation/crew-worksheet/${id}/approve`,
+    REJECT: id => `operation/crew-worksheet/${id}/reject`,
+    STATS: 'operation/crew-worksheet/stats',
+    BY_SUPERVISOR: 'operation/crew-worksheet/by-supervisor',
   },
 
   APPROVAL: {
@@ -165,6 +206,16 @@ export const API_ENDPOINTS = {
     UPDATE_ITEM: '/scm/purchase-request/update-item',
     APPROVE: '/scm/purchase-request/approve',
     ROLLBACK: '/scm/purchase-request/rollback',
+  },
+
+EVENT: {
+    LIST: 'event/list',
+    CATEGORIES: 'event/categories',
+    DETAIL: id => `event/${id}`,
+    CREATE: 'event/create',
+    UPDATE: id => `event/${id}/update`,
+    FINISH: id => `event/${id}/finish`,
+    DELETE: id => `event/${id}/destroy`,
   },
 
 };

@@ -3,8 +3,8 @@ import { useFonts } from 'expo-font';
 import { Stack, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
-import { useColorScheme, Platform, BackHandler, AppState, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { useColorScheme, Platform, BackHandler, AppState, View, DeviceEventEmitter } from 'react-native';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { NativeBaseProvider } from 'native-base';
 import * as Application from 'expo-application';
@@ -19,6 +19,8 @@ import { PermissionService } from '../src/services/permissions';
 import { downloadSpecificData } from '../src/store/slices/downloadSlice';
 import database from '../src/database/SQLiteService';
 
+import { loadMasterDataAfterLogin, loadSQLiteToReduxAfterSync } from '../src/store/slices/authSlice';
+
 
 // Polyfill for BackHandler removeEventListener (deprecated in RN 0.65+)
 if (BackHandler && !BackHandler.removeEventListener) {
@@ -28,7 +30,10 @@ if (BackHandler && !BackHandler.removeEventListener) {
   };
 }
 
-SplashScreen.preventAutoHideAsync();
+// Initialize splash screen with error handling
+SplashScreen.preventAutoHideAsync().catch(error => {
+  console.log('SplashScreen preventAutoHideAsync error (safe to ignore):', error.message);
+});
 
 function AppContent() {
   const dispatch = useDispatch();
@@ -46,6 +51,8 @@ function AppContent() {
   const [currentMasterStep, setCurrentMasterStep] = useState('');
   const [syncedCount, setSyncedCount] = useState(0);
   const [activeQueue, setActiveQueue] = useState(false);
+  const [autoSyncDisabled, setAutoSyncDisabled] = useState(true); // Default TRUE - disable auto-sync by default
+  const [autoSyncInitialized, setAutoSyncInitialized] = useState(false); // Track if we've loaded the flag
 
   // Check if current route is login page
   const isLoginPage = segments[0] === 'login';
@@ -53,14 +60,21 @@ function AppContent() {
   // Debug segments
   console.log('[AppContent] Current segments:', segments, 'isLoginPage:', isLoginPage);
 
+
+
   /**
    * Download master data to SQLite for offline support
-   * Flow: API → SQLite (local database) → AsyncStorage (fallback)
+   * Flow: API → SQLite (local database) → AsyncStorage (fallback) → Redux (on completion)
    */
   const downloadMasterDataToSQLite = async (forceRefresh = false) => {
     // Prevent duplicate calls
     if (isLoadingMasterData || masterDataLoaded || activeQueue) {
       console.log('⏸️ Master data already loading or loaded, skipping...');
+      return false;
+    }
+
+    if (!forceRefresh && autoSyncDisabled) {
+      console.log('⏸️ Auto-sync disabled, skipping automatic master data download.');
       return false;
     }
 
@@ -71,22 +85,6 @@ function AppContent() {
       return false;
     }
 
-    // Check if data is still fresh (less than 1 hour old)
-    const lastFetchStr = await AsyncStorage.getItem('@masterDataLastFetch');
-    const lastFetch = lastFetchStr ? parseInt(lastFetchStr, 10) : 0;
-    const now = Date.now();
-    const ONE_HOUR = 60 * 60 * 1000;
-
-    console.log('📊 Last fetch timestamp:', lastFetch ? new Date(lastFetch).toISOString() : 'never');
-    console.log('📊 Time since last fetch:', lastFetch ? Math.floor((now - lastFetch) / (60 * 1000)) + ' minutes' : 'N/A');
-
-    if (!forceRefresh && lastFetch && (now - lastFetch < ONE_HOUR)) {
-      const minutesAgo = Math.floor((now - lastFetch) / (60 * 1000));
-      console.log(`✅ SQLite data still fresh (synced ${minutesAgo} minutes ago), skipping...`);
-      setMasterDataLoaded(true);
-      return true;
-    }
-    
     console.log('🔄 Data needs refresh, proceeding with download...');
 
     // Set loading flag
@@ -189,12 +187,39 @@ function AppContent() {
       // Show completion message briefly
       setCurrentMasterStep(`✅ Selesai! ${totalSynced} data tersimpan offline`);
 
+      // Load data from SQLite to Redux after download completes
+      console.log('🔄 Loading data from SQLite to Redux after sync...');
+      try {
+        await dispatch(loadSQLiteToReduxAfterSync()).unwrap();
+        console.log('✅ Successfully loaded SQLite data to Redux');
+      } catch (error) {
+        console.error('❌ Error loading SQLite to Redux:', error);
+        // Fallback to old method if new method fails
+        try {
+          console.log('🔄 Fallback: Trying loadSQLiteDataToRedux...');
+          await dispatch(loadSQLiteDataToRedux()).unwrap();
+          console.log('✅ Fallback loading completed');
+        } catch (fallbackError) {
+          console.error('❌ Fallback also failed:', fallbackError);
+          // Fallback to direct Redux loading
+          try {
+            console.log('🔄 Final fallback: Loading master data directly...');
+            await dispatch(loadMasterDataAfterLogin()).unwrap();
+            console.log('✅ Final fallback completed');
+          } catch (finalError) {
+            console.error('❌ Final fallback also failed:', finalError);
+          }
+        }
+      }
+
       // Hide progress bar after delay
       setTimeout(() => {
         setShowMasterProgress(false);
         setMasterDataLoaded(true);
+        setAutoSyncDisabled(true);
         setIsLoadingMasterData(false);
         setActiveQueue(false);
+        AsyncStorage.setItem('@masterDataAutoSyncDisabled', 'true');
       }, 1500);
 
       return true;
@@ -210,15 +235,135 @@ function AppContent() {
     }
   };
 
+  // Load auto-sync flag on mount - check if we've already synced after login
+  useEffect(() => {
+    const loadAutoSyncFlag = async () => {
+      try {
+        const storedFlag = await AsyncStorage.getItem('@masterDataAutoSyncDisabled');
+        const lastFetch = await AsyncStorage.getItem('@masterDataLastFetch');
+        
+        console.log('[AppContent] Loading auto-sync flags:', {
+          storedFlag,
+          lastFetch,
+          hasLastFetch: !!lastFetch,
+        });
+
+        // If we have a last fetch timestamp, it means we've already synced before
+        // So we should disable auto-sync
+        if (lastFetch) {
+          setAutoSyncDisabled(true);
+          console.log('[AppContent] Found last fetch timestamp - auto-sync DISABLED');
+        } else if (storedFlag === 'true') {
+          setAutoSyncDisabled(true);
+          console.log('[AppContent] Stored flag is true - auto-sync DISABLED');
+        } else if (storedFlag === 'false') {
+          // Explicitly set to false (after login)
+          setAutoSyncDisabled(false);
+          console.log('[AppContent] Stored flag is false - auto-sync ENABLED (after login)');
+        } else {
+          // No last fetch and no stored flag = fresh install or after logout
+          // Keep auto-sync disabled by default, only enable on login
+          setAutoSyncDisabled(true);
+          console.log('[AppContent] No last fetch and no flag - auto-sync DISABLED (default)');
+        }
+        
+        setAutoSyncInitialized(true);
+      } catch (error) {
+        console.error('[AppContent] Error loading auto-sync flag:', error);
+        setAutoSyncDisabled(true); // Default to disabled on error
+        setAutoSyncInitialized(true);
+      }
+    };
+    loadAutoSyncFlag();
+  }, []);
+
+  // Watch for login success - load master data directly using Redux thunks
+  useEffect(() => {
+    const handleLoginSuccess = async () => {
+      if (authToken) {
+        console.log('[AppContent] ✅ User logged in, loading master data...');
+        
+        try {
+          // Load master data directly using Redux thunks
+          const result = await dispatch(loadMasterDataAfterLogin()).unwrap();
+          console.log('[AppContent] ✅ Master data loaded successfully:', result);
+          
+          // Also set auto-sync flag for background downloads
+          const storedFlag = await AsyncStorage.getItem('@masterDataAutoSyncDisabled');
+          if (storedFlag === 'false') {
+            console.log('[AppContent] ✅ Auto-sync enabled by login, background download will start');
+            setAutoSyncDisabled(false);
+            setMasterDataLoaded(false);
+          } else {
+            console.log('[AppContent] ✅ Setting master data as loaded');
+            setMasterDataLoaded(true);
+          }
+          
+        } catch (error) {
+          console.error('[AppContent] ❌ Error loading master data:', error);
+          
+          // Fallback to loading master data again
+          try {
+            console.log('[AppContent] 🔄 Fallback: Retrying master data load...');
+            await dispatch(loadMasterDataAfterLogin()).unwrap();
+            console.log('[AppContent] ✅ Fallback loading completed successfully');
+          } catch (fallbackError) {
+            console.error('[AppContent] ❌ Fallback loading also failed:', fallbackError);
+          }
+        }
+      }
+    };
+    handleLoginSuccess();
+  }, [authToken]);
+
+  const downloadMasterDataToSQLiteRef = useRef(downloadMasterDataToSQLite);
+  useEffect(() => {
+    downloadMasterDataToSQLiteRef.current = downloadMasterDataToSQLite;
+  }, [downloadMasterDataToSQLite]);
+
+  // Listen for manual trigger from DownloadDataScreen or after login
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('masterDataAutoSyncReset', async () => {
+      console.log('♻️ Manual reset auto-sync requested from DownloadDataScreen');
+      console.log('♻️ This will trigger progress bar to show');
+      setMasterDataLoaded(false);
+      setAutoSyncDisabled(false);
+      await AsyncStorage.removeItem('@masterDataLastFetch');
+      await AsyncStorage.setItem('@masterDataAutoSyncDisabled', 'false');
+      downloadMasterDataToSQLiteRef.current?.(true);
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  // Only auto-download if explicitly enabled (for background syncing)
   useEffect(() => {
     let isMounted = true;
 
     const checkAndDownloadData = async () => {
-      if (!isMounted || masterDataLoaded || activeQueue) return;
+      // Don't run until we've loaded the auto-sync flag
+      if (!autoSyncInitialized) {
+        console.log('[AppContent] Auto-sync not initialized yet, skipping...');
+        return;
+      }
+
+      if (!isMounted || masterDataLoaded || activeQueue || autoSyncDisabled) {
+        console.log('[AppContent] Skipping background auto-download:', {
+          isMounted,
+          masterDataLoaded,
+          activeQueue,
+          autoSyncDisabled,
+        });
+        return;
+      }
 
       const token = authToken || await AsyncStorage.getItem('@token');
-      if (!token) return;
+      if (!token) {
+        console.log('[AppContent] No token found, skipping background auto-download');
+        return;
+      }
 
+      console.log('[AppContent] Starting background master data sync (SQLite/AsyncStorage backup)');
       await downloadMasterDataToSQLite();
     };
 
@@ -227,7 +372,7 @@ function AppContent() {
     return () => {
       isMounted = false;
     };
-  }, [authToken, masterDataLoaded, activeQueue]);
+  }, [authToken, masterDataLoaded, activeQueue, autoSyncDisabled, autoSyncInitialized]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -378,7 +523,18 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
-      SplashScreen.hideAsync();
+      // Add a delay to ensure splash screen is properly registered and app is ready
+      const timer = setTimeout(async () => {
+        try {
+          // Check if splash screen is visible before hiding
+          await SplashScreen.hideAsync();
+          console.log('✅ Splash screen hidden successfully');
+        } catch (error) {
+          console.log('SplashScreen hide error (safe to ignore):', error.message);
+        }
+      }, 1000); // Increase delay to 1000ms
+      
+      return () => clearTimeout(timer);
     }
   }, [loaded]);
 

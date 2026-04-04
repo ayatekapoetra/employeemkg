@@ -3,6 +3,77 @@ import apiClient from '../../services/api/client';
 import { API_ENDPOINTS } from '../../services/api/endpoints';
 import database from '../../database/SQLiteService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { injectDataToRedux } from '../reduxInjector';
+
+// Helper function to update Redux state - Simple approach
+const updateReduxState = async (dataType, data, dispatch) => {
+  console.log(`[ReduxHelper] Updating Redux state for ${dataType} with ${data.length} items`);
+  
+  try {
+    // The most reliable way: create a temporary fulfilled action for each slice
+    // This mimics what happens when a thunk succeeds
+    
+    let actionType;
+    switch(dataType) {
+      case 'karyawan':
+        actionType = 'karyawan/getList/fulfilled';
+        break;
+      case 'gudang':
+        actionType = 'gudang/getList/fulfilled';
+        break;
+      case 'barang':
+        actionType = 'barang/getList/fulfilled';
+        break;
+      case 'penyewa':
+        actionType = 'penyewa/getList/fulfilled';
+        break;
+      case 'shift':
+        actionType = 'shift/getList/fulfilled';
+        break;
+      case 'kegiatanpit':
+        actionType = 'kegiatanPit/getList/fulfilled';
+        break;
+      case 'lokasipit':
+        actionType = 'lokasiPit/getList/fulfilled';
+        break;
+      case 'oprdrv':
+        actionType = 'oprdrv/getList/fulfilled';
+        break;
+      case 'equipment':
+        actionType = 'equipment/getList/fulfilled';
+        break;
+      case 'pemasok':
+        actionType = 'pemasok/getList/fulfilled';
+        break;
+      default:
+        actionType = `${dataType}/getList/fulfilled`;
+    }
+    
+    const action = {
+      type: actionType,
+      payload: { data },
+      meta: {
+        arg: undefined,
+        requestId: `manual-${Date.now()}`,
+        requestStatus: 'fulfilled'
+      }
+    };
+    
+    console.log(`[ReduxHelper] Dispatching action: ${action.type}`);
+    
+    // First, let's simulate the pending state
+    dispatch({ type: action.type.replace('/fulfilled', '/pending') });
+    
+    // Then dispatch the fulfilled action
+    setTimeout(() => {
+      dispatch(action);
+      console.log(`[ReduxHelper] ✅ Redux state updated for ${dataType}`);
+    }, 10);
+    
+  } catch (error) {
+    console.error(`[ReduxHelper] ❌ Failed to update Redux state for ${dataType}:`, error);
+  }
+};
 
 const initialState = {
   downloadStatus: {}, // { barang: 'success', gudang: 'error', ... }
@@ -166,7 +237,46 @@ export const downloadSpecificData = createAsyncThunk(
         }
       }
 
-      return { dataType, data: apiData, count: apiData.length };
+      // STEP 1: Update Redux state immediately (for responsive UI)
+      console.log(`[Download] STEP 1: Updating Redux state for ${dataType} with ${apiData.length} items`);
+      console.log(`[Download] Data sample:`, JSON.stringify(apiData[0] || null).substring(0, 200));
+      
+      // Use Redux injector for reliable state update
+      console.log(`[Download] Using Redux injector for ${dataType}`);
+      const injected = injectDataToRedux(dataType, apiData);
+      
+      if (injected) {
+        console.log(`[Download] ✅ Redux state updated via injector for ${dataType}`);
+      } else {
+        console.log(`[Download] ⚠️ Redux injector failed, trying normal action dispatch for ${dataType}`);
+        // Fallback to normal action dispatch
+        await updateReduxState(dataType, apiData, dispatch);
+      }
+
+      // STEP 2: Save to AsyncStorage (backup)
+      console.log(`[Download] STEP 2: Saving ${dataType} to AsyncStorage...`);
+      try {
+        await AsyncStorage.setItem(config.cacheKey, JSON.stringify(apiData));
+        console.log(`[Download] ✅ ${dataType} saved to AsyncStorage`);
+      } catch (storageError) {
+        console.warn(`[Download] ⚠️ AsyncStorage save failed for ${dataType}:`, storageError.message);
+      }
+
+      // STEP 3: Sync to SQLite in background (non-blocking)
+      console.log(`[Download] STEP 3: Starting background SQLite sync for ${dataType}...`);
+      if (apiData.length > 0 && config.syncFn) {
+        // Don't wait for SQLite sync - do it in background
+        config.syncFn(apiData).then(syncResult => {
+          console.log(`[Download] ✅ Background SQLite sync completed for ${dataType}:`, {
+            successCount: syncResult.successCount,
+            errorCount: syncResult.errorCount
+          });
+        }).catch(syncError => {
+          console.warn(`[Download] ⚠️ Background SQLite sync failed for ${dataType}:`, syncError.message);
+        });
+      }
+
+      return { dataType, data: apiData, count: apiData.length, reduxUpdated: true };
 
     } catch (error) {
       console.error(`[Download] Error downloading ${dataType}:`, error);

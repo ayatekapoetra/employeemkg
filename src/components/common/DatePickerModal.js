@@ -6,8 +6,9 @@ import { useSelector } from 'react-redux';
 
 function DatePickerModal({ 
   isOpen, 
-  onClose, 
-  onConfirm, 
+  onClose = () => {}, 
+  onConfirm = () => {}, 
+  onChange: onChangeProp,
   date = new Date(),
   mode = 'date',
   title = 'Pilih Tanggal'
@@ -21,7 +22,12 @@ function DatePickerModal({
   const onChange = (event, newDate) => {
     if (Platform.OS === 'android') {
       if (event.type === 'set') {
-        onConfirm(newDate || selectedDate);
+        const finalDate = newDate || selectedDate;
+        if (onChangeProp) {
+          onChangeProp(finalDate);
+        } else {
+          onConfirm(finalDate);
+        }
         onClose();
       } else {
         onClose();
@@ -32,7 +38,11 @@ function DatePickerModal({
   };
 
   const handleConfirm = () => {
-    onConfirm(selectedDate);
+    if (onChangeProp) {
+      onChangeProp(selectedDate);
+    } else {
+      onConfirm(selectedDate);
+    }
     onClose();
   };
 

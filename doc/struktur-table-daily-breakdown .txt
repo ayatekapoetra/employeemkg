@@ -1,0 +1,83 @@
+CREATE TABLE `mrt-test`.`ops_daily_breakdown`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `date_issue` date NULL DEFAULT NULL,
+  `lokasi_id` int NULL DEFAULT NULL,
+  `cabang_id` int NULL DEFAULT NULL,
+  `shift_id` int NULL DEFAULT NULL,
+  `equipment_id` int NULL DEFAULT NULL,
+  `kode_unit` varchar(25) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `kategori` varchar(5) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `smu` decimal(8, 2) NULL DEFAULT 0.00,
+  `breakdown_at` datetime NULL DEFAULT NULL,
+  `pengawas_id` int NULL DEFAULT NULL,
+  `user_id` int NULL DEFAULT NULL,
+  `status` int NULL DEFAULT 0 COMMENT '0 = tunggu teknisi (waiting technision)\n1 = tunggu spare part (waiting part)\n8 = inprogress\n9 = selesai',
+  `aktif` enum('Y','N') CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT 'Y',
+  `created_at` datetime NULL DEFAULT NULL,
+  `updated_at` datetime NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 19762 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+
+CREATE TABLE `mrt-test`.`ops_daily_breakdown_items`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `bd_id` int NULL DEFAULT NULL,
+  `cabang_id` int NULL DEFAULT NULL,
+  `kode_wo` varchar(20) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `equipment_id` int NULL DEFAULT NULL,
+  `unit` varchar(20) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT '',
+  `smu_services` float(8, 2) NULL DEFAULT 0.00,
+  `problem_issue` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
+  `services_act` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
+  `services_at` datetime NULL DEFAULT NULL,
+  `ready_at` datetime NULL DEFAULT NULL,
+  `status` enum('WT','WS','WP','DONE','WV','WTT','IP') CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT 'WT' COMMENT 'WT = wait teknisi\nWS = wait services\nWP = wait part\nWV = wait vendor\nWTT = wait tronton transport\nIP = In Progress \nDONE = selesai',
+  `aktif` enum('Y','N') CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT 'Y',
+  `created_at` datetime NULL DEFAULT NULL,
+  `updated_at` datetime NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `ops_daily_breakdown_issue_idx`(`bd_id` ASC) USING BTREE,
+  CONSTRAINT `ops_daily_breakdown_issue_idx` FOREIGN KEY (`bd_id`) REFERENCES `mrt-test`.`ops_daily_breakdown` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 19799 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+CREATE TABLE `mrt-test`.`ops_daily_breakdown_action`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `bd_id` int NOT NULL,
+  `wo_id` int NOT NULL,
+  `teknisi_id` int NULL DEFAULT NULL,
+  `equipment_id` int NOT NULL,
+  `kdwo` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT '',
+  `starttime` datetime NULL DEFAULT NULL,
+  `endtime` datetime NULL DEFAULT NULL,
+  `narasi` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
+  `photo` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT '',
+  `aktif` enum('Y','N') CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT 'Y',
+  `created_at` datetime NULL DEFAULT NULL,
+  `updated_at` datetime NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 23547 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+CREATE TABLE `mrt-test`.`ops_daily_breakdown_teknisi`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `issue_id` int NULL DEFAULT NULL,
+  `teknisi_id` int NULL DEFAULT NULL,
+  `nama` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `aktif` enum('Y','N') CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT 'Y',
+  `created_at` datetime NULL DEFAULT NULL,
+  `updated_at` datetime NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `ops_breakdown_history_teknisi_idx`(`teknisi_id` ASC) USING BTREE,
+  INDEX `ops_daily_breakdown_teknisi_ibfk_1`(`issue_id` ASC) USING BTREE,
+  CONSTRAINT `ops_daily_breakdown_teknisi_ibfk_1` FOREIGN KEY (`issue_id`) REFERENCES `mrt-test`.`ops_daily_breakdown_items` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `ops_daily_breakdown_teknisi_ibfk_2` FOREIGN KEY (`teknisi_id`) REFERENCES `mrt-test`.`mas_karyawans` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 41829 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+CREATE DEFINER = `root`@`localhost` TRIGGER `mrt-test`.`trigg_add_nama_copy1` BEFORE INSERT ON `Untitled` FOR EACH ROW BEGIN
+SET @nama := (SELECT nama FROM mas_karyawans WHERE id = new.teknisi_id);
+SET NEW.nama = @nama;
+END;
+
+CREATE DEFINER = `root`@`localhost` TRIGGER `mrt-test`.`trigg_upd_nama_copy1` BEFORE UPDATE ON `Untitled` FOR EACH ROW BEGIN
+SET @nama := (SELECT nama FROM mas_karyawans WHERE id = new.teknisi_id);
+SET NEW.nama = @nama;
+END;

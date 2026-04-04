@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Moon, Notification, Sun1, Filter } from 'iconsax-react-native';
+import { TouchableOpacity } from 'react-native';
+import { ArrowLeft2, Moon, Notification, Sun1, Filter } from 'iconsax-react-native';
 import { HStack, IconButton, StatusBar, Text } from 'native-base';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleTheme } from '../../store/slices/themeSlice';
@@ -33,35 +34,32 @@ const HeaderScreen = ({
     <>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <HStack
-        px={4}
-        py={2}
         alignItems="center"
         justifyContent="space-between"
         bg={isDark ? '#2f313e' : '#F5F5F5'}
         borderBottomWidth={1}
         borderBottomColor={isDark ? '#3a3c4a' : '#e0e0e0'}
       >
-        <HStack alignItems="center" flex={1}>
-          {(showBack || onBack) && (
-            <IconButton
-              icon={
-                <ArrowLeft
+          <HStack px={3} space={2} alignItems="center" flex={1}>
+            {(showBack || onBack) && (
+              <TouchableOpacity style={{backgroundColor: isDark ? '#5e5f6cff' : '#c0bdbd', borderRadius: 5}}>
+                <ArrowLeft2
                   size={24}
+                  onPress={handleBack}
                   color={isDark ? '#F5F5F5' : '#2f313e'}
-                />
-              }
-              onPress={handleBack}
-              mr={2}
-            />
-          )}
-          <Text
-            fontSize="xl"
-            fontFamily="Teko-Bold"
-            color={isDark ? '#F5F5F5' : '#2f313e'}
-          >
-            {title}
-          </Text>
-        </HStack>
+                  />
+              </TouchableOpacity>
+            )}
+            <Text
+              fontSize="xl"
+              fontFamily="Teko-Bold"
+              textAlign={'center'}
+              color={isDark ? '#F5F5F5' : '#2f313e'}
+            >
+              {title}
+            </Text>
+          </HStack>
+
 
         <HStack space={1}>
           {onThemes && (

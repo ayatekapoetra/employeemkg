@@ -2,69 +2,38 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../services/api/client';
 import { API_ENDPOINTS } from '../../services/api/endpoints';
-import database from '../../database/SQLiteService';
 
 const CACHE_KEY = '@barang';
 
 export const getBarang = createAsyncThunk(
   'barang/getList',
-  async (params = {}, { rejectWithValue }) => {
+  async (forceRefresh = false, { rejectWithValue }) => {
     try {
-      console.log('[Barang] Fetching from API...', params);
-
-      // 1. FETCH FROM API
-      const resp = await apiClient.get(API_ENDPOINTS.BARANG.LIST, { params });
-
-      // Extract data array
-      const apiData = resp.data?.data || resp.data?.rows || [];
-      console.log('[Barang] API response:', apiData.length, 'items');
-
-      if (Array.isArray(apiData) && apiData.length > 0) {
-        // 2. SYNC TO SQLITE (Primary Storage)
-        try {
-          const syncResult = await database.syncBarang(apiData);
-          console.log('[Barang] Synced to SQLite:', syncResult.successCount, 'items');
-        } catch (sqliteError) {
-          console.warn('[Barang] SQLite sync failed:', sqliteError.message);
-        }
-
-        // 3. SAVE TO ASYNCSTORAGE (Fallback)
-        try {
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(apiData));
-          console.log('[Barang] Saved to AsyncStorage');
-        } catch (storageError) {
-          console.warn('[Barang] AsyncStorage save failed:', storageError.message);
-        }
-      }
-
-      // 4. RETURN TO REDUX (Runtime)
-      return { data: apiData, source: 'api' };
-    } catch (error) {
-      console.error('[Barang] Error fetching from API:', error);
-
-      // FALLBACK: Try SQLite first
-      try {
-        const dbData = await database.getBarang();
-        if (dbData && dbData.length > 0) {
-          console.log('[Barang] Loaded from SQLite fallback:', dbData.length, 'items');
-          return { data: dbData, source: 'sqlite' };
-        }
-      } catch (dbError) {
-        console.warn('[Barang] SQLite fallback failed:', dbError.message);
-      }
-
-      // FALLBACK: Try AsyncStorage
-      try {
+      if (!forceRefresh) {
         const cached = await AsyncStorage.getItem(CACHE_KEY);
         if (cached) {
-          const parsed = JSON.parse(cached);
-          console.log('[Barang] Loaded from AsyncStorage fallback:', parsed.length, 'items');
-          return { data: parsed, source: 'asyncstorage' };
+          console.log('Using cached barang data');
+          return { data: JSON.parse(cached) };
         }
-      } catch (storageError) {
-        console.warn('[Barang] AsyncStorage fallback failed:', storageError.message);
       }
 
+      console.log('Fetching barang from API...');
+      const resp = await apiClient.get(API_ENDPOINTS.BARANG.LIST);
+      const data = resp.data?.data || resp.data?.rows || resp.data || [];
+      
+      console.log('[Barang] API response:', data.length, 'items');
+
+      if (data && Array.isArray(data) && data.length > 0) {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      }
+      
+      return { data };
+    } catch (error) {
+      console.error('Error fetching barang:', error);
+      const cached = await AsyncStorage.getItem(CACHE_KEY);
+      if (cached) {
+        return { data: JSON.parse(cached) };
+      }
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
@@ -130,10 +99,8 @@ export const clearBarangCache = createAsyncThunk(
 const initialState = {
   loading: false,
   error: null,
-  data: [],
+  data: null,
   selectedBarang: null,
-  lastSync: null,
-  dataSource: 'none', // 'api' | 'sqlite' | 'asyncstorage' | 'none'
 };
 
 const barangSlice = createSlice({
@@ -148,6 +115,14 @@ const barangSlice = createSlice({
     clearSelectedBarang: state => {
       state.selectedBarang = null;
     },
+    // Add a direct data setter for Redux injector
+    setBarangData: (state, action) => {
+      state.loading = false;
+      state.error = null;
+      state.data = action.payload || [];
+      state.dataSource = 'redux-injector';
+      state.lastSync = Date.now();
+    },
   },
   extraReducers: builder => {
     builder
@@ -157,10 +132,8 @@ const barangSlice = createSlice({
       })
       .addCase(getBarang.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload.data || [];
-        state.dataSource = action.payload.source || 'api';
+        state.data = action.payload.data;
         state.error = null;
-        state.lastSync = Date.now();
       })
       .addCase(getBarang.rejected, (state, action) => {
         state.loading = false;

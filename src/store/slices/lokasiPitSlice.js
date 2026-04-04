@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../services/api/client';
 import { API_ENDPOINTS } from '../../services/api/endpoints';
+import database from '../../database/SQLiteService';
 
 const CACHE_KEY = '@lokasi-pit';
 
@@ -25,6 +26,11 @@ export const getLokasiPit = createAsyncThunk(
 
       if (data && Array.isArray(data) && data.length > 0) {
         await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        try {
+          await database.syncLokasiPit(data);
+        } catch (syncErr) {
+          console.warn('[LokasiPit] Failed to sync SQLite:', syncErr?.message || syncErr);
+        }
       }
       
       return { data };

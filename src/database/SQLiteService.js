@@ -221,6 +221,7 @@ await this.createTables();
         kode TEXT NOT NULL,
         nama TEXT NOT NULL,
         area TEXT,
+        bisnis TEXT,
         aktif TEXT DEFAULT 'Y',
         created_at INTEGER DEFAULT (strftime('%s', 'now')),
         updated_at INTEGER DEFAULT (strftime('%s', 'now'))
@@ -269,6 +270,12 @@ await this.createTables();
           table: 'master_karyawan',
           columns: [
             { name: 'area', type: 'TEXT', default: null }
+          ]
+        },
+        {
+          table: 'master_cabang',
+          columns: [
+            { name: 'bisnis', type: 'TEXT', default: null }
           ]
         }
       ];
@@ -1159,6 +1166,41 @@ await this.createTables();
         start_shift: item.start_shift || '',
         end_shift: item.end_shift || '',
         aktif: item.aktif || 'Y'
+      };
+    }, columns);
+  }
+
+  /**
+   * Get cabang from SQLite
+   */
+  async getCabang() {
+    return await this.getAll('master_cabang');
+  }
+
+  /**
+   * Sync cabang from API to SQLite
+   */
+  async syncCabang(data) {
+    const columns = ['id', 'kode', 'nama', 'area', 'bisnis', 'aktif'];
+
+    return this._batchSync('master_cabang', data, (item) => {
+      if (!item) return null;
+      const id = item.id ?? item.cabang_id;
+      if (!id) return null;
+      return {
+        id: id.toString(),
+        kode: item.kode || item.code || '',
+        nama: item.nama || item.name || '',
+        area: item.area || item.area_name || item.region || '',
+        bisnis:
+          item.bisnis?.nama ||
+          item.bisnis?.name ||
+          item.bisnis_name ||
+          item.bisnis_unit?.nama ||
+          item.bisnis_unit?.name ||
+          item.bisnis_unit_name ||
+          '',
+        aktif: item.aktif || item.active || 'Y'
       };
     }, columns);
   }

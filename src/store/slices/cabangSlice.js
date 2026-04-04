@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../services/api/client';
 import { API_ENDPOINTS } from '../../services/api/endpoints';
+import database from '../../database/SQLiteService';
 
 const CACHE_KEY = '@cabang';
 
@@ -25,6 +26,11 @@ export const getCabang = createAsyncThunk(
 
       if (data && Array.isArray(data) && data.length > 0) {
         await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        try {
+          await database.syncCabang(data);
+        } catch (syncErr) {
+          console.warn('[Cabang] Failed to sync SQLite:', syncErr?.message || syncErr);
+        }
       }
       
       return { data };
@@ -45,7 +51,14 @@ export const getCabangOffline = createAsyncThunk(
     try {
       console.log('[Cabang] Loading offline data...');
 
-      // 1. TRY ASYNCSTORAGE
+      // 1. TRY SQLITE FIRST
+      const dbData = await database.getCabang();
+      if (dbData && dbData.length > 0) {
+        console.log('[Cabang] Loaded from SQLite:', dbData.length, 'items');
+        return { data: dbData, source: 'sqlite' };
+      }
+
+      // 2. TRY ASYNCSTORAGE
       const cached = await AsyncStorage.getItem(CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);

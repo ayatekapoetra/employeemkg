@@ -3,7 +3,7 @@ import { TouchableOpacity } from 'react-native';
 import { VStack, Text, Center, HStack, Divider } from 'native-base';
 import { AppScreen, HeaderScreen } from '../../src/components/common';
 import { useDispatch, useSelector } from 'react-redux';
-import { ArrowRight2, Profile, ShieldSecurity, DirectNotification, Calendar2, Stickynote, Convert, MonitorMobbile, House2, Civic, Logout } from 'iconsax-react-native';
+import { ArrowRight2, Profile, ShieldSecurity, DriverRefresh, Calendar2, Stickynote, Convert, MonitorMobbile, House2, Civic, Logout } from 'iconsax-react-native';
 import { logout } from '../../src/store/slices/authSlice';
 import { saveTheme } from '../../src/store/slices/themeSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -122,7 +122,8 @@ export default function SettingScreen() {
       title: 'Download Data Options',
       access: '',
       uri: 'download-data-screen',
-      grpIcon: <Text fontSize={24}>📥</Text>,
+      // grpIcon: <Text fontSize={24}>📥</Text>,
+      grpIcon: <DriverRefresh size={28} color="#787b83" variant="Bulk"/>,
     },
     {
       key: 4,

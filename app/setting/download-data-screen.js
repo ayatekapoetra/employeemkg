@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   TouchableOpacity,
   ScrollView,
@@ -18,15 +18,19 @@ import {
   TickCircle,
   Refresh,
   CloseCircle,
+  SidebarBottom,
+  DriverRefresh
 } from 'iconsax-react-native';
 import { COLORS } from '../../src/constants/colors';
 import {
   downloadSpecificData,
-  downloadAllMasterData,
   clearDownloadStatus,
+  setDownloadStatus,
 } from '../../src/store/slices/downloadSlice';
 import { loadSQLiteDataToRedux } from '../../src/store/slices/appSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import database from '../../src/database/SQLiteService';
+import MasterDataProgress from '../../src/components/common/MasterDataProgress';
 
 export default function DownloadDataScreen() {
   const router = useRouter();
@@ -40,17 +44,29 @@ export default function DownloadDataScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [modalSummary, setModalSummary] = useState({ success: 0, total: 0 });
+  const [showMasterProgress, setShowMasterProgress] = useState(false);
+  const [masterProgress, setMasterProgress] = useState(0);
+  const [currentMasterStep, setCurrentMasterStep] = useState('');
+  const [syncedCount, setSyncedCount] = useState(0);
 
-  const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
-  const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1];
-  const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280';
-  const cardBg = mode === 'dark' ? '#1f2937' : '#ffffff';
-  const borderColor = mode === 'dark' ? '#374151' : '#e5e7eb';
+  const backgroundColor = mode === 'dark' ? '#0B1224' : '#f8fafc';
+  const textColor = mode === 'dark' ? '#E5E7EB' : '#0f172a';
+  const subtitleColor = mode === 'dark' ? '#9ca3af' : '#475569';
+  const cardBg = mode === 'dark' ? '#111827' : '#ffffff';
+  const borderColor = mode === 'dark' ? '#1f2937' : '#e2e8f0';
+  const accent = mode === 'dark' ? '#60a5fa' : '#2563eb';
 
-  // Data items available for download
-  const dataItems = [
+  const summary = useMemo(() => {
+    const statuses = Object.values(downloadStatus || {});
+    const completed = statuses.filter(s => s === 'success').length;
+    const failed = statuses.filter(s => s === 'error').length;
+    const inProgress = statuses.filter(s => s === 'loading').length;
+    return { completed, failed, inProgress };
+  }, [downloadStatus]);
+
+  // Data items available for download (aligned with downloadSpecificData config)
+  const dataItems = useMemo(() => ([
     { key: 'barang', name: 'Barang', icon: 'box' },
-    { key: 'barangrack', name: 'Rak Barang', icon: 'layers' },
     { key: 'equipment', name: 'Equipment', icon: 'car' },
     { key: 'lokasipit', name: 'Lokasi Pit', icon: 'location' },
     { key: 'oprdrv', name: 'Operator Driver', icon: 'user' },
@@ -60,19 +76,112 @@ export default function DownloadDataScreen() {
     { key: 'gudang', name: 'Gudang', icon: 'home' },
     { key: 'karyawan', name: 'Karyawan', icon: 'user-square' },
     { key: 'kegiatanpit', name: 'Kegiatan Pit', icon: 'task' },
-  ];
+  ]), []);
 
   // Handle download all master data
   const handleDownloadAll = async () => {
+    const queue = dataItems;
+    const totalSteps = queue.length;
+
     try {
       setRefreshing(true);
-      const result = await dispatch(downloadAllMasterData()).unwrap();
-      const success = (result || []).filter(r => r.success).length;
-      const total = (result || []).length;
-      setModalSummary({ success, total });
+      setShowMasterProgress(true);
+      setMasterProgress(0);
+      setCurrentMasterStep('Menyiapkan ulang data master...');
+      setSyncedCount(0);
+      setTimeout(() => setMasterProgress(5), 100); // kick-start bar
+
+      // Reset status & clear local caches to force repopulate SQLite
+      dispatch(clearDownloadStatus());
+
+      // Ensure DB ready before clearing / syncing (with timeout so UI tidak hang)
+      try {
+        setCurrentMasterStep('Inisialisasi database lokal...');
+        const initTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('init-timeout')), 2000));
+        await Promise.race([database.ensureInitialized(), initTimeout]);
+        console.log('[DownloadData] SQLite initialized');
+      } catch (err) {
+        console.warn('[DownloadData] Init DB gagal / timeout, lanjut tanpa blocking:', err?.message || err);
+      }
+
+      const storageKeys = [
+        '@barang', '@equipment', '@lokasipit', '@oprdrv', '@pemasok',
+        '@penyewa', '@shift', '@gudang', '@karyawan', '@kegiatan-pit',
+        '@masterDataLastFetch'
+      ];
+
+      const masterTables = [
+        'master_barang', 'master_equipment', 'master_lokasipit', 'master_oprdrv',
+        'master_pemasok', 'master_penyewa', 'master_shift', 'master_gudang',
+        'master_karyawan', 'master_kegiatanpit'
+      ];
+
+      // Clear cache keys in parallel (non-blocking if some fail)
+      await Promise.allSettled(storageKeys.map(key => AsyncStorage.removeItem(key).catch(() => {})));
+
+      // Clear master tables sequentially with timeout guard (1.5s) to prevent hang
+      const clearWithTimeout = async (table) => {
+        console.log('[DownloadData] Clearing table', table);
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500));
+        await Promise.race([
+          database.clear(table),
+          timeout,
+        ]);
+        console.log('[DownloadData] Cleared table', table);
+      };
+
+      for (const table of masterTables) {
+        try {
+          await clearWithTimeout(table);
+        } catch (err) {
+          console.warn('[DownloadData] Gagal clear table', table, err?.message || err);
+        }
+      }
+
+      setMasterProgress(12);
+      setCurrentMasterStep('Clear cache & SQLite selesai, mulai unduh...');
+
+      let successCount = 0;
+      let totalSynced = 0;
+      console.log('[DownloadData] Mulai loop download, total langkah:', totalSteps);
+
+      for (let i = 0; i < totalSteps; i++) {
+        const item = queue[i];
+        const stepLabel = `${item.icon} ${item.name}`;
+
+        dispatch(setDownloadStatus({ dataType: item.key, status: 'loading' }));
+        setCurrentMasterStep(`${stepLabel}: mengunduh...`);
+        setMasterProgress(Math.min(95, (i / totalSteps) * 100));
+        console.log(`[DownloadData] Mulai unduh ${item.key} (${i + 1}/${totalSteps})`);
+
+        try {
+          const result = await dispatch(downloadSpecificData(item.key)).unwrap();
+          dispatch(setDownloadStatus({ dataType: item.key, status: 'success' }));
+          totalSynced += result?.count || 0;
+          successCount += 1;
+          setSyncedCount(totalSynced);
+          setCurrentMasterStep(`${stepLabel}: tersimpan (${result?.count || 0} data)`);
+        } catch (err) {
+          dispatch(setDownloadStatus({ dataType: item.key, status: 'error' }));
+          setCurrentMasterStep(`${stepLabel}: gagal diunduh`);
+          console.warn('[DownloadData] Gagal unduh', item.key, err?.message || err);
+        }
+
+        setMasterProgress(((i + 1) / totalSteps) * 100);
+      }
+
+      setCurrentMasterStep(`Selesai! ${successCount}/${totalSteps} berhasil, ${totalSynced} data tersimpan`);
+      setModalSummary({ success: successCount, total: totalSteps });
       setShowSuccessModal(true);
+
+      setTimeout(() => {
+        setShowMasterProgress(false);
+        setMasterProgress(100);
+      }, 1200);
     } catch (error) {
+      setCurrentMasterStep('Gagal memperbaharui data');
       Alert.alert('Error', error || 'Gagal memperbaharui data');
+      setTimeout(() => setShowMasterProgress(false), 800);
     } finally {
       setRefreshing(false);
     }
@@ -233,21 +342,113 @@ export default function DownloadDataScreen() {
 
   return (
     <AppScreen>
+      <MasterDataProgress
+        visible={showMasterProgress}
+        progress={masterProgress}
+        currentStep={currentMasterStep}
+        syncedCount={syncedCount}
+      />
       <VStack flex={1} bg={backgroundColor}>
         {/* Header */}
-        <HStack p={4} alignItems="center" space={3} borderBottomWidth={1} borderBottomColor={borderColor}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft size={24} color={textColor} />
-          </TouchableOpacity>
-          <VStack flex={1}>
-            <Text fontSize="lg" fontFamily="Quicksand-Bold" color={textColor}>
-              Download Master Data
-            </Text>
-            <Text fontSize="xs" fontFamily="Poppins-Light" color={subtitleColor}>
-              Download data master untuk penggunaan offline
-            </Text>
+        <VStack px={4} pt={4} space={4}>
+          <HStack alignItems="center" justifyContent="space-between">
+            <HStack alignItems="center" space={2}>
+              <TouchableOpacity onPress={() => router.back()}>
+                <ArrowLeft size={24} color={textColor} />
+              </TouchableOpacity>
+              <VStack>
+                <Text fontSize="lg" fontFamily="Quicksand-Bold" color={textColor}>
+                  Download Data
+                </Text>
+                <Text fontSize="xs" fontFamily="Poppins-Light" color={subtitleColor}>
+                  Offline-first, cepat, & tersinkron
+                </Text>
+              </VStack>
+            </HStack>
+            <HStack space={2}>
+              <VStack bg={mode === 'dark' ? '#0f172a' : '#e0f2fe'} px={3} py={2} rounded="xl" borderWidth={1} borderColor={borderColor}>
+                <Text fontSize="xs" color={subtitleColor} fontFamily="Poppins-SemiBold">Selesai</Text>
+                <Text fontSize="md" color={textColor} fontFamily="Quicksand-Bold">{summary.completed}</Text>
+              </VStack>
+              <VStack bg={mode === 'dark' ? '#1f2937' : '#fff7ed'} px={3} py={2} rounded="xl" borderWidth={1} borderColor={borderColor}>
+                <Text fontSize="xs" color={subtitleColor} fontFamily="Poppins-SemiBold">Gagal</Text>
+                <Text fontSize="md" color={textColor} fontFamily="Quicksand-Bold">{summary.failed}</Text>
+              </VStack>
+            </HStack>
+          </HStack>
+
+          <VStack
+            space={3}
+            p={4}
+            rounded="2xl"
+            borderWidth={1}
+            borderColor={borderColor}
+            bg={mode === 'dark' ? '#0f172a' : '#e2f3ff'}
+          >
+            <HStack alignItems="center" justifyContent="space-between">
+              <VStack flex={1} space={1}>
+                <Text fontSize="xs" color={subtitleColor} fontFamily="Poppins-SemiBold">
+                  Status Sinkronisasi
+                </Text>
+                <Text fontSize="lg" color={textColor} fontFamily="Quicksand-Bold">
+                  {isDownloading || refreshing ? 'Sedang berjalan...' : 'Siap mengunduh' }
+                </Text>
+                <Text fontSize="xs" color={subtitleColor} fontFamily="Poppins-Regular" lineHeight={13}>
+                  Pastikan koneksi stabil repopulate data SQLite.
+                </Text>
+              </VStack>
+              <Center bg={mode === 'dark' ? '#172554' : '#dbeafe'} w={12} h={12} rounded="full">
+                <Refresh size={22} color={accent} variant="Bold" />
+              </Center>
+            </HStack>
+
+            <HStack space={2}>
+              <TouchableOpacity
+                onPress={handleDownloadAll}
+                disabled={refreshing || isDownloading}
+                style={{
+                  flex: 1,
+                  backgroundColor: accent,
+                  paddingVertical: 5,
+                  paddingHorizontal: 10,
+                  borderRadius: 14,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'justify-between',
+                }}
+              >
+                {refreshing || isDownloading ? (
+                  <ActivityIndicator size="small" color={textColor} />
+                ) : (
+                  <DriverRefresh size={26} color={'#FFF'} variant="Bulk"/>
+                )}
+                <VStack ml={3}>
+                  <Text fontSize="md" fontFamily="Quicksand-Bold" color="#fff">
+                    {refreshing || isDownloading ? 'Mengunduh...' : 'Download Data'}
+                  </Text>
+                  <Text fontSize="xs" fontFamily="Poppins-Light" color="#e2e8f0" lineHeight={13}>
+                    Overwrite cache & SQLite
+                  </Text>
+                </VStack>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleClearTimestamp}
+                style={{
+                  width: 54,
+                  backgroundColor: mode === 'dark' ? '#1f2937' : '#ffffff',
+                  borderRadius: 14,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: 1,
+                  borderColor: borderColor,
+                }}
+              >
+                <SidebarBottom size={26} color={textColor} variant="Bulk"/>
+              </TouchableOpacity>
+            </HStack>
           </VStack>
-        </HStack>
+        </VStack>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -260,66 +461,6 @@ export default function DownloadDataScreen() {
           }
         >
           <VStack space={4} p={4}>
-            {/* Download All Button */}
-            <TouchableOpacity
-              onPress={handleDownloadAll}
-              disabled={refreshing || isDownloading}
-              style={{
-                backgroundColor: mode === 'dark' ? '#1e3a8a' : '#dbeafe',
-                padding: 20,
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: mode === 'dark' ? '#3b82f6' : '#93c5fd',
-              }}
-            >
-              <HStack space={4} alignItems="center" justifyContent="center">
-                {refreshing || isDownloading ? (
-                  <>
-                    <ActivityIndicator size="small" color={mode === 'dark' ? '#93c5fd' : '#1e40af'} />
-                    <Text fontSize="md" fontFamily="Quicksand-Bold" color={mode === 'dark' ? '#dbeafe' : '#1e3a8a'}>
-                      Mendownload Semua Data...
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Text fontSize={24}>⬇️</Text>
-                    <VStack>
-                      <Text fontSize="md" fontFamily="Quicksand-Bold" color={mode === 'dark' ? '#FFF' : '#000'}>
-                        Download Semua Master Data
-                      </Text>
-                      <Text fontSize="xs" fontFamily="Poppins-Light" color={mode === 'dark' ? '#60a5fa' : '#3b82f6'}>
-                        Tarik ke bawah untuk refresh semua data
-                      </Text>
-                    </VStack>
-                  </>
-                )}
-              </HStack>
-            </TouchableOpacity>
-
-            {/* Trigger Progress Bar - untuk manual download dengan progress */}
-            <TouchableOpacity
-              onPress={handleClearTimestamp}
-              style={{
-                backgroundColor: mode === 'dark' ? '#7c2d12' : '#fff7ed',
-                padding: 14,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: mode === 'dark' ? '#ea580c' : '#fdba74',
-              }}
-            >
-              <HStack space={3} alignItems="center" justifyContent="center">
-                <Text fontSize={18}>📊</Text>
-                <VStack>
-                  <Text fontSize="sm" fontFamily="Quicksand-Bold" color={mode === 'dark' ? '#fed7aa' : '#9a3412'}>
-                    Download dengan Progress Bar
-                  </Text>
-                  <Text fontSize="xs" fontFamily="Poppins-Light" color={mode === 'dark' ? '#fdba74' : '#c2410c'}>
-                    Tampilkan progress bar di halaman Home
-                  </Text>
-                </VStack>
-              </HStack>
-            </TouchableOpacity>
-
             {/* Data Items List */}
             <VStack space={3}>
               <Text fontSize="sm" fontFamily="Quicksand-SemiBold" color={textColor} mb={2}>
@@ -338,10 +479,17 @@ export default function DownloadDataScreen() {
                     disabled={status === 'loading'}
                     style={{
                       backgroundColor: cardBg,
-                      padding: 16,
-                      borderRadius: 12,
+                      paddingVertical: 5,
+                      paddingHorizontal: 10,
+                      borderRadius: 14,
                       borderWidth: 1,
                       borderColor: status === 'error' ? '#ef4444' : borderColor,
+                      borderLeftWidth: 4,
+                      borderLeftColor: status === 'success' ? '#22c55e' : status === 'error' ? '#ef4444' : accent,
+                      shadowColor: '#000',
+                      shadowOpacity: 0.06,
+                      shadowOffset: { width: 0, height: 3 },
+                      shadowRadius: 6,
                     }}
                   >
                     <HStack space={3} alignItems="center" justifyContent="space-between">
@@ -364,6 +512,13 @@ export default function DownloadDataScreen() {
                               {getStatusText(status)}
                               {count !== undefined && status === 'success' && ` (${count} item)`}
                             </Text>
+                          </HStack>
+                          <HStack space={2} alignItems="center">
+                            {count !== undefined && status === 'success' && (
+                              <Text fontSize="2xs" fontFamily="Poppins-SemiBold" color={subtitleColor}>
+                                {count} data tersinkron
+                              </Text>
+                            )}
                           </HStack>
                           {error && (
                             <Text fontSize="xs" fontFamily="Poppins-Light" color="#ef4444" mt={1}>
@@ -433,72 +588,23 @@ export default function DownloadDataScreen() {
           shadow={6}
           space={2}
         >
-          {/* Load Data to Redux Button */}
-          <TouchableOpacity
-            onPress={async () => {
-              try {
-                Alert.alert(
-                  'Load Data ke Redux',
-                  'Akan memuat data dari SQLite ke Redux state. Lanjutkan?',
-                  [
-                    { text: 'Batal', style: 'cancel' },
-                    { 
-                      text: 'Load', 
-                      onPress: async () => {
-                        try {
-                          // Load data from SQLite to Redux
-                          const success = await dispatch(loadSQLiteDataToRedux()).unwrap();
-                          Alert.alert('Berhasil', `${success} tipe data berhasil dimuat ke Redux`);
-                        } catch (error) {
-                          Alert.alert('Error', 'Gagal memuat data ke Redux');
-                        }
-                      }
-                    }
-                  ]
-                );
-              } catch (error) {
-                Alert.alert('Error', 'Gagal memuat data ke Redux');
-              }
-            }}
-            style={{
-              backgroundColor: mode === 'dark' ? '#059669' : '#10b981',
-              paddingVertical: 14,
-              borderRadius: 12,
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: 10,
-            }}
-          >
-            <VStack flex={1} alignItems="center">
-              <Text fontSize="md" fontFamily="Quicksand-Bold" color="#ffffff">
-                🔄 Load Data ke Redux
-              </Text>
-              <Text fontSize="xs" fontFamily="Poppins-Light" color="#d1fae5">
-                Muat data dari SQLite ke Redux state
-              </Text>
-            </VStack>
-          </TouchableOpacity>
-
           {/* SQLite Query Button */}
           <TouchableOpacity
             onPress={() => router.push('/setting/sqlite-query-screen')}
             style={{
               backgroundColor: mode === 'dark' ? '#7c3aed' : '#8b5cf6',
-              paddingVertical: 14,
+              // paddingVertical: 14,
+              paddingVertical: 5,
+              paddingHorizontal: 10,
               borderRadius: 12,
               flexDirection: 'row',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: 10,
             }}
           >
             <VStack flex={1} alignItems="center">
               <Text fontSize="md" fontFamily="Quicksand-Bold" color="#ffffff">
                 SQLite Query Tool
-              </Text>
-              <Text fontSize="xs" fontFamily="Poppins-Light" color="#e9d5ff">
-                Live query ke database local
               </Text>
             </VStack>
           </TouchableOpacity>

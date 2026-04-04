@@ -99,6 +99,14 @@ export const downloadSpecificData = createAsyncThunk(
     try {
       console.log(`[Download] Starting download for: ${dataType}`);
 
+      // Ensure SQLite ready (fail fast after timeout so UI tidak hang)
+      try {
+        const initTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('init-timeout')), 2000));
+        await Promise.race([database.ensureInitialized(), initTimeout]);
+      } catch (e) {
+        console.warn('[Download] SQLite init skipped/timeout:', e?.message || e);
+      }
+
       // Define endpoints and configurations
       const dataConfigs = {
         'barang': {
@@ -199,28 +207,28 @@ export const downloadSpecificData = createAsyncThunk(
 
       console.log(`[Download] Fetched ${apiData.length} items for ${dataType}`);
 
-      // Sync to SQLite if sync function exists
-      if (apiData.length > 0 && config.syncFn) {
-        try {
-          console.log(`[Download] Starting SQLite sync for ${dataType}...`);
-          console.log(`[Download] Data sample for ${dataType}:`, JSON.stringify(apiData[0]).substring(0, 300));
-          const syncResult = await config.syncFn(apiData);
-          console.log(`[Download] ✅ Synced ${dataType} to SQLite:`, {
-            successCount: syncResult.successCount,
-            errorCount: syncResult.errorCount,
-            errors: syncResult.errors?.slice(0, 3)
-          });
-          if (syncResult.error) {
-            console.warn(`[Download] ⚠️ SQLite sync had errors:`, syncResult.error);
-          }
-          if (syncResult.errorCount > 0) {
-            console.warn(`[Download] ⚠️ ${dataType} had ${syncResult.errorCount} sync errors`);
-          }
-        } catch (syncError) {
-          console.error(`[Download] ❌ SQLite sync FAILED for ${dataType}:`, syncError.message);
-          console.error(`[Download] Error stack:`, syncError.stack);
-          // Continue with AsyncStorage fallback
+      // Sync to SQLite if sync function exists (heavy datasets handled non-blocking)
+      const shouldBackgroundSync = true; // always background to avoid blocking UI/progress
+      const runSync = async () => {
+        if (apiData.length === 0 || !config.syncFn) return;
+        console.log(`[Download] Starting SQLite sync for ${dataType}...`);
+        console.log(`[Download] Data sample for ${dataType}:`, JSON.stringify(apiData[0]).substring(0, 300));
+        const syncTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('sync-timeout')), shouldBackgroundSync ? 3000 : 5000));
+        const syncResult = await Promise.race([config.syncFn(apiData), syncTimeout]);
+        console.log(`[Download] ✅ Synced ${dataType} to SQLite:`, {
+          successCount: syncResult.successCount,
+          errorCount: syncResult.errorCount,
+          errors: syncResult.errors?.slice(0, 3)
+        });
+        if (syncResult.errorCount > 0) {
+          console.warn(`[Download] ⚠️ ${dataType} had ${syncResult.errorCount} sync errors`);
         }
+      };
+
+      if (shouldBackgroundSync) {
+        runSync().catch(syncError => {
+          console.warn(`[Download] ⚠️ Background SQLite sync failed for ${dataType}:`, syncError?.message || syncError);
+        });
       } else {
         if (!config.syncFn) {
           console.log(`[Download] ⚠️ No sync function for ${dataType}, using AsyncStorage only`);

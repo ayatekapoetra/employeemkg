@@ -51,7 +51,7 @@
     },
     "splash": {
       "image": "./assets/images/sp-1.png",
-      "resizeMode": "cover",
+      "resizeMode": "contain",
       "backgroundColor": "#000000",
       "dark": {
         "backgroundColor": "#000000"

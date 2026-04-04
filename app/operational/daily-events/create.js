@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { HStack, VStack, Text, TextArea, Button } from 'native-base';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -241,17 +242,16 @@ export default function CreateDailyEventScreen() {
                 onNotification={true}
             />
             
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
-            >
-            <ScrollView
-                flex={1}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 20 }}
+            <KeyboardAwareScrollView
+                enableOnAndroid
+                enableAutomaticScroll
+                extraScrollHeight={120}
+                extraHeight={80}
+                keyboardOpeningTime={0}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="interactive"
+                contentContainerStyle={{ paddingBottom: 20 }}
+                showsVerticalScrollIndicator={false}
             >
                 <VStack space={4} px={4} pt={2}>
                     {/* Form Section */}
@@ -362,6 +362,8 @@ export default function CreateDailyEventScreen() {
                                 borderRadius={8}
                                 borderWidth={1}
                                 borderColor={mode === 'dark' ? '#4B5563' : '#E5E7EB'}
+                                textAlignVertical="top"
+                                blurOnSubmit={false}
                                 _focus={{
                                     borderColor: mode === 'dark' ? '#3B82F6' : '#2563EB'
                                 }}
@@ -424,6 +426,8 @@ export default function CreateDailyEventScreen() {
                                 borderRadius={8}
                                 borderWidth={1}
                                 borderColor={mode === 'dark' ? '#4B5563' : '#E5E7EB'}
+                                textAlignVertical="top"
+                                blurOnSubmit={false}
                                 _focus={{
                                     borderColor: mode === 'dark' ? '#3B82F6' : '#2563EB'
                                 }}
@@ -492,8 +496,7 @@ export default function CreateDailyEventScreen() {
                         </TouchableOpacity>
                     </VStack>
                 </VStack>
-            </ScrollView>
-            </KeyboardAvoidingView>
+            </KeyboardAwareScrollView>
 
             {/* DateTime Picker Modal */}
             <DateTimePickerModal

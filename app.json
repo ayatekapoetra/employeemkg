@@ -16,6 +16,12 @@
       "buildNumber": "23",
       "supportsTablet": true,
       "displayName": "APPEMPLOYEE",
+      "splash": {
+        "image": "./assets/images/sp-1.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#000000",
+        "tabletImage": "./assets/images/sp-1.png"
+      },
       "config": {
         "googleMapsApiKey": "AIzaSyCYMnlvt-xY5PrinwHmw6qGRfPzD6_sZxA"
       },
@@ -51,8 +57,9 @@
     },
     "splash": {
       "image": "./assets/images/sp-1.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#000000",
+      "tabletImage": "./assets/images/sp-1.png",
       "dark": {
         "backgroundColor": "#000000"
       }

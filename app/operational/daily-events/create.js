@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { ScrollView, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { HStack, VStack, Text, TextArea, Button } from 'native-base';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -352,23 +352,26 @@ export default function CreateDailyEventScreen() {
                             />
                             
                             {/* Location Description */}
-                            <TextArea
+                            <TextInput
                                 placeholder="Deskripsi lokasi (opsional)"
+                                placeholderTextColor={subtitleColor}
                                 value={formData.location_description}
                                 onChangeText={(value) => handleInputChange('location_description', value)}
-                                fontSize="sm"
-                                fontFamily="Poppins-Regular"
-                                color={textColor}
-                                bg={mode === 'dark' ? '#374151' : '#F9FAFB'}
-                                borderRadius={8}
-                                borderWidth={1}
-                                borderColor={mode === 'dark' ? '#4B5563' : '#E5E7EB'}
-                                textAlignVertical="top"
+                                multiline
+                                style={{
+                                    backgroundColor: mode === 'dark' ? '#374151' : '#F9FAFB',
+                                    borderRadius: 8,
+                                    borderWidth: 1,
+                                    borderColor: mode === 'dark' ? '#4B5563' : '#E5E7EB',
+                                    padding: 12,
+                                    minHeight: 120,
+                                    textAlignVertical: 'top',
+                                    color: textColor,
+                                    fontFamily: 'Poppins-Regular',
+                                    fontSize: 14,
+                                  }}
                                 blurOnSubmit={false}
-                                _focus={{
-                                    borderColor: mode === 'dark' ? '#3B82F6' : '#2563EB'
-                                }}
-                            />
+                              />
                         </VStack>
 
                         {/* Start Time */}
@@ -416,23 +419,26 @@ export default function CreateDailyEventScreen() {
                             <Text fontSize="sm" fontFamily="Poppins-Bold" color={textColor}>
                                 Deskripsi Event
                             </Text>
-                            <TextArea
+                            <TextInput
                                 placeholder="Deskripsi event (opsional)"
+                                placeholderTextColor={subtitleColor}
                                 value={formData.start_description}
                                 onChangeText={(value) => handleInputChange('start_description', value)}
-                                fontSize="sm"
-                                fontFamily="Poppins-Regular"
-                                color={textColor}
-                                bg={mode === 'dark' ? '#374151' : '#F9FAFB'}
-                                borderRadius={8}
-                                borderWidth={1}
-                                borderColor={mode === 'dark' ? '#4B5563' : '#E5E7EB'}
-                                textAlignVertical="top"
+                                multiline
+                                style={{
+                                    backgroundColor: mode === 'dark' ? '#374151' : '#F9FAFB',
+                                    borderRadius: 8,
+                                    borderWidth: 1,
+                                    borderColor: mode === 'dark' ? '#4B5563' : '#E5E7EB',
+                                    padding: 12,
+                                    minHeight: 140,
+                                    textAlignVertical: 'top',
+                                    color: textColor,
+                                    fontFamily: 'Poppins-Regular',
+                                    fontSize: 14,
+                                  }}
                                 blurOnSubmit={false}
-                                _focus={{
-                                    borderColor: mode === 'dark' ? '#3B82F6' : '#2563EB'
-                                }}
-                            />
+                              />
                         </VStack>
 
                         {/* Shift */}

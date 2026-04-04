@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
-import { ArrowLeft2, Moon, Notification, Sun1, Filter } from 'iconsax-react-native';
+import { ArrowLeft2, Moon, Notification, Sun1, Filter, ArrowLeft } from 'iconsax-react-native';
 import { HStack, IconButton, StatusBar, Text } from 'native-base';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleTheme } from '../../store/slices/themeSlice';
@@ -42,8 +42,10 @@ const HeaderScreen = ({
       >
           <HStack px={3} space={2} alignItems="center" flex={1}>
             {(showBack || onBack) && (
-              <TouchableOpacity style={{backgroundColor: isDark ? '#5e5f6cff' : '#c0bdbd', borderRadius: 5}}>
-                <ArrowLeft2
+              <TouchableOpacity style={{
+                // backgroundColor: isDark ? '#5e5f6cff' : '#c0bdbd', 
+                borderRadius: 5}}>
+                <ArrowLeft
                   size={24}
                   onPress={handleBack}
                   color={isDark ? '#F5F5F5' : '#2f313e'}

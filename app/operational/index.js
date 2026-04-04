@@ -106,25 +106,25 @@ const ListMenu = [
     {
         id: 1,
         title: "Daily Breakdown",
-        subtitle: "Pencatatan data breakdown harian setiap equipment",
+        subtitle: "Pencatatan data breakdown harian setiap equipment\n#Riwayat Breakdown Equipment",
         routePath: '/operational/daily-breakdown'
     },
     {
         id: 2,
         title: "Work Order",
-        subtitle: "Pencatatan data work order harian setiap equipment",
+        subtitle: "Pencatatan data work order harian setiap equipment\n#Riwayat Kerja Services",
         routePath: '/operational/work-order'
     },
     {
         id: 3,
         title: "Equipment Activity Plan",
-        subtitle: "Pencatatan data harian rencana aktifitas kerja equipment",
+        subtitle: "Pencatatan data harian rencana aktifitas kerja equipment\n#Rencana Kerja Equipment",
         routePath: '/operational/equipment-plan'
     },
     {
         id: 4,
         title: "Crew Work Activity",
-        subtitle: "Pencatatan data harian absensi dan kegiatan harian crew \n#Absen Tulis",
+        subtitle: "Pencatatan data harian absensi dan kegiatan harian crew\n#Absen Tulis",
         routePath: '/operational/crew-worksheet'
     },
     {

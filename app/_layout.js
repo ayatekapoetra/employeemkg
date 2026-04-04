@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { useColorScheme, Platform, BackHandler, AppState, View, DeviceEventEmitter } from 'react-native';
+import * as Updates from 'expo-updates';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { NativeBaseProvider } from 'native-base';
 import * as Application from 'expo-application';
@@ -56,9 +57,40 @@ function AppContent() {
 
   // Check if current route is login page
   const isLoginPage = segments[0] === 'login';
-  
+
   // Debug segments
   console.log('[AppContent] Current segments:', segments, 'isLoginPage:', isLoginPage);
+
+  // OTA auto-check on foreground (silent fetch + immediate reload)
+  useEffect(() => {
+    let isChecking = false;
+
+    const checkAndUpdate = async () => {
+      if (isChecking) return;
+      isChecking = true;
+      try {
+        const res = await Updates.checkForUpdateAsync();
+        if (res.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch (e) {
+        console.log('[OTA] Check/fetch failed:', e?.message || e);
+      } finally {
+        isChecking = false;
+      }
+    };
+
+    // Run once on mount
+    checkAndUpdate();
+
+    // Re-run when app returns to foreground
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') checkAndUpdate();
+    });
+
+    return () => sub?.remove?.();
+  }, []);
 
 
 

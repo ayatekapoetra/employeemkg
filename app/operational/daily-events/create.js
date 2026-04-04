@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { HStack, VStack, Text, TextArea, Button } from 'native-base';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -242,16 +242,17 @@ export default function CreateDailyEventScreen() {
                 onNotification={true}
             />
             
-            <KeyboardAwareScrollView
-                enableOnAndroid
-                enableAutomaticScroll
-                extraScrollHeight={120}
-                extraHeight={80}
-                keyboardOpeningTime={0}
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+            >
+            <ScrollView
+                flex={1}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 20 }}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="interactive"
-                contentContainerStyle={{ paddingBottom: 20 }}
-                showsVerticalScrollIndicator={false}
             >
                 <VStack space={4} px={4} pt={2}>
                     {/* Form Section */}
@@ -496,7 +497,8 @@ export default function CreateDailyEventScreen() {
                         </TouchableOpacity>
                     </VStack>
                 </VStack>
-            </KeyboardAwareScrollView>
+            </ScrollView>
+            </KeyboardAvoidingView>
 
             {/* DateTime Picker Modal */}
             <DateTimePickerModal

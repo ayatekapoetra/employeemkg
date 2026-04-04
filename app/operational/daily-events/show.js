@@ -3,6 +3,7 @@ import { View, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Share } f
 import { HStack, VStack, Text, Divider, Button } from 'native-base';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Edit, Trash, TickCircle } from 'iconsax-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { getEventDetail, finishEvent } from '../../../src/store/slices/eventSlice';
 import { COLORS } from '../../../src/constants/colors';
@@ -17,12 +18,12 @@ export default function ShowDailyEventScreen() {
     const params = useLocalSearchParams();
     const eventId = params.id;
     const dispatch = useDispatch();
-    
+
     // State untuk event data
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    
+
     // State untuk finish event
     const [showFinishModal, setShowFinishModal] = useState(false);
     const [finishData, setFinishData] = useState({
@@ -30,7 +31,7 @@ export default function ShowDailyEventScreen() {
         finish_description: ''
     });
     const [finishing, setFinishing] = useState(false);
-    
+
     // State untuk date/time picker
     const [showDateTimePicker, setShowDateTimePicker] = useState(false);
 
@@ -50,12 +51,12 @@ export default function ShowDailyEventScreen() {
         try {
             setLoading(true);
             setError(null);
-            
+
             // API call to get event detail
             const eventData = await dispatch(getEventDetail(eventId)).unwrap();
             setEvent(eventData);
             setLoading(false);
-            
+
         } catch (err) {
             setLoading(false);
             setError('Gagal memuat detail event');
@@ -112,34 +113,34 @@ export default function ShowDailyEventScreen() {
     const handleFinishEvent = async () => {
         try {
             setFinishing(true);
-            
+
             // Format finish time
             const finishTime = moment(finishData.finish_time).format('YYYY-MM-DD HH:mm:ss');
-            
+
             // Validation
             if (moment(finishTime).isBefore(moment(event.start_time))) {
                 Alert.alert('Error', 'Waktu selesai tidak boleh lebih awal dari waktu mulai');
                 setFinishing(false);
                 return;
             }
-            
+
             // API call to finish event
             const finishDataApi = {
                 finish_time: finishTime,
                 finish_description: finishData.finish_description,
                 finished_by: 1 // Mock user ID
             };
-            
+
             const response = await dispatch(finishEvent({ id: event.id, data: finishDataApi })).unwrap();
-            
+
             setFinishing(false);
             setShowFinishModal(false);
             Alert.alert(
                 'Berhasil',
                 'Event berhasil diselesaikan',
                 [
-                    { 
-                        text: 'OK', 
+                    {
+                        text: 'OK',
                         onPress: () => {
                             // Refresh data
                             fetchEventData();
@@ -147,7 +148,7 @@ export default function ShowDailyEventScreen() {
                     }
                 ]
             );
-            
+
         } catch (error) {
             setFinishing(false);
             Alert.alert('Error', 'Gagal menyelesaikan event: ' + (error.message || 'Terjadi kesalahan'));
@@ -174,7 +175,7 @@ Waktu: ${moment(event?.start_time).format('DD MMM YYYY, HH:mm')} - ${event?.fini
 Lokasi: ${event?.location?.nama}
 Keterangan: ${event?.start_description || '-'}
             `.trim();
-            
+
             await Share.share({
                 message: shareText,
                 title: `Detail Event - ${event?.category?.nama}`
@@ -184,13 +185,24 @@ Keterangan: ${event?.start_description || '-'}
         }
     };
 
+    const handleDelete = () => {
+        Alert.alert(
+            'Konfirmasi',
+            'Hapus event ini?',
+            [
+                { text: 'Batal', style: 'cancel' },
+                { text: 'Hapus', style: 'destructive', onPress: () => Alert.alert('Info', 'Fitur hapus belum diimplementasi') }
+            ]
+        );
+    };
+
     // Loading state
     if (loading) {
         return (
             <AppScreen>
-                <HeaderScreen 
-                    title="Detail Event" 
-                    onBack={() => router.back()} 
+                <HeaderScreen
+                    title="Detail Event"
+                    onBack={() => router.back()}
                     onThemes={true}
                     onNotification={true}
                 />
@@ -208,18 +220,18 @@ Keterangan: ${event?.start_description || '-'}
     if (error || !event) {
         return (
             <AppScreen>
-                <HeaderScreen 
-                    title="Detail Event" 
-                    onBack={() => router.back()} 
+                <HeaderScreen
+                    title="Detail Event"
+                    onBack={() => router.back()}
                     onThemes={true}
                     onNotification={true}
                 />
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
                     <Ionicons name="alert-circle-outline" size={48} color={mode === 'dark' ? '#F87171' : '#EF4444'} />
-                    <Text style={{ 
-                        marginTop: 16, 
-                        color: textColor, 
-                        fontSize: 16, 
+                    <Text style={{
+                        marginTop: 16,
+                        color: textColor,
+                        fontSize: 16,
                         fontFamily: 'Poppins-Bold',
                         textAlign: 'center'
                     }}>
@@ -246,9 +258,9 @@ Keterangan: ${event?.start_description || '-'}
 
     return (
         <AppScreen>
-            <HeaderScreen 
-                title="Detail Event" 
-                onBack={() => router.back()} 
+            <HeaderScreen
+                title="Detail Event"
+                onBack={() => router.back()}
                 onThemes={true}
                 onNotification={true}
                 rightComponent={
@@ -264,9 +276,9 @@ Keterangan: ${event?.start_description || '-'}
                     </HStack>
                 }
             />
-            
-            <ScrollView 
-                flex={1} 
+
+            <ScrollView
+                flex={1}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 20 }}
             >
@@ -410,8 +422,8 @@ Keterangan: ${event?.start_description || '-'}
                             backgroundColor: cardBg,
                             padding: 16
                         }
-                    ]}>
-                        
+                        ]}>
+
                         {event.finish_description && (
                             <>
                                 <VStack space={2}>
@@ -440,31 +452,56 @@ Keterangan: ${event?.start_description || '-'}
                         )}
                     </VStack>
 
-                    {/* Finish Button (only for ONGOING events) */}
-                    {event.status === 'ONGOING' && (
+                    {/* Actions */}
+                    <HStack space={3} mt={4}>
                         <TouchableOpacity
                             onPress={() => setShowFinishModal(true)}
+                            disabled={event.status !== 'ONGOING'}
                             style={{
-                                backgroundColor: mode === 'dark' ? '#065F46' : '#10B981',
-                                borderRadius: 8,
-                                padding: 16,
+                                flex: 1,
                                 flexDirection: 'row',
-                                justifyContent: 'center',
                                 alignItems: 'center',
-                                marginTop: 8
+                                justifyContent: 'center',
+                                padding: 14,
+                                borderRadius: 10,
+                                backgroundColor: event.status === 'ONGOING' ? (mode === 'dark' ? '#065F46' : '#10B981') : (mode === 'dark' ? '#1F2937' : '#E5E7EB'),
+                                opacity: event.status === 'ONGOING' ? 1 : 0.5
                             }}
                         >
-                            <Ionicons name="checkmark" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                            <Text style={{
-                                color: '#FFFFFF',
-                                fontSize: 16,
-                                fontFamily: 'Poppins-Bold',
-                                fontWeight: '700'
-                            }}>
-                                Selesaikan Event
+                            <TickCircle color={event.status === 'ONGOING' ? '#FFFFFF' : subtitleColor} variant="Bold" size={20} style={{ marginRight: 8 }} />
+                            <Text style={{ color: event.status === 'ONGOING' ? '#FFFFFF' : subtitleColor, fontFamily: 'Poppins-Bold', fontSize: 14 }}>
+                                Selesaikan
                             </Text>
                         </TouchableOpacity>
-                    )}
+
+                        <TouchableOpacity
+                            onPress={() => router.push(`/operational/daily-events/${event.id}/edit`)}
+                            style={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: 10,
+                                backgroundColor: mode === 'dark' ? '#1F2937' : '#E5E7EB',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            <Edit color={textColor} variant="Bold" size={20} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={handleDelete}
+                            style={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: 10,
+                                backgroundColor: mode === 'dark' ? '#1F2937' : '#E5E7EB',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            <Trash color={mode === 'dark' ? '#F87171' : '#EF4444'} variant="Bold" size={20} />
+                        </TouchableOpacity>
+                    </HStack>
 
                     {/* Finish Modal */}
                     {showFinishModal && (
@@ -477,8 +514,8 @@ Keterangan: ${event?.start_description || '-'}
                             backgroundColor: 'rgba(0, 0, 0, 0.5)',
                             justifyContent: 'flex-end'
                         }}>
-                            <TouchableOpacity 
-                                activeOpacity={1} 
+                            <TouchableOpacity
+                                activeOpacity={1}
                                 onPress={() => setShowFinishModal(false)}
                                 style={{ flex: 1 }}
                             />
@@ -498,7 +535,7 @@ Keterangan: ${event?.start_description || '-'}
                                 ]}>
                                     Selesaikan Event
                                 </Text>
-                                
+
                                 <VStack space={4}>
                                     {/* Finish Time */}
                                     <VStack space={2}>
@@ -536,10 +573,10 @@ Keterangan: ${event?.start_description || '-'}
                                                     {moment(finishData.finish_time).format('DD MMM YYYY, HH:mm')}
                                                 </Text>
                                             </HStack>
-                                             <Ionicons name="calendar-outline" size={16} color={subtitleColor} />
+                                            <Ionicons name="calendar-outline" size={16} color={subtitleColor} />
                                         </TouchableOpacity>
                                     </VStack>
-                                    
+
                                     {/* Finish Description */}
                                     <VStack space={2}>
                                         <Text style={[
@@ -567,7 +604,7 @@ Keterangan: ${event?.start_description || '-'}
                                             {finishData.finish_description || 'Masukkan keterangan...'}
                                         </Text>
                                     </VStack>
-                                    
+
                                     {/* Action Buttons */}
                                     <HStack space={3} mt={2}>
                                         <TouchableOpacity
@@ -590,7 +627,7 @@ Keterangan: ${event?.start_description || '-'}
                                                 Batal
                                             </Text>
                                         </TouchableOpacity>
-                                        
+
                                         <TouchableOpacity
                                             onPress={handleFinishEvent}
                                             disabled={finishing}
@@ -606,7 +643,7 @@ Keterangan: ${event?.start_description || '-'}
                                                 {finishing ? (
                                                     <ActivityIndicator size="small" color="#FFFFFF" />
                                                 ) : (
-                                                     <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                                                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
                                                 )}
                                                 <Text style={{
                                                     color: '#FFFFFF',

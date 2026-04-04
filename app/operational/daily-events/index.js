@@ -11,7 +11,8 @@ import EventCard from './components/EventCard';
 
 import FilterBottomSheet from './components/FilterBottomSheet';
 
-import { getEventList, getEventCategories } from '../../../src/store/slices/eventSlice';
+import { getEventList } from '../../../src/store/slices/eventHistorySlice';
+import { getEventCategories } from '../../../src/store/slices/eventCtgSlice';
 
 export default function DailyEventsScreen() {
     const router = useRouter();
@@ -225,7 +226,7 @@ export default function DailyEventsScreen() {
                             setFilterVisible(true);
                         }}
                     >
-                        <Filter color={hasActiveFilters() ? '#FFFFFF' : textColor} />
+                        <Filter size={24} color={hasActiveFilters() ? '#FFFFFF' : textColor} />
                         {hasActiveFilters() && (
                             <View style={{
                                 position: 'absolute',
@@ -241,7 +242,7 @@ export default function DailyEventsScreen() {
                 </HStack>
 
                 {/* Events List */}
-                <HStack mt={1} mx={4}>
+                <HStack mt={1} mx={4} mb={12}>
                     <FlatList
                         data={events || []}
                         renderItem={({ item }) => <EventCard event={item} />}

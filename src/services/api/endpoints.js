@@ -208,14 +208,14 @@ export const API_ENDPOINTS = {
     ROLLBACK: '/scm/purchase-request/rollback',
   },
 
-EVENT: {
-    LIST: 'event/list',
-    CATEGORIES: 'event/categories',
-    DETAIL: id => `event/${id}`,
-    CREATE: 'event/create',
-    UPDATE: id => `event/${id}/update`,
-    FINISH: id => `event/${id}/finish`,
-    DELETE: id => `event/${id}/destroy`,
+  EVENT: {
+    LIST: '/event/list',
+    CATEGORIES: '/event/categories',
+    DETAIL: id => `/event/${id}`,
+    CREATE: '/event/create',
+    UPDATE: id => `/event/${id}`,
+    FINISH: id => `/event/${id}/finish`,
+    DELETE: id => `/event/${id}/destroy`,
   },
 
 };

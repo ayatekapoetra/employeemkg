@@ -1,15 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { HStack, VStack, Text, TextArea, Button } from 'native-base';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { View, ScrollView, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import { HStack, VStack, Text } from 'native-base';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Save, MapPin, Calendar, Clock, Info } from 'iconsax-react-native';
+import { Calendar, Clock, InfoCircle, TickCircle } from 'iconsax-react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { getEventDetail, updateEvent } from '../../../src/store/slices/eventSlice';
+import { getEventDetail, updateEvent } from '../../../src/store/slices/eventHistorySlice';
+import { getEventCategories } from '../../../src/store/slices/eventCtgSlice';
 import { COLORS } from '../../../src/constants/colors';
 import { AppScreen, HeaderScreen } from '../../../src/components/common';
 import BottomSheetSelect from '../../../src/components/common/BottomSheetSelect';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import ModalAlert from '../../../src/components/common/ModalAlert';
 import moment from 'moment';
+import database from '../../../src/database/SQLiteService';
 
 export default function EditDailyEventScreen() {
     const router = useRouter();
@@ -34,18 +37,21 @@ export default function EditDailyEventScreen() {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [fetchLoading, setFetchLoading] = useState(true);
-    
-    // State untuk data master
-    const [categories, setCategories] = useState([]);
-    const [equipments, setEquipments] = useState([]);
-    const [locations, setLocations] = useState([]);
-    const [shifts, setShifts] = useState([]);
-    const [cabangs, setCabangs] = useState([]);
+    const [equipmentLocal, setEquipmentLocal] = useState([]);
+    const [lokasiLocal, setLokasiLocal] = useState([]);
+    const [shiftLocal, setShiftLocal] = useState([]);
+    const [cabangLocal, setCabangLocal] = useState([]);
+    const [modalAlert, setModalAlert] = useState({ visible: false, title: '', message: '', type: 'info', buttons: [] });
     
     // State untuk date/time picker
     const [showDateTimePicker, setShowDateTimePicker] = useState(false);
 
     const mode = useSelector(state => state.themes)?.value || 'light';
+    const equipmentRedux = useSelector(state => state.equipment);
+    const lokasiRedux = useSelector(state => state.lokasikerja);
+    const shiftRedux = useSelector(state => state.shift);
+    const cabangRedux = useSelector(state => state.cabang);
+    const eventCtgRedux = useSelector(state => state.eventCtg);
     const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1];
     const subtitleColor = mode === 'dark' ? '#9CA3AF' : '#6B7280';
     const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
@@ -54,8 +60,34 @@ export default function EditDailyEventScreen() {
     // Fetch existing event data
     useEffect(() => {
         fetchEventData();
-        fetchMasterData();
     }, [eventId]);
+
+    // Fetch categories from redux if empty
+    useEffect(() => {
+        const hasData = Array.isArray(eventCtgRedux?.data) && eventCtgRedux.data.length > 0;
+        if (!eventCtgRedux?.loading && !hasData) {
+            dispatch(getEventCategories());
+        }
+    }, [dispatch, eventCtgRedux?.data, eventCtgRedux?.loading]);
+
+    // Load fallback lokal
+    useEffect(() => {
+        const loadLocal = async () => {
+            try {
+                const eq = await database.getAll('master_equipment');
+                const lok = await database.getAll('master_lokasipit');
+                const sh = await database.getShift?.();
+                const cab = await database.getAll?.('master_cabang');
+                if (Array.isArray(eq)) setEquipmentLocal(eq);
+                if (Array.isArray(lok)) setLokasiLocal(lok);
+                if (Array.isArray(sh)) setShiftLocal(sh);
+                if (Array.isArray(cab)) setCabangLocal(cab);
+            } catch (e) {
+                console.warn('[EditDailyEvent] loadLocal error:', e?.message || e);
+            }
+        };
+        loadLocal();
+    }, []);
 
     // Fetch event data
     const fetchEventData = useCallback(async () => {
@@ -84,54 +116,18 @@ export default function EditDailyEventScreen() {
         } catch (err) {
             setFetchLoading(false);
             console.error('[EditDailyEvent] Error fetching event data:', err);
-            Alert.alert('Error', 'Gagal memuat data event');
+            setModalAlert({
+                visible: true,
+                title: 'Error',
+                message: 'Gagal memuat data event',
+                type: 'error',
+                buttons: [
+                    { text: 'Tutup', onPress: () => setModalAlert(prev => ({ ...prev, visible: false })) }
+                ]
+            });
         }
     }, [eventId, dispatch]);
 
-    // Fetch data master
-    const fetchMasterData = useCallback(async () => {
-        try {
-            // Mock data untuk development
-            setCategories([
-                { id: 1, kode: 'BREAKDOWN', nama: 'Breakdown', icon: 'construct', color: '#EF4444', require_equipment: 'Y' },
-                { id: 2, kode: 'HUJAN', nama: 'Hujan', icon: 'rainy', color: '#3B82F6', require_equipment: 'N' },
-                { id: 3, kode: 'JALAN_LICIN', nama: 'Jalan Licin', icon: 'warning', color: '#F59E0B', require_equipment: 'N' },
-                { id: 4, kode: 'MENUNGGU_ARAHAN', nama: 'Menunggu Arahan', icon: 'time', color: '#8B5CF6', require_equipment: 'N' },
-                { id: 5, kode: 'REFUEL', nama: 'Refuel', icon: 'flask', color: '#10B981', require_equipment: 'Y' },
-                { id: 6, kode: 'LAINNYA', nama: 'Lainnya', icon: 'alert-circle', color: '#6B7280', require_equipment: 'N' }
-            ]);
-            
-            setEquipments([
-                { id: 1, kode: 'DT-001', model: 'Dump Truck', manufaktur: 'Komatsu' },
-                { id: 2, kode: 'DT-002', model: 'Dump Truck', manufaktur: 'Komatsu' },
-                { id: 3, kode: 'EX-001', model: 'Excavator', manufaktur: 'CAT' },
-                { id: 4, kode: 'EX-002', model: 'Excavator', manufaktur: 'Komatsu' }
-            ]);
-            
-            setLocations([
-                { id: 1, nama_lokasi: 'PIT A', keterangan: 'Lokasi Pit A' },
-                { id: 2, nama_lokasi: 'PIT B', keterangan: 'Lokasi Pit B' },
-                { id: 3, nama_lokasi: 'Stockpile A', keterangan: 'Lokasi Stockpile A' },
-                { id: 4, nama_lokasi: 'Stockpile B', keterangan: 'Lokasi Stockpile B' },
-                { id: 5, nama_lokasi: 'Area Lain', keterangan: 'Lokasi lainnya' }
-            ]);
-            
-            setShifts([
-                { id: 1, nama: 'Shift 1 (06:00 - 14:00)' },
-                { id: 2, nama: 'Shift 2 (14:00 - 22:00)' },
-                { id: 3, nama: 'Shift 3 (22:00 - 06:00)' }
-            ]);
-            
-            setCabangs([
-                { id: 1, nama: 'Cabang 1' },
-                { id: 2, nama: 'Cabang 2' },
-                { id: 3, nama: 'Cabang 3' }
-            ]);
-            
-        } catch (error) {
-            console.error('[EditDailyEvent] Error fetching master data:', error);
-        }
-    }, []);
 
     // Handle form input change
     const handleInputChange = (field, value) => {
@@ -199,31 +195,37 @@ export default function EditDailyEventScreen() {
             console.log('[EditDailyEvent] Updating data:', apiData);
             
             // API call
-            const response = await dispatch(updateEvent({ id: eventId, data: apiData })).unwrap();
-            
-            setLoading(false);
-            Alert.alert(
-                'Berhasil',
-                'Event berhasil diperbarui',
-                [
+            await dispatch(updateEvent({ id: eventId, data: apiData })).unwrap();
+
+            setModalAlert({
+                visible: true,
+                title: 'Berhasil',
+                message: 'Event berhasil diperbarui',
+                type: 'success',
+                buttons: [
                     { 
-                        text: 'OK', 
+                        text: 'OK',
                         onPress: () => {
-                            // Navigate back to detail page
+                            setModalAlert(prev => ({ ...prev, visible: false }));
                             router.push(`/operational/daily-events/${eventId}`);
                         }
                     }
                 ]
-            );
+            });
             
         } catch (error) {
+            console.log(error);
+            setModalAlert({
+                visible: true,
+                title: 'Error',
+                message: 'Gagal memperbarui event: ' + (error.message || 'Terjadi kesalahan'),
+                type: 'error',
+                buttons: [
+                    { text: 'Tutup', onPress: () => setModalAlert(prev => ({ ...prev, visible: false })) }
+                ]
+            });
+        } finally {
             setLoading(false);
-            console.error('[EditDailyEvent] Error updating event:', error);
-            Alert.alert(
-                'Error',
-                'Gagal memperbarui event: ' + (error.message || 'Terjadi kesalahan'),
-                [{ text: 'OK' }]
-            );
         }
     };
 
@@ -234,39 +236,117 @@ export default function EditDailyEventScreen() {
         handleInputChange('start_time', formatted);
     };
 
+    const categories = useMemo(() => {
+        if (Array.isArray(eventCtgRedux?.data)) return eventCtgRedux.data;
+        return [];
+    }, [eventCtgRedux?.data]);
+
     // Get selected category
     const selectedCategory = categories.find(cat => cat.id === parseInt(formData.event_category_id));
     
     // Format options for BottomSheetSelect
     const categoryOptions = categories.map(cat => ({
-        id: cat.id.toString(),
+        id: cat.id?.toString?.() || '',
         nama: cat.nama,
         subtitle: cat.kode,
         color: cat.color,
         require_equipment: cat.require_equipment
-    }));
-    
-    const equipmentOptions = equipments.map(eq => ({
-        id: eq.id.toString(),
-        nama: eq.kode,
-        subtitle: `${eq.model} - ${eq.manufaktur}`
-    }));
-    
-    const locationOptions = locations.map(loc => ({
-        id: loc.id.toString(),
-        nama: loc.nama_lokasi,
-        subtitle: loc.keterangan
-    }));
-    
-    const shiftOptions = shifts.map(shift => ({
-        id: shift.id.toString(),
-        nama: shift.nama
-    }));
-    
-    const cabangOptions = cabangs.map(cabang => ({
-        id: cabang.id.toString(),
-        nama: cabang.nama
-    }));
+    })).filter(opt => opt.id);
+
+    const equipmentOptions = useMemo(() => {
+        let data = equipmentRedux?.data || [];
+        if (!Array.isArray(data)) data = data?.rows || data?.data || data?.equipment || [];
+        if ((!data || data.length === 0) && equipmentLocal.length) data = equipmentLocal;
+        if (!data || data.length === 0) return [];
+        return data
+          .map((item) => {
+            const id = item.id?.toString() || item.kode_unit?.toString() || item.kode?.toString() || '';
+            if (!id) return null;
+            const kode = item.kode_unit || item.kode_equipment || item.code || item.kode || item.nopol || item.no_polisi || '';
+            const nama = item.nama_unit || item.nama_equipment || item.name || item.nama || '';
+            const manuf = item.manufaktur || item.manufacturer || '';
+            const model = item.model || '';
+            const subtitle = [manuf, model].filter(Boolean).join(' - ');
+            return { id, nama: kode || nama || '[No Name]', subtitle };
+          })
+          .filter(Boolean);
+      }, [equipmentRedux?.data, equipmentLocal]);
+
+    const locationOptions = useMemo(() => {
+        let data = lokasiRedux?.data || [];
+        if (!Array.isArray(data) && lokasiRedux?.data && typeof lokasiRedux.data === 'object') {
+          data = lokasiRedux.data.rows || lokasiRedux.data.data || [];
+        }
+        if ((!data || data.length === 0) && lokasiLocal.length) data = lokasiLocal;
+        if (!data || data.length === 0) return [];
+        return data
+          .map((item) => {
+            const id = item.id?.toString() || item.kode_lokasi?.toString() || item.kode?.toString() || '';
+            if (!id) return null;
+            const cabangNama = item.cabang?.nama || item.cabang?.name || item.nama_cabang || item.cabang_name || '';
+            const typeLokasi = item.type || item.tipe || item.jenis || '';
+            const subtitleParts = [];
+            if (typeLokasi) subtitleParts.push(typeLokasi);
+            if (cabangNama) subtitleParts.push(cabangNama);
+            return {
+              id,
+              nama: item.nama_lokasi || item.nama || item.lokasi || '[No Name]',
+              subtitle: subtitleParts.join(' - '),
+            };
+          })
+          .filter(Boolean);
+      }, [lokasiRedux?.data, lokasiLocal]);
+
+    const shiftOptions = useMemo(() => {
+        let data = shiftRedux?.data || [];
+        if (!Array.isArray(data)) data = data?.rows || data?.data || [];
+        if ((!data || data.length === 0) && Array.isArray(shiftRedux?.master_shift)) {
+          data = shiftRedux.master_shift;
+        }
+        if ((!data || data.length === 0) && Array.isArray(shiftRedux?.sqlite_shift)) {
+          data = shiftRedux.sqlite_shift;
+        }
+        if ((!data || data.length === 0) && shiftLocal.length) {
+          data = shiftLocal;
+        }
+        if (!data || data.length === 0) return [];
+        return data
+          .map(item => {
+            const id = item.id?.toString() || '';
+            if (!id) return null;
+            const nama = item.nama || item.name || item.shift_name || item.kode || '';
+            const start = item.start_shift || item.start || '';
+            const end = item.end_shift || item.end || '';
+            const subtitle = start && end ? `${start} - ${end}` : '';
+            return { id, nama, subtitle };
+          })
+          .filter(Boolean);
+      }, [shiftRedux?.data, shiftRedux?.master_shift, shiftRedux?.sqlite_shift, shiftLocal]);
+
+    const cabangOptions = useMemo(() => {
+        let data = cabangRedux?.data || [];
+        if (!Array.isArray(data)) data = data?.rows || data?.data || [];
+        if ((!data || data.length === 0) && cabangLocal.length) data = cabangLocal;
+        if (!data || data.length === 0) return [];
+        return data
+          .map(item => {
+            const id = item.id?.toString() || item.kode?.toString() || '';
+            if (!id) return null;
+            const nama = item.nama || item.name || item.cabang_name || '[No Name]';
+            const area = item.area || item.area_name || item.nama_area || item.region || '';
+            const bisnis =
+              item.bisnis?.nama ||
+              item.bisnis?.name ||
+              item.bisnis_name ||
+              item.bisnis_unit?.nama ||
+              item.bisnis_unit?.name ||
+              item.bisnis_unit_name ||
+              '';
+            const subtitle = [area, bisnis].filter(Boolean).join(' - ');
+            return { id, nama, subtitle };
+          })
+          .filter(Boolean);
+      }, [cabangRedux?.data, cabangLocal]);
 
     // Loading state
     if (fetchLoading) {
@@ -297,10 +377,17 @@ export default function EditDailyEventScreen() {
                 onNotification={true}
             />
             
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+            >
             <ScrollView 
                 flex={1} 
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 20 }}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="interactive"
             >
                 <VStack space={4} px={4} pt={2}>
                     {/* Form Section */}
@@ -322,7 +409,7 @@ export default function EditDailyEventScreen() {
                             />
                             {selectedCategory && selectedCategory.require_equipment === 'Y' && (
                                 <HStack space={2} alignItems="center">
-                                    <Info size={14} color={errorColor} />
+                                    <InfoCircle size={14} color={errorColor} />
                                     <Text fontSize="xs" color={errorColor}>
                                         Equipment wajib dipilih untuk kategori ini
                                     </Text>
@@ -400,19 +487,24 @@ export default function EditDailyEventScreen() {
                             />
                             
                             {/* Location Description */}
-                            <TextArea
+                            <TextInput
                                 placeholder="Deskripsi lokasi (opsional)"
+                                placeholderTextColor={subtitleColor}
                                 value={formData.location_description}
                                 onChangeText={(value) => handleInputChange('location_description', value)}
-                                fontSize="sm"
-                                fontFamily="Poppins-Regular"
-                                color={textColor}
-                                bg={mode === 'dark' ? '#374151' : '#F9FAFB'}
-                                borderRadius={8}
-                                borderWidth={1}
-                                borderColor={mode === 'dark' ? '#4B5563' : '#E5E7EB'}
-                                _focus={{
-                                    borderColor: mode === 'dark' ? '#3B82F6' : '#2563EB'
+                                multiline
+                                blurOnSubmit={false}
+                                style={{
+                                    backgroundColor: mode === 'dark' ? '#374151' : '#F9FAFB',
+                                    borderRadius: 8,
+                                    borderWidth: 1,
+                                    borderColor: mode === 'dark' ? '#4B5563' : '#E5E7EB',
+                                    padding: 12,
+                                    minHeight: 120,
+                                    textAlignVertical: 'top',
+                                    color: textColor,
+                                    fontFamily: 'Poppins-Regular',
+                                    fontSize: 14
                                 }}
                             />
                         </VStack>
@@ -462,19 +554,24 @@ export default function EditDailyEventScreen() {
                             <Text fontSize="sm" fontFamily="Poppins-Bold" color={textColor}>
                                 Deskripsi Event
                             </Text>
-                            <TextArea
+                            <TextInput
                                 placeholder="Deskripsi event (opsional)"
+                                placeholderTextColor={subtitleColor}
                                 value={formData.start_description}
                                 onChangeText={(value) => handleInputChange('start_description', value)}
-                                fontSize="sm"
-                                fontFamily="Poppins-Regular"
-                                color={textColor}
-                                bg={mode === 'dark' ? '#374151' : '#F9FAFB'}
-                                borderRadius={8}
-                                borderWidth={1}
-                                borderColor={mode === 'dark' ? '#4B5563' : '#E5E7EB'}
-                                _focus={{
-                                    borderColor: mode === 'dark' ? '#3B82F6' : '#2563EB'
+                                multiline
+                                blurOnSubmit={false}
+                                style={{
+                                    backgroundColor: mode === 'dark' ? '#374151' : '#F9FAFB',
+                                    borderRadius: 8,
+                                    borderWidth: 1,
+                                    borderColor: mode === 'dark' ? '#4B5563' : '#E5E7EB',
+                                    padding: 12,
+                                    minHeight: 140,
+                                    textAlignVertical: 'top',
+                                    color: textColor,
+                                    fontFamily: 'Poppins-Regular',
+                                    fontSize: 14
                                 }}
                             />
                         </VStack>
@@ -506,6 +603,7 @@ export default function EditDailyEventScreen() {
                                 options={cabangOptions}
                                 onChange={(value) => handleInputChange('cabang_id', value)}
                                 displayKey="nama"
+                                displaySubKey="subtitle"
                                 error={errors.cabang_id}
                             />
                         </VStack>
@@ -527,7 +625,7 @@ export default function EditDailyEventScreen() {
                                 {loading ? (
                                     <ActivityIndicator size="small" color="#FFFFFF" />
                                 ) : (
-                                    <Save size={20} color="#FFFFFF" />
+                                    <TickCircle size={20} color="#FFFFFF" />
                                 )}
                                 <Text
                                     fontSize="md"
@@ -542,6 +640,7 @@ export default function EditDailyEventScreen() {
                     </VStack>
                 </VStack>
             </ScrollView>
+            </KeyboardAvoidingView>
 
             {/* DateTime Picker Modal */}
             <DateTimePickerModal
@@ -550,6 +649,15 @@ export default function EditDailyEventScreen() {
                 onConfirm={handleDateTimeConfirm}
                 onCancel={() => setShowDateTimePicker(false)}
                 date={formData.start_time ? new Date(formData.start_time) : new Date()}
+            />
+
+            <ModalAlert
+                isVisible={modalAlert.visible}
+                title={modalAlert.title}
+                message={modalAlert.message}
+                type={modalAlert.type}
+                buttons={modalAlert.buttons}
+                onClose={() => setModalAlert(prev => ({ ...prev, visible: false }))}
             />
         </AppScreen>
     );

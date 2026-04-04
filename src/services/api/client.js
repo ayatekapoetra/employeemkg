@@ -2,7 +2,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import deviceIdGenerator from '../../utils/deviceIdGenerator';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3003/api/';
+const rawApiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost/api/';
+
+// Normalize base URL to ensure it has protocol and trailing slash
+const normalizeBaseUrl = (url) => {
+  if (!url) return 'http://localhost/api/';
+  let normalized = url.trim();
+  if (!/^https?:\/\//i.test(normalized)) {
+    normalized = 'http://' + normalized;
+  }
+  if (!normalized.endsWith('/')) {
+    normalized = normalized + '/';
+  }
+  return normalized;
+};
+
+const API_URL = normalizeBaseUrl(rawApiUrl);
 
 const createApiClient = (baseURL) => {
   

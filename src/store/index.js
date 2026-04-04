@@ -31,7 +31,8 @@ import workOrderReducer from './slices/workOrderSlice';
 import activityPlanReducer from './slices/activityPlanSlice';
 import crewWorksheetReducer from './slices/crewWorksheetSlice';
 import appReducer from './slices/appSlice';
-import eventReducer from './slices/eventSlice';
+import eventHistoryReducer from './slices/eventHistorySlice';
+import eventCtgReducer from './slices/eventCtgSlice';
 
 const isDevelopment = __DEV__;
 
@@ -65,7 +66,8 @@ const store = configureStore({
     activityPlan: activityPlanReducer,
     crewWorksheet: crewWorksheetReducer,
     app: appReducer,
-    event: eventReducer,
+    eventHistory: eventHistoryReducer,
+    eventCtg: eventCtgReducer,
   },
   middleware: (getDefaultMiddleware) => {
     const middleware = getDefaultMiddleware({

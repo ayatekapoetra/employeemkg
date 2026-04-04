@@ -13,6 +13,7 @@ import { getEquipment } from '../../src/store/slices/equipmentSlice';
 import { getOprDrv } from '../../src/store/slices/oprdrvSlice';
 import { getLokasiPit } from '../../src/store/slices/lokasiPitSlice';
 import { getKegiatanPit } from '../../src/store/slices/kegiatanPitSlice';
+import { getEventCategories } from '../../src/store/slices/eventCtgSlice';
 
 moment.locale('id');
 
@@ -38,6 +39,7 @@ export default function HomeScreen() {
     dispatch(getEquipment());
     dispatch(getLokasiPit());
     dispatch(getKegiatanPit());
+    dispatch(getEventCategories());
   };
 
   const onRefreshHandle = useCallback(() => {

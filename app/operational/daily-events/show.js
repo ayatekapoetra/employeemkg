@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Share } from 'react-native';
+import { View, ScrollView, TouchableOpacity, ActivityIndicator, Share, TextInput } from 'react-native';
 import { HStack, VStack, Text, Divider, Button } from 'native-base';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Edit, Trash, TickCircle } from 'iconsax-react-native';
+import { Edit2, Trash, TickCircle } from 'iconsax-react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { getEventDetail, finishEvent } from '../../../src/store/slices/eventSlice';
+import { getEventDetail, finishEvent, deleteEvent } from '../../../src/store/slices/eventHistorySlice';
 import { COLORS } from '../../../src/constants/colors';
 import { AppScreen, HeaderScreen } from '../../../src/components/common';
+import ModalAlert from '../../../src/components/common/ModalAlert';
 import CategoryBadge from './components/CategoryBadge';
 import StatusBadge from './components/StatusBadge';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -31,6 +32,7 @@ export default function ShowDailyEventScreen() {
         finish_description: ''
     });
     const [finishing, setFinishing] = useState(false);
+    const [modalAlert, setModalAlert] = useState({ visible: false, title: '', message: '', type: 'info', buttons: [] });
 
     // State untuk date/time picker
     const [showDateTimePicker, setShowDateTimePicker] = useState(false);
@@ -119,7 +121,13 @@ export default function ShowDailyEventScreen() {
 
             // Validation
             if (moment(finishTime).isBefore(moment(event.start_time))) {
-                Alert.alert('Error', 'Waktu selesai tidak boleh lebih awal dari waktu mulai');
+                setModalAlert({
+                    visible: true,
+                    title: 'Validasi Gagal',
+                    message: 'Waktu selesai tidak boleh lebih awal dari waktu mulai',
+                    type: 'error',
+                    buttons: [{ text: 'Tutup' }]
+                });
                 setFinishing(false);
                 return;
             }
@@ -135,23 +143,31 @@ export default function ShowDailyEventScreen() {
 
             setFinishing(false);
             setShowFinishModal(false);
-            Alert.alert(
-                'Berhasil',
-                'Event berhasil diselesaikan',
-                [
+            setModalAlert({
+                visible: true,
+                title: 'Berhasil',
+                message: 'Event berhasil diselesaikan',
+                type: 'success',
+                buttons: [
                     {
                         text: 'OK',
                         onPress: () => {
-                            // Refresh data
                             fetchEventData();
+                            setModalAlert((prev) => ({ ...prev, visible: false }));
                         }
                     }
                 ]
-            );
+            });
 
         } catch (error) {
             setFinishing(false);
-            Alert.alert('Error', 'Gagal menyelesaikan event: ' + (error.message || 'Terjadi kesalahan'));
+            setModalAlert({
+                visible: true,
+                title: 'Error',
+                message: 'Gagal menyelesaikan event: ' + (error.message || 'Terjadi kesalahan'),
+                type: 'error',
+                buttons: [{ text: 'Tutup' }]
+            });
         }
     };
 
@@ -186,14 +202,39 @@ Keterangan: ${event?.start_description || '-'}
     };
 
     const handleDelete = () => {
-        Alert.alert(
-            'Konfirmasi',
-            'Hapus event ini?',
-            [
-                { text: 'Batal', style: 'cancel' },
-                { text: 'Hapus', style: 'destructive', onPress: () => Alert.alert('Info', 'Fitur hapus belum diimplementasi') }
+        setModalAlert({
+            visible: true,
+            title: 'Konfirmasi',
+            message: 'Hapus event ini?',
+            type: 'warning',
+            buttons: [
+                { text: 'Batal', onPress: () => setModalAlert((prev) => ({ ...prev, visible: false })) },
+                {
+                    text: 'Hapus',
+                    type: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await dispatch(deleteEvent(event.id)).unwrap();
+                            setModalAlert({
+                                visible: true,
+                                title: 'Berhasil',
+                                message: 'Event dihapus',
+                                type: 'success',
+                                buttons: [{ text: 'OK', onPress: () => { setModalAlert((prev) => ({ ...prev, visible: false })); router.back(); } }]
+                            });
+                        } catch (err) {
+                            setModalAlert({
+                                visible: true,
+                                title: 'Error',
+                                message: err?.message || 'Gagal menghapus event',
+                                type: 'error',
+                                buttons: [{ text: 'Tutup', onPress: () => setModalAlert((prev) => ({ ...prev, visible: false })) }]
+                            });
+                        }
+                    }
+                }
             ]
-        );
+        });
     };
 
     // Loading state
@@ -269,7 +310,14 @@ Keterangan: ${event?.start_description || '-'}
                             <Ionicons name="share-social-outline" size={24} color={textColor} />
                         </TouchableOpacity>
                         {event.status === 'ONGOING' && (
-                            <TouchableOpacity onPress={() => router.push(`/operational/daily-events/${event.id}/edit`)}>
+                            <TouchableOpacity
+                                onPress={() =>
+                                    router.push({
+                                        pathname: '/operational/daily-events/edit',
+                                        params: { id: event.id?.toString?.() || event.id }
+                                    })
+                                }
+                            >
                                 <Ionicons name="create-outline" size={24} color={textColor} />
                             </TouchableOpacity>
                         )}
@@ -391,14 +439,6 @@ Keterangan: ${event?.start_description || '-'}
                         </VStack>
 
                         <Divider my={2} />
-
-                        <Text style={{
-                            color: textColor,
-                            fontSize: 14,
-                            fontFamily: 'Poppins-Bold'
-                        }}>
-                            Personel
-                        </Text>
                         <HStack space={3} flexWrap="wrap" alignItems="flex-start">
                             <VStack space={1} style={{ width: '48%' }}>
                                 <Text style={{ color: subtitleColor, fontSize: 11, fontFamily: 'Poppins-Regular' }}>Dimulai Oleh</Text>
@@ -475,17 +515,22 @@ Keterangan: ${event?.start_description || '-'}
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            onPress={() => router.push(`/operational/daily-events/${event.id}/edit`)}
+                            onPress={() =>
+                                router.push({
+                                    pathname: '/operational/daily-events/edit',
+                                    params: { id: event.id?.toString?.() || event.id }
+                                })
+                            }
                             style={{
                                 width: 48,
                                 height: 48,
                                 borderRadius: 10,
-                                backgroundColor: mode === 'dark' ? '#1F2937' : '#E5E7EB',
+                                backgroundColor: mode === 'dark' ? '#f09d27' : '#eeb304',
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             }}
                         >
-                            <Edit color={textColor} variant="Bold" size={20} />
+                            <Edit2 color={'#FFF'} variant="Bold" size={20} />
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -494,12 +539,12 @@ Keterangan: ${event?.start_description || '-'}
                                 width: 48,
                                 height: 48,
                                 borderRadius: 10,
-                                backgroundColor: mode === 'dark' ? '#1F2937' : '#E5E7EB',
+                                backgroundColor: mode === 'dark' ? '#F87171' : '#EF4444',
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             }}
                         >
-                            <Trash color={mode === 'dark' ? '#F87171' : '#EF4444'} variant="Bold" size={20} />
+                            <Trash color={'#FFF'} variant="Bold" size={20} />
                         </TouchableOpacity>
                     </HStack>
 
@@ -588,21 +633,28 @@ Keterangan: ${event?.start_description || '-'}
                                         ]}>
                                             Keterangan (Opsional)
                                         </Text>
-                                        <Text style={[
-                                            {
+                                        <TextInput
+                                            multiline
+                                            placeholder="Deskripsi event (opsional)"
+                                            placeholderTextColor={subtitleColor}
+                                            value={finishData?.finish_description}
+                                            onChangeText={(value) => setFinishData((prev) => ({
+                                                ...prev,
+                                                finish_description: value
+                                            }))}
+                                            style={{
                                                 backgroundColor: mode === 'dark' ? '#374151' : '#F9FAFB',
                                                 borderRadius: 8,
                                                 borderWidth: 1,
                                                 borderColor: mode === 'dark' ? '#4B5563' : '#E5E7EB',
                                                 padding: 12,
+                                                minHeight: 140,
+                                                textAlignVertical: 'top',
                                                 color: textColor,
-                                                fontSize: 14,
                                                 fontFamily: 'Poppins-Regular',
-                                                minHeight: 80
-                                            }
-                                        ]}>
-                                            {finishData.finish_description || 'Masukkan keterangan...'}
-                                        </Text>
+                                                fontSize: 14
+                                            }}
+                                        />
                                     </VStack>
 
                                     {/* Action Buttons */}
@@ -670,6 +722,15 @@ Keterangan: ${event?.start_description || '-'}
                 onConfirm={handleDateTimeConfirm}
                 onCancel={() => setShowDateTimePicker(false)}
                 date={finishData.finish_time ? new Date(finishData.finish_time) : new Date()}
+            />
+
+            <ModalAlert
+              isVisible={modalAlert.visible}
+              title={modalAlert.title}
+              message={modalAlert.message}
+              type={modalAlert.type}
+              buttons={modalAlert.buttons}
+              onClose={() => setModalAlert((prev) => ({ ...prev, visible: false }))}
             />
         </AppScreen>
     );

@@ -1,5 +1,6 @@
-import React from 'react';
-import { Modal, VStack, HStack, Text, Button, Center, Box, Pressable, IconButton } from 'native-base';
+import React, { useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { Modal, VStack, HStack, Text, Button, Box, Pressable } from 'native-base';
 import { View, StyleSheet } from 'react-native';
 import { Danger, TickCircle, InfoCircle, Warning2, CloseSquare } from 'iconsax-react-native';
 
@@ -12,30 +13,43 @@ const ModalAlert = ({
   buttons = [],
   showCloseButton = true 
 }) => {
+  const mode = useSelector(state => state.themes?.value) || 'light';
+
+  const palette = useMemo(() => {
+    const isDark = mode === 'dark';
+    const tone = {
+      success: { icon: '#34D399', bg: isDark ? '#064E3B' : '#D1FAE5' },
+      error: { icon: '#F87171', bg: isDark ? '#7F1D1D' : '#FEE2E2' },
+      warning: { icon: '#FBBF24', bg: isDark ? '#78350F' : '#FEF3C7' },
+      info: { icon: '#60A5FA', bg: isDark ? '#1E3A8A' : '#DBEAFE' },
+    };
+
+    return {
+      text: isDark ? '#E5E7EB' : '#111827',
+      subtitle: isDark ? '#CBD5E1' : '#4B5563',
+      surface: isDark ? '#0F172A' : '#FFFFFF',
+      border: isDark ? '#1F2937' : '#E5E7EB',
+      accent: isDark ? '#60A5FA' : '#3B82F6',
+      tone,
+    };
+  }, [mode]);
   const getIcon = () => {
+    const colors = palette.tone[type] || palette.tone.info;
     switch (type) {
       case 'success':
-        return <TickCircle size={32} color="#10B981" />;
+        return <TickCircle size={32} color={colors.icon} />;
       case 'error':
-        return <Danger size={32} color="#EF4444" />;
+        return <Danger size={32} color={colors.icon} />;
       case 'warning':
-        return <Warning2 size={32} color="#F59E0B" />;
+        return <Warning2 size={32} color={colors.icon} />;
       default:
-        return <InfoCircle size={32} color="#3B82F6" />;
+        return <InfoCircle size={32} color={colors.icon} />;
     }
   };
 
   const getIconBgColor = () => {
-    switch (type) {
-      case 'success':
-        return '#D1FAE5';
-      case 'error':
-        return '#FEE2E2';
-      case 'warning':
-        return '#FEF3C7';
-      default:
-        return '#DBEAFE';
-    }
+    const colors = palette.tone[type] || palette.tone.info;
+    return colors.bg;
   };
 
   const renderButtons = () => {
@@ -43,7 +57,7 @@ const ModalAlert = ({
       return (
         <Button 
           onPress={onClose}
-          bg="#3B82F6"
+          bg={palette.accent}
           _text={{ color: 'white', fontFamily: 'Quicksand-Bold' }}
           rounded="lg"
           size="md">
@@ -58,7 +72,11 @@ const ModalAlert = ({
           <Button
             key={index}
             onPress={button.onPress || onClose}
-            bg={button.type === 'destructive' ? '#EF4444' : (button.type === 'cancel' ? '#6B7280' : '#3B82F6')}
+            bg={button.type === 'destructive' 
+              ? '#EF4444' 
+              : (button.type === 'cancel' 
+                ? (mode === 'dark' ? '#4B5563' : '#6B7280') 
+                : palette.accent)}
             _text={{ 
               color: 'white', 
               fontFamily: 'Quicksand-Bold',
@@ -80,13 +98,14 @@ const ModalAlert = ({
       onClose={onClose}
       animationType="slide"
       transparent={true}>
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
+      <View style={styles.overlay}>        
+        <View style={[styles.modalContainer, { backgroundColor: palette.surface, borderColor: palette.border }]}>          
+          <Box style={[styles.accentBar, { backgroundColor: palette.accent }]} />
           {/* Header with Icon */}
-          <VStack space={4} alignItems="center" mb={4}>
+          <VStack space={3} alignItems="center" mb={3}>
             <Box
-              width={64}
-              height={64}
+              width={36}
+              height={36}
               rounded="full"
               bg={getIconBgColor()}
               justifyContent="center"
@@ -94,11 +113,11 @@ const ModalAlert = ({
               style={styles.iconContainer}>
               {getIcon()}
             </Box>
-            
+
             <Text
-              fontSize={20}
+              fontSize={18}
               fontFamily="Quicksand-Bold"
-              color="#1F2937"
+              color={palette.text}
               textAlign="center">
               {title}
             </Text>
@@ -106,12 +125,12 @@ const ModalAlert = ({
 
           {/* Message */}
           <Text
-            fontSize={14}
+            fontSize={13}
             fontFamily="Quicksand-Regular"
-            color="#6B7280"
+            color={palette.subtitle}
             textAlign="center"
-            mb={6}
-            lineHeight={20}>
+            mb={5}
+            lineHeight={19}>
             {message}
           </Text>
 
@@ -119,11 +138,11 @@ const ModalAlert = ({
           {renderButtons()}
 
           {/* Close Button */}
-          {showCloseButton && (
-            <Pressable
-              onPress={onClose}
-              style={styles.closeButton}>
-              <CloseSquare size={20} color="#6B7280" />
+            {showCloseButton && (
+              <Pressable
+                onPress={onClose}
+                style={styles.closeButton}>
+              <CloseSquare size={20} color={palette.subtitle} />
             </Pressable>
           )}
         </View>
@@ -135,17 +154,16 @@ const ModalAlert = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
-    backgroundColor: 'white',
     borderRadius: 16,
-    padding: 24,
-    width: '90%',
-    maxWidth: 400,
+    padding: 20,
+    width: '78%',
+    maxWidth: 300,
     alignItems: 'center',
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -154,6 +172,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    overflow: 'hidden',
   },
   iconContainer: {
     shadowColor: '#000',
@@ -164,6 +183,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
     elevation: 2,
+  },
+  accentBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 6,
   },
   closeButton: {
     position: 'absolute',

@@ -14,6 +14,8 @@ import { getOprDrv } from '../../src/store/slices/oprdrvSlice';
 import { getLokasiPit } from '../../src/store/slices/lokasiPitSlice';
 import { getKegiatanPit } from '../../src/store/slices/kegiatanPitSlice';
 import { getEventCategories } from '../../src/store/slices/eventCtgSlice';
+import { getShift } from '../../src/store/slices/shiftSlice';
+import { getCabang } from '../../src/store/slices/cabangSlice';
 
 moment.locale('id');
 
@@ -30,22 +32,30 @@ export default function HomeScreen() {
     setColorTheme(themes.value);
   }, [themes]);
 
+  const initDataRedux = useCallback(async () => {
+    try {
+      setRefresh(true);
+      await Promise.all([
+        dispatch(getOprDrv()),
+        dispatch(getEquipment()),
+        dispatch(getLokasiPit()),
+        dispatch(getKegiatanPit()),
+        dispatch(getEventCategories()),
+        dispatch(getShift()),
+        dispatch(getCabang()),
+      ]);
+    } finally {
+      setRefresh(false);
+    }
+  }, [dispatch]);
+
   useEffect(() => {
     initDataRedux();
-  }, []);
-
-  const initDataRedux = async () => {
-    dispatch(getOprDrv());
-    dispatch(getEquipment());
-    dispatch(getLokasiPit());
-    dispatch(getKegiatanPit());
-    dispatch(getEventCategories());
-  };
+  }, [initDataRedux]);
 
   const onRefreshHandle = useCallback(() => {
-    setRefresh(true);
-    setTimeout(() => setRefresh(false), 3 * 1000);
-  }, []);
+    initDataRedux();
+  }, [initDataRedux]);
 
   if (refresh) {
     return (

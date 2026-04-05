@@ -353,7 +353,7 @@ export default function EditDailyEventScreen() {
         return (
             <AppScreen>
                 <HeaderScreen 
-                    title="Edit Eventxxxx" 
+                    title="Edit Event" 
                     onBack={() => router.back()} 
                     onThemes={true}
                     onNotification={true}

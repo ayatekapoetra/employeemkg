@@ -23,57 +23,13 @@ moment.locale('id');
 
 const { width } = Dimensions.get('screen');
 
-let MapView = null;
-let Circle = null;
-let Marker = null;
-let PROVIDER_GOOGLE = null;
-let hasMapSupport = false;
-let mapLoadError = null;
-
-// Add delay for Android to prevent crash during map loading
-const loadMaps = () => {
-  try {
-    console.log('🗺️ Loading react-native-maps...');
-    const RNMaps = require('react-native-maps');
-
-    // Check if RNMaps is properly loaded
-    if (!RNMaps) {
-      throw new Error('react-native-maps returned null/undefined');
-    }
-
-    MapView = RNMaps.default || RNMaps;
-    Circle = RNMaps.Circle;
-    Marker = RNMaps.Marker;
-    PROVIDER_GOOGLE = RNMaps.PROVIDER_GOOGLE;
-
-    // Validate all required components
-    if (!MapView) {
-      throw new Error('MapView component not found');
-    }
-    if (!Circle) {
-      throw new Error('Circle component not found');
-    }
-    if (!Marker) {
-      throw new Error('Marker component not found');
-    }
-
-    hasMapSupport = true;
-    console.log('✅ Maps loaded successfully');
-    console.log('MapView:', typeof MapView);
-    console.log('Circle:', typeof Circle);
-    console.log('Marker:', typeof Marker);
-  } catch (error) {
-    console.error('❌ Maps failed to load:', error.message);
-    console.error('Full error:', error);
-    mapLoadError = error.message;
-    hasMapSupport = false;
-    MapView = null;
-    Circle = null;
-    Marker = null;
-  }
-};
-
-// Map module will be loaded after mount via useEffect
+// Map components disabled (react-native-maps removed)
+const MapView = null;
+const Circle = null;
+const Marker = null;
+const PROVIDER_GOOGLE = null;
+const hasMapSupport = false;
+const mapLoadError = 'react-native-maps not installed';
 
 const lokasiAbsensi = lokasiAbsenData.RECORDS.map(item => ({
   site_id: parseInt(item.id),
@@ -175,24 +131,19 @@ function ChecklogScreen() {
   }, [dispatch]);
 
   useEffect(() => {
-    console.log('Mounting ChecklogScreen...');
+    console.log('Mounting ChecklogScreen (maps disabled)...');
     let isMounted = true;
 
     const initializeData = async () => {
       try {
         if (isMounted) {
-          // Load maps first
-          loadMaps();
-
-          // Wait a bit for maps to load
-          await new Promise(resolve => setTimeout(resolve, 500));
-
+          // Skip map loading because react-native-maps is removed
           await getDataInitial();
 
-          // Then get location with additional delay
+          // Then get location with slight delay
           setTimeout(() => {
             if (isMounted) getLocation();
-          }, 1000);
+          }, 500);
         }
       } catch (error) {
         console.error('Mount error:', error);

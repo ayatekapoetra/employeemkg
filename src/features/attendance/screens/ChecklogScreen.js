@@ -564,19 +564,19 @@ function ChecklogScreen() {
         )}
 
         <VStack flex={1}>
-          {myLocation && hasMapSupport && MapView && Circle && Marker && location?.latitude && location?.longitude && (
+          {myLocation && (
             <Center
               flex={1}
-              bg={mode === 'dark' ? 'linear-gradient-to-b from-gray-900 via-gray-800 to-gray-900' : 'linear-gradient-to-b from-blue-50 via-blue-100 to-blue-50'}
+              bg={mode === 'dark' ? '#0b1224' : '#eef2ff'}
               p={6}
             >
               {/* Animated Location Icon with Pulse Effect */}
               <Box
                 style={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: 50,
-                  backgroundColor: mode === 'dark' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                  width: 110,
+                  height: 110,
+                  borderRadius: 55,
+                  backgroundColor: mode === 'dark' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(59, 130, 246, 0.12)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -586,10 +586,10 @@ function ChecklogScreen() {
                 <Animated.View
                   style={{
                     position: 'absolute',
-                    width: 140,
-                    height: 140,
-                    borderRadius: 70,
-                    backgroundColor: mode === 'dark' ? 'rgba(99, 102, 241, 0.3)' : 'rgba(59, 130, 246, 0.25)',
+                    width: 160,
+                    height: 160,
+                    borderRadius: 80,
+                    backgroundColor: mode === 'dark' ? 'rgba(59, 130, 246, 0.25)' : 'rgba(59, 130, 246, 0.2)',
                     transform: [
                       {
                         scale: pulseAnim.interpolate({
@@ -600,62 +600,39 @@ function ChecklogScreen() {
                     ],
                     opacity: pulseAnim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0.8, 0],
+                      outputRange: [0.6, 0],
                     }),
                   }}
                 />
-                <Location size={48} color={jarak.jarak < 100 ? '#10b981' : '#ef4444'} variant="Bulk" />
+                <Location size={52} color={jarak.jarak < 100 ? '#10b981' : '#ef4444'} variant="Bulk" />
               </Box>
 
-              {/* Title */}
               <Text fontSize="2xl" fontFamily="Poppins-Bold" color={textColor} mt={5} textAlign="center">
                 Lokasi Presisi
               </Text>
 
-              {/* Location Name Badge */}
               {jarak.checkpoint && (
                 <Box
                   style={{
-                    marginTop: 8,
-                    paddingHorizontal: 20,
+                    marginTop: 10,
+                    paddingHorizontal: 18,
                     paddingVertical: 10,
-                    backgroundColor: mode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(59, 130, 246, 0.15)',
-                    borderRadius: 24,
-                    borderWidth: 1.5,
-                    borderColor: mode === 'dark' ? 'rgba(99, 102, 241, 0.4)' : 'rgba(59, 130, 246, 0.3)',
+                    backgroundColor: mode === 'dark' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.12)',
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: mode === 'dark' ? 'rgba(59, 130, 246, 0.35)' : 'rgba(59, 130, 246, 0.25)',
                     flexDirection: 'row',
                     alignItems: 'center',
                     alignSelf: 'center',
-                    shadowColor: mode === 'dark' ? '#6366f1' : '#3b82f6',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 4,
-                    elevation: 3,
                   }}
                 >
-                  <Box
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: 10,
-                      backgroundColor: mode === 'dark' ? '#6366f1' : '#3b82f6',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: 10,
-                    }}
-                  >
-                    <Text fontSize={10} color="white" fontWeight="bold">
-                      📍
-                    </Text>
-                  </Box>
-                  <Text fontSize="sm" fontFamily="Poppins-SemiBold" color={mode === 'dark' ? '#a5b4fc' : '#3b82f6'}>
+                  <Text fontSize={14} style={{ marginRight: 8 }}>📍</Text>
+                  <Text fontSize="sm" fontFamily="Poppins-SemiBold" color={mode === 'dark' ? '#bfdbfe' : '#1d4ed8'}>
                     {jarak.checkpoint}
                   </Text>
                 </Box>
               )}
 
-              {/* Status Badge */}
               <Box
                 style={{
                   marginTop: 12,
@@ -686,37 +663,22 @@ function ChecklogScreen() {
                 </Text>
               </Box>
 
-              {/* Location Details Card */}
               <Box
                 style={{
-                  marginTop: 20,
+                  marginTop: 18,
                   padding: 16,
-                  backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.7)',
+                  backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.9)',
                   borderRadius: 16,
                   borderWidth: 1,
-                  borderColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                  borderColor: mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
                   width: '100%',
-                  maxWidth: 320,
-                  backdropBlur: 'blur',
+                  maxWidth: 360,
                 }}
               >
                 <VStack space={3}>
-                  {/* Latitude */}
                   <HStack justifyContent="space-between" alignItems="center">
                     <HStack space={2} alignItems="center">
-                      <Box
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 8,
-                          backgroundColor: mode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(59, 130, 246, 0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Text fontSize={12}>📍</Text>
-                      </Box>
+                      <Text fontSize={12}>📍</Text>
                       <Text fontSize="xs" color={iconColor} fontFamily="Poppins-Medium">
                         Latitude
                       </Text>
@@ -731,22 +693,9 @@ function ChecklogScreen() {
                     </Text>
                   </HStack>
 
-                  {/* Longitude */}
                   <HStack justifyContent="space-between" alignItems="center">
                     <HStack space={2} alignItems="center">
-                      <Box
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 8,
-                          backgroundColor: mode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(59, 130, 246, 0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Text fontSize={12}>🌐</Text>
-                      </Box>
+                      <Text fontSize={12}>🌐</Text>
                       <Text fontSize="xs" color={iconColor} fontFamily="Poppins-Medium">
                         Longitude
                       </Text>
@@ -761,26 +710,11 @@ function ChecklogScreen() {
                     </Text>
                   </HStack>
 
-                  {/* Distance */}
                   <HStack justifyContent="space-between" alignItems="center">
                     <HStack space={2} alignItems="center">
-                      <Box
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 8,
-                          backgroundColor: jarak.jarak < 100
-                            ? mode === 'dark' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)'
-                            : mode === 'dark' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Text fontSize={12}>📏</Text>
-                      </Box>
+                      <Text fontSize={12}>📏</Text>
                       <Text fontSize="xs" color={iconColor} fontFamily="Poppins-Medium">
-                        Jarak
+                        Jarak ke titik absensi
                       </Text>
                     </HStack>
                     <HStack space={2} alignItems="center">
@@ -800,20 +734,22 @@ function ChecklogScreen() {
                       </Text>
                     </HStack>
                   </HStack>
+
+                  {myLocation.accuracy && (
+                    <HStack justifyContent="space-between" alignItems="center">
+                      <HStack space={2} alignItems="center">
+                        <Text fontSize={12}>🎯</Text>
+                        <Text fontSize="xs" color={iconColor} fontFamily="Poppins-Medium">
+                          Akurasi GPS
+                        </Text>
+                      </HStack>
+                      <Text fontSize="xs" color={iconColor} fontFamily="Poppins-SemiBold">
+                        ±{Math.round(myLocation.accuracy)} m
+                      </Text>
+                    </HStack>
+                  )}
                 </VStack>
               </Box>
-
-              {/* Accuracy Info */}
-              {myLocation.accuracy && (
-                <Text
-                  fontSize="xs"
-                  color={iconColor}
-                  fontFamily="Poppins-Light"
-                  style={{ marginTop: 12, textAlign: 'center', opacity: 0.7 }}
-                >
-                  Akurasi: ±{Math.round(myLocation.accuracy)} meter
-                </Text>
-              )}
             </Center>
           )}
         </VStack>

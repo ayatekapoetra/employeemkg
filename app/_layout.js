@@ -100,13 +100,15 @@ function AppContent() {
    */
   const downloadMasterDataToSQLite = async (forceRefresh = false) => {
     // Prevent duplicate calls
-    if (isLoadingMasterData || masterDataLoaded || activeQueue) {
+    if (isLoadingMasterData || activeQueue) {
       console.log('⏸️ Master data already loading or loaded, skipping...');
       return false;
     }
 
     if (!forceRefresh && autoSyncDisabled) {
       console.log('⏸️ Auto-sync disabled, skipping automatic master data download.');
+      // Mark as loaded so UI doesn’t hang waiting
+      setMasterDataLoaded(true);
       return false;
     }
 
@@ -148,7 +150,7 @@ function AppContent() {
       console.error('❌ SQLite initialization failed:', dbError);
     }
 
-    // Show progress bar
+    // Show progress bar (non-blocking for UI)
     console.log('🎯 Showing progress bar...');
     setShowMasterProgress(true);
     setMasterProgress(0);
@@ -252,7 +254,7 @@ function AppContent() {
         setIsLoadingMasterData(false);
         setActiveQueue(false);
         AsyncStorage.setItem('@masterDataAutoSyncDisabled', 'true');
-      }, 1500);
+      }, 800);
 
       return true;
     } catch (error) {

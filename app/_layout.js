@@ -101,14 +101,15 @@ function AppContent() {
   const downloadMasterDataToSQLite = async (forceRefresh = false) => {
     // Prevent duplicate calls
     if (isLoadingMasterData || activeQueue) {
-      console.log('⏸️ Master data already loading or loaded, skipping...');
+      console.log('⏸️ Master data already loading, skipping...');
       return false;
     }
 
+    // Never block UI; assume data is “loaded” while background sync runs
+    setMasterDataLoaded(true);
+
     if (!forceRefresh && autoSyncDisabled) {
       console.log('⏸️ Auto-sync disabled, skipping automatic master data download.');
-      // Mark as loaded so UI doesn’t hang waiting
-      setMasterDataLoaded(true);
       return false;
     }
 
@@ -119,10 +120,10 @@ function AppContent() {
       return false;
     }
 
-    console.log('🔄 Data needs refresh, proceeding with download...');
+    console.log('🔄 Data needs refresh, proceeding with download (background)...');
 
-    // Set loading flag
-    setIsLoadingMasterData(true);
+    // Background flags: do not set loading to true to avoid spinner lock
+    setIsLoadingMasterData(false);
     setActiveQueue(true);
 
     // Get usertype for conditional data loading
@@ -254,7 +255,7 @@ function AppContent() {
         setIsLoadingMasterData(false);
         setActiveQueue(false);
         AsyncStorage.setItem('@masterDataAutoSyncDisabled', 'true');
-      }, 800);
+      }, 200);
 
       return true;
     } catch (error) {

@@ -25,7 +25,7 @@ export default function HomeScreen() {
   const themes = useSelector(state => state.themes);
   const { user, loading } = useSelector(state => state.auth);
   const [colorTheme, setColorTheme] = useState(themes.value);
-  const [refresh, setRefresh] = useState(loading);
+  const [refresh, setRefresh] = useState(false);
   const mode = useSelector(state => state.themes)?.value || 'light';
 
   useEffect(() => {

@@ -32,6 +32,10 @@ export default function HomeScreen() {
     setColorTheme(themes.value);
   }, [themes]);
 
+  useEffect(() => {
+    setRefresh(loading);
+  }, [loading]);
+
   const initDataRedux = useCallback(async () => {
     try {
       setRefresh(true);

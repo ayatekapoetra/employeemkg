@@ -21,17 +21,10 @@ export const getKaryawan = createAsyncThunk(
         }
       }
 
-      console.log('Fetching karyawan from API...');
-      console.log('🌐 API Endpoint:', API_ENDPOINTS.KARYAWAN.LIST);
-      
       try {
         const resp = await apiClient.get(API_ENDPOINTS.KARYAWAN.LIST);
-        console.log('📦 Karyawan API Response status:', resp.status);
-        console.log('📦 Karyawan API Response data type:', typeof resp.data);
-        console.log('📦 Karyawan API Response:', JSON.stringify(resp.data, null, 2));
         
         let data = resp.data?.rows || resp.data?.data || resp.data || [];
-        console.log('📦 Karyawan extracted data:', data.length, 'items');
         
         // Log first few items to see structure
         if (data.length > 0) {

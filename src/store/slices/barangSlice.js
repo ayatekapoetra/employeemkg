@@ -29,7 +29,7 @@ export const getBarang = createAsyncThunk(
       
       return { data };
     } catch (error) {
-      console.error('Error fetching barang:', error);
+      console.warn('Error fetching barang:', error);
       const cached = await AsyncStorage.getItem(CACHE_KEY);
       if (cached) {
         return { data: JSON.parse(cached) };
@@ -46,11 +46,11 @@ export const getBarangOffline = createAsyncThunk(
       console.log('[Barang] Loading offline data...');
 
       // 1. TRY SQLITE FIRST
-      const dbData = await database.getBarang();
-      if (dbData && dbData.length > 0) {
-        console.log('[Barang] Loaded from SQLite:', dbData.length, 'items');
-        return { data: dbData, source: 'sqlite' };
-      }
+      // const dbData = await database.getBarang();
+      // if (dbData && dbData.length > 0) {
+      //   console.log('[Barang] Loaded from SQLite:', dbData.length, 'items');
+      //   return { data: dbData, source: 'sqlite' };
+      // }
 
       // 2. FALLBACK TO ASYNCSTORAGE
       const cached = await AsyncStorage.getItem(CACHE_KEY);

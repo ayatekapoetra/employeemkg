@@ -51,14 +51,17 @@ export default function HomeScreen() {
     } finally {
       setRefresh(false);
     }
+    
   }, [dispatch]);
 
   useEffect(() => {
     initDataRedux();
+    setRefresh(false);
   }, [initDataRedux]);
 
   const onRefreshHandle = useCallback(() => {
     initDataRedux();
+    setRefresh(false);
   }, [initDataRedux]);
 
   if (refresh) {

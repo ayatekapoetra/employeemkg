@@ -4,24 +4,20 @@ import moment from 'moment';
 import 'moment/locale/id';
 import { Badge, Center, HStack, Pressable, ScrollView, Spinner, Text, VStack } from 'native-base';
 import { TouchableOpacity, RefreshControl, FlatList } from 'react-native';
-import { useEffect, useRef, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { AppScreen, HeaderScreen, LoadingHauler } from '../../../src/components/common';
 import { COLORS } from '../../../src/constants/colors';
 import apiClient from '../../../src/services/api/client';
 import { API_ENDPOINTS } from '../../../src/services/api/endpoints';
 import FilterPurchaseRequestModal from '../../../src/features/approval/components/FilterPurchaseRequestModal';
-import { getBarang } from '../../../src/store/slices/barangSlice';
-import database from '../../../src/database/SQLiteService';
 
 moment.locale('id');
 
 export default function ApprovalPurchaseRequest() {
   const router = useRouter();
-  const dispatch = useDispatch();
   const mode = useSelector(state => state.themes)?.value || 'light';
   const userProfile = useSelector(state => state.userProfile)?.value || {};
-  const barangSyncFailed = useRef(false);
 
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -98,33 +94,6 @@ export default function ApprovalPurchaseRequest() {
       setLoadingMore(false);
     }
   };
-
-  useEffect(() => {
-    // Sync master barang to SQLite after login / when opening this page
-    const syncBarangToSqlite = async () => {
-      if (barangSyncFailed.current) {
-        return;
-      }
-      try {
-        const res = await dispatch(getBarang(true)).unwrap();
-        const items = res?.data || [];
-        if (Array.isArray(items) && items.length) {
-          try {
-            await database.syncBarang(items);
-          } catch (err) {
-            console.warn('[ApprovalPurchaseRequest] syncBarang sqlite error:', err?.message || err);
-            if (String(err?.message || err).toLowerCase().includes('sqlite_full')) {
-              barangSyncFailed.current = true;
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('[ApprovalPurchaseRequest] fetch barang error:', err?.message || err);
-      }
-    };
-
-    syncBarangToSqlite();
-  }, [dispatch]);
 
   useEffect(() => {
     setPage(1);

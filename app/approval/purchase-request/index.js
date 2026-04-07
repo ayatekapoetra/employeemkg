@@ -330,7 +330,7 @@ export default function ApprovalPurchaseRequest() {
         <VStack p={4} space={4}>
           {!isHeaderCollapsed && (
             <VStack
-              bg={mode === 'dark' ? 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)' : 'linear-gradient(135deg, #2563eb 0%, #60a5fa 100%)'}
+              bg={mode === 'dark' ? 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)' : 'linear-gradient(135deg, #cbcbcb 0%, #fffff 100%)'}
               p={5}
               rounded="2xl"
               shadow={3}
@@ -341,7 +341,7 @@ export default function ApprovalPurchaseRequest() {
                   <Text
                     fontSize="xs"
                     fontFamily="Poppins-Light"
-                    color="#ffffff"
+                    color={textColor}
                     opacity={0.9}
                   >
                     Total Purchase Request
@@ -349,59 +349,59 @@ export default function ApprovalPurchaseRequest() {
                   <Text
                     fontSize="3xl"
                     fontFamily="Quicksand-Bold"
-                    color="#ffffff"
+                    color={textColor}
                   >
                     {totalData > 0 ? totalData : purchaseRequests.length}
                   </Text>
                 </VStack>
                 <VStack
-                  bg="rgba(255,255,255,0.2)"
+                  bg={mode === 'dark' ? "rgba(255,255,255,0.2)" : "rgba(77,128,246,0.2)"}
                   p={3}
                   rounded="xl"
                 >
-                  <ShoppingCart size={32} color="#ffffff" variant="Bold" />
+                  <ShoppingCart size={32} color={textColor} variant="Bold" />
                 </VStack>
               </HStack>
 
               <HStack space={2}>
                 <VStack 
                   flex={1}
-                  bg="rgba(255,255,255,0.15)"
+                  bg={mode === 'dark' ? "rgba(255,255,255,0.2)" : "rgba(77,128,246,0.2)"}
                   p={2}
                   rounded="lg"
                 >
-                  <Text fontSize="xs" fontFamily="Poppins-Light" color="#ffffff" opacity={0.9}>
+                  <Text fontSize="xs" fontFamily="Poppins-Light" color={textColor} opacity={0.9}>
                     Aktif
                   </Text>
-                  <Text fontSize="lg" fontFamily="Quicksand-Bold" color="#ffffff">
+                  <Text fontSize="lg" fontFamily="Quicksand-Bold" color={textColor}>
                     {purchaseRequests.filter(item => item.status === 'active').length}
                   </Text>
                 </VStack>
 
                 <VStack 
                   flex={1}
-                  bg="rgba(255,255,255,0.15)"
+                  bg={mode === 'dark' ? "rgba(255,255,255,0.2)" : "rgba(77,128,246,0.2)"}
                   p={2}
                   rounded="lg"
                 >
-                  <Text fontSize="xs" fontFamily="Poppins-Light" color="#ffffff" opacity={0.9}>
+                  <Text fontSize="xs" fontFamily="Poppins-Light" color={textColor} opacity={0.9}>
                     Approved
                   </Text>
-                  <Text fontSize="lg" fontFamily="Quicksand-Bold" color="#ffffff">
+                  <Text fontSize="lg" fontFamily="Quicksand-Bold" color={textColor}>
                     {purchaseRequests.filter(item => item.status === 'approved').length}
                   </Text>
                 </VStack>
 
                 <VStack 
                   flex={1}
-                  bg="rgba(255,255,255,0.15)"
+                  bg={mode === 'dark' ? "rgba(255,255,255,0.2)" : "rgba(77,128,246,0.2)"}
                   p={2}
                   rounded="lg"
                 >
-                  <Text fontSize="xs" fontFamily="Poppins-Light" color="#ffffff" opacity={0.9}>
+                  <Text fontSize="xs" fontFamily="Poppins-Light" color={textColor} opacity={0.9}>
                     Selesai
                   </Text>
-                  <Text fontSize="lg" fontFamily="Quicksand-Bold" color="#ffffff">
+                  <Text fontSize="lg" fontFamily="Quicksand-Bold" color={textColor}>
                     {purchaseRequests.filter(item => item.status === 'finish').length}
                   </Text>
                 </VStack>

@@ -473,7 +473,7 @@ export default function CreateEquipmentPlanScreen() {
                   >
                     <Text style={[
                       styles.ctgText,
-                      { color: header.ctg === ctg.key ? '#009688' : subtitleColor }
+                      { color: header.ctg === ctg.key ? '#FFF' : subtitleColor }
                     ]}>
                       {ctg.label}
                     </Text>
@@ -502,7 +502,7 @@ export default function CreateEquipmentPlanScreen() {
                   >
                     <Text style={[
                       styles.shiftText,
-                      { color: header.shift === shift.key ? '#009688' : subtitleColor }
+                      { color: header.shift === shift.key ? '#FFF' : subtitleColor }
                     ]}>
                       {shift.label}
                     </Text>

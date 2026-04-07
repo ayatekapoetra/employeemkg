@@ -579,8 +579,16 @@ await this.createTables();
   async syncBarang(data) {
     console.log('[SQLiteService] syncBarang called with', data?.length || 0, 'items');
     console.log('[SQLiteService] Using optimized method for large datasets');
-    
-    return this._syncBarangOptimized(data);
+    try {
+      return await this._syncBarangOptimized(data);
+    } catch (err) {
+      const msg = err?.message || String(err);
+      if (msg && msg.toLowerCase().includes('sqlite_full')) {
+        console.warn('[SQLiteService] SQLITE_FULL detected, skipping barang sync');
+        return { successCount: 0, errorCount: data?.length || 0, errors: [msg] };
+      }
+      throw err;
+    }
   }
 
   /**
@@ -614,6 +622,9 @@ await this.createTables();
         console.log(`[SQLiteService] Table cleared successfully in ${clearTime}ms`);
       } catch (clearError) {
         console.warn('[SQLiteService] Failed to clear table:', clearError.message);
+        if (String(clearError?.message || '').toLowerCase().includes('sqlite_full')) {
+          throw clearError;
+        }
         // Continue even if clear fails
       }
 

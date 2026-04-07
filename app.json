@@ -3,7 +3,7 @@
     "name": "employeemkg",
     "slug": "employeemkg",
     "owner": "ayateka",
-    "version": "1.2.23",
+    "version": "1.2.24",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "employeemkg",
@@ -13,7 +13,7 @@
     "description": "Employee management application for CV. MAKKURAGA TAMA",
     "primaryColor": "#E6F4FE",
     "ios": {
-      "buildNumber": "23",
+      "buildNumber": "24",
       "supportsTablet": true,
       "displayName": "APPEMPLOYEE",
       "splash": {
@@ -31,7 +31,7 @@
       }
     },
     "android": {
-      "versionCode": 23,
+      "versionCode": 24,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

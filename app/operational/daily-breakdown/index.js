@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, Fragment } from 'react';
 import { View, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { HStack, Text, VStack, Pressable } from 'native-base';
 import { useRouter } from 'expo-router';
-import { Filter, Calendar, Clock, Location } from 'iconsax-react-native';
+import { Filter, Calendar, Clock, Location, Printer } from 'iconsax-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { COLORS } from '../../../src/constants/colors'
 import { AppScreen, HeaderScreen } from '../../../src/components/common';
@@ -11,11 +11,13 @@ import { useFilterData, useFilterFormat } from './hooks/useFilterData';
 import FilterBottomSheet from './components/FilterBottomSheet';
 import moment from 'moment';
 import { calculateDuration } from '../../../src/utils/dailyBreakdown/utils';
+import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function DailyBreakdownScreen() {
     const router = useRouter();
     const dispatch = useDispatch();
-    const { statistics, data, loading, error } = useSelector(state => state.breakdown);
+    const { data, loading, error } = useSelector(state => state.breakdown);
     const [refreshing, setRefreshing] = useState(false);
     const [filterVisible, setFilterVisible] = useState(false);
     const [filters, setFilters] = useState({
@@ -37,8 +39,6 @@ export default function DailyBreakdownScreen() {
     const cardBg = mode === 'dark' ? '#2a2c3e' : '#ffffff';
     const cardBorder = mode === 'dark' ? '#3a3c4e' : '#e5e7eb';
     const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1];
-    const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280';
-    const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
 
     // Fungsi untuk mendapatkan status text dan warna
     const getStatusInfo = (statusCode) => {
@@ -143,6 +143,57 @@ export default function DailyBreakdownScreen() {
     // Check if any filter is active
     const hasActiveFilters = hasActiveFiltersHook(filters);
 
+    const printPDFHandle = async () => {
+        try {
+            // Lazy import native modules untuk mengurangi potensi crash saat mount
+            const FileSystem = await import('expo-file-system/legacy');
+            const Sharing = await import('expo-sharing');
+
+            const apiFilters = formatApiFilters(filters);
+            const startdate = apiFilters.startdate || moment().format('YYYY-MM-DD');
+            const enddate = apiFilters.enddate || moment().format('YYYY-MM-DD');
+
+            // Bangun query string tanpa bergantung pada URLSearchParams (hindari issue Hermes)
+            const params = { ...apiFilters, startdate, enddate };
+            const query = Object.entries(params)
+                .filter(([, v]) => v !== undefined && v !== null && v !== '')
+                .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+                .join('&');
+
+            const rawBase = process.env.EXPO_PUBLIC_API_URL || 'https://apinext.makkuragatama.id/api';
+            let base = rawBase.trim();
+            if (!base.endsWith('/')) base = `${base}/`;
+            if (!/\bapi\/?$/i.test(base)) base = `${base}api/`;
+
+            const url = `${base}operation/daily-breakdown/download${query ? `?${query}` : ''}`;
+
+            const filename = `laporan-breakdown-${startdate}-${enddate}.pdf`;
+            const fileUri = `${FileSystem.cacheDirectory}${filename}`;
+
+            const token = await AsyncStorage.getItem('@token');
+            const { uri, status } = await FileSystem.downloadAsync(url, fileUri, {
+                headers: {
+                    Accept: 'application/pdf',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+            });
+
+            if (status !== 200 || !uri) {
+                throw new Error(`Gagal mengunduh PDF (status ${status || 'unknown'}) - ${url}`);
+            }
+
+            const available = await Sharing.isAvailableAsync();
+            if (available) {
+                await Sharing.shareAsync(uri, { mimeType: 'application/pdf' });
+            } else {
+                Alert.alert('Unduh Berhasil', `File tersimpan di ${uri}`);
+            }
+        } catch (err) {
+            console.error('[DailyBreakdown] printPDFHandle error:', err);
+            Alert.alert('Gagal', err?.message || 'Gagal mengunduh PDF');
+        }
+    }
+
     // Render item untuk FlatList
     const renderBreakdownItem = ({ item }) => {
         const statusInfo = getStatusInfo(item.status);
@@ -223,7 +274,6 @@ export default function DailyBreakdownScreen() {
                                 </Text>
                             </HStack>
                         </VStack>
-                    
                 </VStack>
             </Pressable>
         );
@@ -331,6 +381,19 @@ export default function DailyBreakdownScreen() {
                                     height: 12,
                                 }} />
                             )}
+                        </VStack>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={{height: 40, width: 40, borderRadius: 5}}
+                        onPress={printPDFHandle}>
+                        <VStack
+                            p={2}
+                            flex={1} 
+                            bg={'warmGray.300'}
+                            justifyContent={'center'} 
+                            alignItems={'center'}
+                            rounded={'md'}>
+                            <Printer size={26} color={COLORS.teks.light[2]}/>
                         </VStack>
                     </TouchableOpacity>
                 </HStack>

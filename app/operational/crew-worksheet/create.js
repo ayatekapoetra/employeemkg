@@ -152,7 +152,15 @@ export default function CrewWorksheetCreateScreen() {
             }
 
             // Filter karyawan data from Redux to only show specific sections
-            const targetSections = ['pengawas', 'koordinator', 'foreman', 'supervisor', 'pjo'];
+            const targetSections = [
+                'PENGAWAS LOGISTIK', 
+                'DIREKTUR OPERATIONAL', 
+                'pengawas', 
+                'koordinator', 
+                'foreman', 
+                'supervisor', 
+                'pjo'
+            ];
 
             const filteredKaryawan = karyawanData.filter(karyawan => {
                 // Check various possible field names for section/jabatan

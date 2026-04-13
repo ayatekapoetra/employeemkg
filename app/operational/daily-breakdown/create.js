@@ -29,6 +29,33 @@ import BottomSheetSelect from '../../../src/components/common/BottomSheetSelect'
 import database from '../../../src/database/SQLiteService'
 import { AppScreen, HeaderScreen } from '../../../src/components/common'
 
+const shiftKerja = [
+    {
+        "id": 1,
+        "kode": "I",
+        "nama": "Shift 1",
+        "start_shift": "07:00:00",
+        "start_int": 7,
+        "end_shift": "19:00:00"
+    },
+    {
+        "id": 2,
+        "kode": "II",
+        "nama": "Shift 2",
+        "start_shift": "19:00:00",
+        "start_int": 19,
+        "end_shift": "07:00:00",
+    },
+    {
+        "id": 3,
+        "kode": "X",
+        "nama": "Shift Normal",
+        "start_shift": "08:00:00",
+        "start_int": 8,
+        "end_shift": "17:00:00",
+    }
+]
+
 export default function CreateBreakdownScreen() {
   const router = useRouter()
   const dispatch = useDispatch()
@@ -151,7 +178,7 @@ export default function CreateBreakdownScreen() {
 
   const shiftOptions = useMemo(() => {
     let data = shiftRedux?.data || []
-    if (!Array.isArray(data)) data = data?.rows || data?.data || []
+    if (!Array.isArray(data)) data = data?.rows || data?.data || shiftKerja
     if ((!data || data.length === 0) && Array.isArray(shiftRedux?.master_shift)) {
       data = shiftRedux.master_shift
     }
@@ -161,7 +188,7 @@ export default function CreateBreakdownScreen() {
     if ((!data || data.length === 0) && shiftLocal.length) {
       data = shiftLocal
     }
-    if (!data || data.length === 0) return []
+    if (!data || data.length === 0) return shiftKerja
     return data.map(item => {
       const id = item.id?.toString() || ''
       if (!id) return null

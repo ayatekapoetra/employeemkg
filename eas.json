@@ -5,13 +5,15 @@
   },
   "build": {
     "development": {
-      "developmentClient": false,
+      "channel": "devemployeeapp",
+      "developmentClient": true,
       "distribution": "internal",
       "ios": {
         "simulator": true
       }
     },
     "preview": {
+      "channel": "prevemployeeapp",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
@@ -21,6 +23,7 @@
       }
     },
     "production": {
+      "channel": "proemployeeapp",
       "android": {
         "buildType": "app-bundle",
         "credentialsSource": "remote"

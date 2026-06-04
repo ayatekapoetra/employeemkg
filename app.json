@@ -3,19 +3,17 @@
     "name": "employeemkg",
     "slug": "employeemkg",
     "owner": "ayateka",
-    "version": "1.2.26",
+    "version": "1.2.27",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "employeemkg",
     "userInterfaceStyle": "automatic",
-      "newArchEnabled": true,
-    "privacy": "public",
+    "newArchEnabled": true,
     "description": "Employee management application for CV. MAKKURAGA TAMA",
     "primaryColor": "#E6F4FE",
     "ios": {
-      "buildNumber": "26",
+      "buildNumber": "27",
       "supportsTablet": true,
-      "displayName": "APPEMPLOYEE",
       "splash": {
         "image": "./assets/images/sp-1.png",
         "resizeMode": "cover",
@@ -31,7 +29,7 @@
       }
     },
     "android": {
-      "versionCode": 26,
+      "versionCode": 27,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -39,6 +37,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
+      "softwareKeyboardLayoutMode": "resize",
       "predictiveBackGestureEnabled": false,
       "config": {
         "googleMaps": {
@@ -66,6 +65,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-updates",
       [
         "expo-splash-screen",
         {
@@ -78,17 +78,19 @@
         }
       ],
       "expo-secure-store",
-      "expo-location"
+      "expo-location",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
     "updates": {
+      "enabled": true,
       "url": "https://u.expo.dev/1075cddc-eee7-4b88-a925-365266c5f842"
     },
     "runtimeVersion": {
-      "policy": "sdkVersion"
+      "policy": "appVersion"
     },
     "extra": {
       "router": {},

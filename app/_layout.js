@@ -22,6 +22,9 @@ import database from '../src/database/SQLiteService';
 
 import { loadMasterDataAfterLogin, loadSQLiteToReduxAfterSync } from '../src/store/slices/authSlice';
 
+// OTA version marker for tracking
+const otaMarker = 'OTA 1.2.27-01';  // Format: OTA {version}-{build}
+
 
 // Polyfill for BackHandler removeEventListener (deprecated in RN 0.65+)
 if (BackHandler && !BackHandler.removeEventListener) {
@@ -42,6 +45,9 @@ function AppContent() {
   const userAuth = useSelector(state => state.auth)?.user || {};
   const authToken = useSelector(state => state.auth)?.token;
   const segments = useSegments();
+
+  // Log OTA marker for debugging
+  console.log('🚀 OTA Marker:', otaMarker);
 
   const [masterDataLoaded, setMasterDataLoaded] = useState(false);
   const [isLoadingMasterData, setIsLoadingMasterData] = useState(false);
@@ -69,13 +75,20 @@ function AppContent() {
       if (isChecking) return;
       isChecking = true;
       try {
+        console.log('[OTA] Checking for updates...', { otaMarker });
         const res = await Updates.checkForUpdateAsync();
+        console.log('[OTA] Check result:', res);
+        
         if (res.isAvailable) {
-          await Updates.fetchUpdateAsync();
+          console.log('[OTA] Update available, downloading...');
+          const fetchResult = await Updates.fetchUpdateAsync();
+          console.log('[OTA] Fetch result:', fetchResult);
+          
           await Updates.reloadAsync();
+          console.log('[OTA] App reloaded');
         }
       } catch (e) {
-        console.log('[OTA] Check/fetch failed:', e?.message || e);
+        console.error('[OTA] Check/fetch failed:', e?.message || e);
       } finally {
         isChecking = false;
       }
@@ -231,19 +244,11 @@ function AppContent() {
         console.error('❌ Error loading SQLite to Redux:', error);
         // Fallback to old method if new method fails
         try {
-          console.log('🔄 Fallback: Trying loadSQLiteDataToRedux...');
-          await dispatch(loadSQLiteDataToRedux()).unwrap();
+          console.log('🔄 Fallback: Loading master data directly...');
+          await dispatch(loadMasterDataAfterLogin()).unwrap();
           console.log('✅ Fallback loading completed');
         } catch (fallbackError) {
           console.error('❌ Fallback also failed:', fallbackError);
-          // Fallback to direct Redux loading
-          try {
-            console.log('🔄 Final fallback: Loading master data directly...');
-            await dispatch(loadMasterDataAfterLogin()).unwrap();
-            console.log('✅ Final fallback completed');
-          } catch (finalError) {
-            console.error('❌ Final fallback also failed:', finalError);
-          }
         }
       }
 
@@ -506,7 +511,7 @@ export default function RootLayout() {
       try {
         let uniqueId;
         if (Platform.OS === 'android') {
-          uniqueId = Application.androidId;
+          uniqueId = Application.getAndroidId();
         } else {
           uniqueId = await Application.getIosIdForVendorAsync();
         }

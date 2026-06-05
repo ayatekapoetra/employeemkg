@@ -23,7 +23,8 @@ import database from '../src/database/SQLiteService';
 import { loadMasterDataAfterLogin, loadSQLiteToReduxAfterSync } from '../src/store/slices/authSlice';
 
 // OTA version marker for tracking
-const otaMarker = 'OTA 1.2.27-01';  // Format: OTA {version}-{build}
+import { OTA_VERSION } from '../src/constants/otaVersion';
+const otaMarker = OTA_VERSION;
 
 
 // Polyfill for BackHandler removeEventListener (deprecated in RN 0.65+)

@@ -9,6 +9,7 @@ import { RefreshControl, TouchableOpacity } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppScreen, HeaderScreen, LoadingHauler } from '../../src/components/common';
 import { COLORS } from '../../src/constants/colors';
+import { OTA_VERSION, getAppVersion } from '../../src/constants/otaVersion';
 import { getEquipment } from '../../src/store/slices/equipmentSlice';
 import { getOprDrv } from '../../src/store/slices/oprdrvSlice';
 import { getLokasiPit } from '../../src/store/slices/lokasiPitSlice';
@@ -297,7 +298,8 @@ export default function HomeScreen() {
                   </VStack>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={{ flex: 1, aspectRatio: 1 }} onPress={() => router.push('/penugasan')}>
+                {/* <TouchableOpacity style={{ flex: 1, aspectRatio: 1 }} onPress={() => router.push('/penugasan')}> */}
+                <TouchableOpacity style={{ flex: 1, aspectRatio: 1 }} onPress={() => router.push('/operational')}>
                   <VStack
                     bg={cardBg}
                     p={4}
@@ -325,7 +327,8 @@ export default function HomeScreen() {
                     >
                       <Image
                         alt="Penugasan"
-                        source={require('../../assets/images/excavator.png')}
+                        // source={require('../../assets/images/excavator.png')}
+                        source={require('../../assets/images/operational.png')}
                         resizeMode="contain"
                         style={{ width: 50, height: 50 }}
                       />
@@ -337,13 +340,14 @@ export default function HomeScreen() {
                       fontFamily="Quicksand-SemiBold"
                       numberOfLines={2}
                     >
-                      Penugasan{'\n'}Equipment Harian
+                      Group Operational Fitur
                     </Text>
                   </VStack>
                 </TouchableOpacity>
               </HStack>
               <HStack space={3} justifyContent="center">
-                <TouchableOpacity style={{maxHeight: 100, flex: 1, aspectRatio: 1}} onPress={() => router.push('/operational')}>
+                {/* <TouchableOpacity style={{maxHeight: 100, flex: 1, aspectRatio: 1}} onPress={() => router.push('/operational')}> */}
+                {/* <TouchableOpacity style={{maxHeight: 100, flex: 1, aspectRatio: 1}} onPress={() => router.push('/penugasan')}>
                   <HStack
                     p={4}
                     space={3}
@@ -368,7 +372,8 @@ export default function HomeScreen() {
                       >
                         <Image
                           alt="Penugasan"
-                          source={require('../../assets/images/operational.png')}
+                          // source={require('../../assets/images/operational.png')}
+                          source={require('../../assets/images/excavator.png')}
                           resizeMode="contain"
                           style={{ width: 60, height: 60 }}
                         />
@@ -377,7 +382,7 @@ export default function HomeScreen() {
                         <Text 
                           color={textColor}
                           fontFamily="Quicksand-SemiBold">
-                          Group Operational Fitur
+                          Penugasan{'\n'}Equipment Harian
                         </Text>
                         <Text
                           fontSize={11}
@@ -387,7 +392,7 @@ export default function HomeScreen() {
                         </Text>
                       </VStack>
                   </HStack>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </HStack>
             </VStack>
 
@@ -397,7 +402,10 @@ export default function HomeScreen() {
                   Aplikasi Makkuraga Group
                 </Text>
                 <Text fontSize={12} fontFamily="Poppins-Light" fontWeight={300} color={COLORS.teks[mode][2]}>
-                  Versi {Constants.expoConfig?.version || '1.0.0'}
+                  Versi {Constants.expoConfig?.version || getAppVersion()}
+                </Text>
+                <Text fontSize={12} fontFamily="Poppins-Light" fontWeight={300} color={COLORS.teks[mode][2]}>
+                  {OTA_VERSION}
                 </Text>
               </Center>
             </VStack>

@@ -7,10 +7,10 @@
  * @see src/config/version.js
  */
 
-import { OTA_VERSION, getAppVersion, getBuildNumber } from './config/version';
+import { OTA_VERSION, getAppVersion, getBuildNumber } from '../config/version';
 
 // Re-export from config
-export { OTA_VERSION as default } from './config/version';
+export { OTA_VERSION as default } from '../config/version';
 
 export const OTA_MARKER = OTA_VERSION;
 

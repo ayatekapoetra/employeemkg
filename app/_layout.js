@@ -23,7 +23,7 @@ import database from '../src/database/SQLiteService';
 import { loadMasterDataAfterLogin, loadSQLiteToReduxAfterSync } from '../src/store/slices/authSlice';
 
 // OTA version marker for tracking
-import { OTA_VERSION } from '../src/constants/otaVersion';
+import OTA_VERSION from '../src/constants/otaVersion';
 const otaMarker = OTA_VERSION;
 
 

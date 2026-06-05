@@ -9,7 +9,7 @@ import { RefreshControl, TouchableOpacity } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppScreen, HeaderScreen, LoadingHauler } from '../../src/components/common';
 import { COLORS } from '../../src/constants/colors';
-import { OTA_VERSION, getAppVersion } from '../../src/constants/otaVersion';
+import OTA_VERSION, { getAppVersionFromOTA } from '../../src/constants/otaVersion';
 import { getEquipment } from '../../src/store/slices/equipmentSlice';
 import { getOprDrv } from '../../src/store/slices/oprdrvSlice';
 import { getLokasiPit } from '../../src/store/slices/lokasiPitSlice';
@@ -402,7 +402,7 @@ export default function HomeScreen() {
                   Aplikasi Makkuraga Group
                 </Text>
                 <Text fontSize={12} fontFamily="Poppins-Light" fontWeight={300} color={COLORS.teks[mode][2]}>
-                  Versi {Constants.expoConfig?.version || getAppVersion()}
+                  Versi {Constants.expoConfig?.version || getAppVersionFromOTA()}
                 </Text>
                 <Text fontSize={12} fontFamily="Poppins-Light" fontWeight={300} color={COLORS.teks[mode][2]}>
                   {OTA_VERSION}

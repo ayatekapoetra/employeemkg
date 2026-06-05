@@ -2,16 +2,17 @@
  * OTA Version Marker
  * 
  * This constant tracks the OTA (Over-The-Air) update version.
- * Update this value when releasing a new OTA update.
+ * Version is loaded from centralized config file.
  * 
- * Format: OTA {app-version}-{build-number}
- * Example: OTA 1.2.27-01
- * 
- * Version History:
- * - OTA 1.2.27-01: Initial OTA implementation
+ * @see src/config/version.js
  */
 
-export const OTA_VERSION = 'OTA 1.2.27-01';
+import { OTA_VERSION, getAppVersion, getBuildNumber } from './config/version';
+
+// Re-export from config
+export { OTA_VERSION as default } from './config/version';
+
+export const OTA_MARKER = OTA_VERSION;
 
 /**
  * Get OTA marker for display
@@ -21,18 +22,12 @@ export const getOTAMarker = () => OTA_VERSION;
 
 /**
  * Get app version from OTA marker
- * @returns {string} App version (e.g., "1.2.27")
+ * @returns {string} App version (e.g., "1.2.28")
  */
-export const getAppVersion = () => {
-  const match = OTA_VERSION.match(/OTA\s+([\d.]+)/);
-  return match ? match[1] : '1.0.0';
-};
+export const getAppVersionFromOTA = () => getAppVersion();
 
 /**
  * Get build number from OTA marker
- * @returns {string} Build number (e.g., "01")
+ * @returns {string} Build number (e.g., "28")
  */
-export const getBuildNumber = () => {
-  const match = OTA_VERSION.match(/OTA\s+[\d.]+-(\d+)/);
-  return match ? match[1] : '00';
-};
+export const getBuildNumberFromOTA = () => getBuildNumber();

@@ -125,7 +125,10 @@
     },
     "updates": {
       "enabled": true,
-      "url": "https://u.expo.dev/1075cddc-eee7-4b88-a925-365266c5f842"
+      "url": "https://u.expo.dev/1075cddc-eee7-4b88-a925-365266c5f842",
+      "requestHeaders": {
+        "expo-channel-name": "proemployeeapp"
+      }
     },
     "extra": {
       "router": {},

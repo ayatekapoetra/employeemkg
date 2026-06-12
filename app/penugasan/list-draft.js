@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSelector, useDispatch } from 'react-redux';

@@ -268,7 +268,7 @@ export default function CrewWorksheetDetailScreen() {
                             {error}
                         </Text>
                         <TouchableOpacity
-                            onPress={loadWorksheetDetail}
+                            onPress={onRefresh}
                             style={{
                                 backgroundColor: COLORS.primary,
                                 paddingHorizontal: 20,

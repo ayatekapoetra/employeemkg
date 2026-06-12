@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { TouchableOpacity, Modal, FlatList, TextInput, View, StyleSheet, Keyboard } from 'react-native';
 import { VStack, Text, HStack, Button } from 'native-base';

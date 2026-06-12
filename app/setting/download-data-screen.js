@@ -75,6 +75,7 @@ export default function DownloadDataScreen() {
     { key: 'shift', name: 'Shift', icon: 'clock' },
     { key: 'gudang', name: 'Gudang', icon: 'home' },
     { key: 'karyawan', name: 'Karyawan', icon: 'user-square' },
+    { key: 'pengawas', name: 'Pengawas', icon: 'user-tick' },
     { key: 'kegiatanpit', name: 'Kegiatan Pit', icon: 'task' },
   ]), []);
 

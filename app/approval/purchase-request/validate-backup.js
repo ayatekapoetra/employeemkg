@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name, react-hooks/rules-of-hooks */
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Archive, Box, Calendar, Coin, DollarCircle, Edit, InfoCircle, MoneyRecive, Save2, SearchNormal1, ShoppingCart, Tag, TickCircle, TruckFast, User } from 'iconsax-react-native';
 import moment from 'moment';

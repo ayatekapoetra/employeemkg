@@ -106,7 +106,12 @@ export default function CrewWorksheetScreen() {
             console.log('✅ API fetch completed', result);
         } catch (error) {
             console.error('❌ Error loading crew worksheet data:', error);
-            showErrorAlert('Error', error.message);
+            dispatch(showAlert({
+                status: 'error',
+                title: 'Error',
+                subtitle: error.message || 'Gagal memuat data crew worksheet',
+                duration: 4000
+            }));
         }
     };
 
@@ -178,6 +183,7 @@ export default function CrewWorksheetScreen() {
             case 'P': return COLORS.main.warning; // Warning color
             case 'A': return COLORS.main.success; // Success color  
             case 'R': return COLORS.main.danger; // Danger color
+            case 'V': return COLORS.main.info; // Danger color
             default: return COLORS.main.gray; // Gray color
         }
     };
@@ -187,6 +193,7 @@ export default function CrewWorksheetScreen() {
             case 'P': return 'Pending';
             case 'A': return 'Approved';
             case 'R': return 'Rejected';
+            case 'V': return 'Validated';
             default: return status;
         }
     };

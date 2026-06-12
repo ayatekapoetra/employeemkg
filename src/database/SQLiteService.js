@@ -250,6 +250,23 @@ await this.createTables();
         aktif TEXT DEFAULT 'Y',
         created_at INTEGER DEFAULT (strftime('%s', 'now')),
         updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS master_pengawas (
+        id TEXT PRIMARY KEY,
+        nama TEXT NOT NULL,
+        nik TEXT,
+        ktp TEXT,
+        jabatan TEXT,
+        section TEXT,
+        department TEXT,
+        cabang_id TEXT,
+        phone TEXT,
+        email TEXT,
+        area TEXT,
+        aktif TEXT DEFAULT 'Y',
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
       )`
     ];
 
@@ -874,111 +891,6 @@ await this.createTables();
   }
 
   /**
-   * Sync barang from API to SQLite - Optimized for large datasets
-   */
-  async syncBarang(data) {
-    console.log('[SQLiteService] syncBarang called with', data?.length || 0, 'items');
-    console.log('[SQLiteService] Using optimized method for large datasets');
-    const columns = ['id', 'nama', 'kode', 'kategori', 'satuan', 'stok', 'aktif'];
-    
-    return this._enqueue(async () => {
-      if (!Array.isArray(data) || data.length === 0) {
-        return { successCount: 0, errorCount: 0, errors: [] };
-      }
-
-      console.log(`[SQLiteService] Sync barang: ${data.length} items (optimized mode)`);
-
-      // Ensure DB is ready
-      await this.ensureInitialized();
-
-      let successCount = 0;
-      let errorCount = 0;
-      const errors = [];
-      
-      // For large datasets, use batch processing
-      const BATCH_SIZE = 200; // Process 200 items at a time
-      const DELAY_MS = 50; // 50ms delay between batches
-      
-      // Build the SQL template once
-      const colList = columns.join(', ');
-      const placeholders = columns.map(() => '?').join(', ');
-      const sql = `INSERT OR REPLACE INTO master_barang (${colList}, updated_at) VALUES (${placeholders}, strftime('%s', 'now'))`;
-
-      console.log(`[SQLiteService] Processing in ${Math.ceil(data.length / BATCH_SIZE)} batches...`);
-
-      // Process in batches
-      for (let batchStart = 0; batchStart < data.length; batchStart += BATCH_SIZE) {
-        const batchEnd = Math.min(batchStart + BATCH_SIZE, data.length);
-        const batch = data.slice(batchStart, batchEnd);
-        
-        console.log(`[SQLiteService] Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}: items ${batchStart + 1}-${batchEnd}`);
-        
-        // Use transaction for each batch
-        try {
-          await this.db.withTransactionAsync(async () => {
-            for (let i = 0; i < batch.length; i++) {
-              const item = batch[i];
-              const globalIndex = batchStart + i;
-              
-              if (!item) {
-                errorCount++;
-                continue;
-              }
-
-              const rowData = this._mapBarangItem(item, globalIndex);
-              if (!rowData) {
-                errorCount++;
-                continue;
-              }
-
-              // Build params array
-              const params = columns.map(col => {
-                const val = rowData[col];
-                if (val === null || val === undefined) return null;
-                if (typeof val === 'number') return isNaN(val) || !isFinite(val) ? 0 : val;
-                if (typeof val === 'boolean') return val ? 1 : 0;
-                return String(val);
-              });
-
-              try {
-                await this.db.runAsync(sql, params);
-                successCount++;
-              } catch (err) {
-                const errMsg = err?.message || '';
-                errorCount++;
-                
-                if (errors.length < 5) {
-                  errors.push(`[${globalIndex}]: ${errMsg.substring(0, 80)}`);
-                }
-                
-                console.warn(`[SQLiteService] Barang item ${globalIndex} failed: ${errMsg}`);
-              }
-            }
-          });
-          
-          console.log(`[SQLiteService] Batch ${Math.floor(batchStart / BATCH_SIZE) + 1} completed: ${successCount} total`);
-          
-          // Add delay between batches to prevent database lock
-          if (batchEnd < data.length) {
-            await new Promise(resolve => setTimeout(resolve, DELAY_MS));
-          }
-          
-        } catch (batchError) {
-          console.error(`[SQLiteService] Batch ${Math.floor(batchStart / BATCH_SIZE) + 1} failed:`, batchError);
-          errorCount += batch.length;
-          
-          if (errors.length < 5) {
-            errors.push(`Batch ${Math.floor(batchStart / BATCH_SIZE) + 1}: ${batchError.message?.substring(0, 80)}`);
-          }
-        }
-      }
-
-      console.log(`[SQLiteService] Barang sync completed: ✅ ${successCount} synced, ❌ ${errorCount} errors`);
-      return { successCount, errorCount, errors };
-    });
-  }
-
-  /**
    * Helper function to map barang item
    */
   _mapBarangItem(item, index) {
@@ -1330,6 +1242,43 @@ await this.createTables();
   }
 
   // ============================================
+  // Pengawas Sync Services
+  // ============================================
+
+  /**
+   * Get pengawas from SQLite
+   */
+  async getPengawas() {
+    return await this.getAll('master_pengawas');
+  }
+
+  /**
+   * Sync pengawas from API to SQLite
+   */
+  async syncPengawas(data) {
+    const columns = ['id', 'nama', 'nik', 'ktp', 'jabatan', 'section', 'department', 'cabang_id', 'phone', 'email', 'area', 'aktif'];
+    
+    return this._batchSync('master_pengawas', data, (item) => {
+      const itemId = item.id ?? item.pengawas_id ?? item.karyawan_id;
+      if (!itemId) return null;
+      return {
+        id: String(itemId),
+        nama: item.nama || item.name || item.nama_lengkap || '',
+        nik: item.nik || item.nip || '',
+        ktp: item.ktp || item.no_ktp || '',
+        jabatan: item.jabatan || item.position || item.job_title || '',
+        section: item.section || '',
+        department: item.department || item.departemen || '',
+        cabang_id: item.cabang_id ? String(item.cabang_id) : '',
+        phone: item.phone || item.telepon || item.hp || '',
+        email: item.email || '',
+        area: item.area || (item.cabang?.area) || '',
+        aktif: item.aktif || item.active || item.status || 'Y'
+      };
+    }, columns);
+  }
+
+  // ============================================
   // AsyncStorage Fallback (for critical data)
   // ============================================
 
@@ -1388,7 +1337,8 @@ await this.createTables();
       'master_shift',
       'master_gudang',
       'master_karyawan',
-      'master_kegiatanpit'
+      'master_kegiatanpit',
+      'master_pengawas'
     ];
 
     for (const table of tables) {
@@ -1442,7 +1392,8 @@ await this.createTables();
       'master_shift',
       'master_gudang',
       'master_karyawan',
-      'master_kegiatanpit'
+      'master_kegiatanpit',
+      'master_pengawas'
     ];
 
     for (const table of masterTables) {

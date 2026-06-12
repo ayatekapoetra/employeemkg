@@ -3,10 +3,7 @@
     "name": "employeemkg",
     "slug": "employeemkg",
     "owner": "ayateka",
-    "version": "1.2.31",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "version": "1.2.26",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "employeemkg",
@@ -15,7 +12,7 @@
     "description": "Employee management application for CV. MAKKURAGA TAMA",
     "primaryColor": "#E6F4FE",
     "ios": {
-      "buildNumber": "31",
+      "buildNumber": "26",
       "supportsTablet": true,
       "splash": {
         "image": "./assets/images/sp-1.png",
@@ -28,13 +25,11 @@
       },
       "bundleIdentifier": "com.ayateka.appemployee",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "Aplikasi membutuhkan akses kamera untuk mengambil foto absensi (check in/out)",
-        "NSPhotoLibraryUsageDescription": "Aplikasi membutuhkan akses galeri foto untuk memilih foto profil karyawan"
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "versionCode": 31,
+      "versionCode": 26,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -51,18 +46,7 @@
       },
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.CAMERA"
-      ],
-      "blockedPermissions": [
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.READ_MEDIA_VIDEO",
-        "android.permission.READ_MEDIA_AUDIO",
-        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.SYSTEM_ALERT_WINDOW"
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "package": "com.employeemkg"
     },
@@ -81,7 +65,6 @@
     },
     "plugins": [
       "expo-router",
-      "expo-updates",
       [
         "expo-splash-screen",
         {
@@ -95,37 +78,17 @@
       ],
       "expo-secure-store",
       "expo-location",
-      "expo-web-browser",
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Aplikasi membutuhkan akses galeri foto untuk memilih foto profil karyawan",
-          "cameraPermission": "Aplikasi membutuhkan akses kamera untuk mengambil foto absensi"
-        }
-      ],
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Aplikasi membutuhkan akses kamera untuk mengambil foto absensi (check in/out)"
-        }
-      ],
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35
-          }
-        }
-      ]
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
     "updates": {
-      "enabled": true,
       "url": "https://u.expo.dev/1075cddc-eee7-4b88-a925-365266c5f842"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
     },
     "extra": {
       "router": {},

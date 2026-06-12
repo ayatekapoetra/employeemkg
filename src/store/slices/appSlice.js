@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { injectDataToRedux } from '../reduxInjector';
+import database from '../../database/SQLiteService';
 
 /**
  * Load data dari SQLite ke Redux state dengan fallback ke AsyncStorage
@@ -23,6 +24,7 @@ export const loadSQLiteDataToRedux = createAsyncThunk(
     // Define data configurations
     const dataConfigs = [
       { key: 'karyawan', cacheKey: '@karyawan', slice: 'karyawan', name: 'Karyawan' },
+      { key: 'pengawas', cacheKey: '@pengawas', slice: 'pengawas', name: 'Pengawas' },
       { key: 'gudang', cacheKey: '@gudang', slice: 'gudang', name: 'Gudang' },
       { key: 'barang', cacheKey: '@barang', slice: 'barang', name: 'Barang' },
       { key: 'penyewa', cacheKey: '@penyewa', slice: 'penyewa', name: 'Penyewa' },
@@ -87,7 +89,8 @@ export const loadSQLiteDataToRedux = createAsyncThunk(
           // Define the exact action types for each slice
           const actionTypes = {
             'karyawan': 'karyawan/getList/fulfilled',
-            'gudang': 'gudang/getList/fulfilled', 
+            'pengawas': 'pengawas/getList/fulfilled', 
+            'gudang': 'gudang/getList/fulfilled',
             'barang': 'barang/getList/fulfilled',
             'penyewa': 'penyewa/getList/fulfilled',
             'shift': 'shift/getList/fulfilled',

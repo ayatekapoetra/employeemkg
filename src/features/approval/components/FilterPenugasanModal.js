@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import { ArrowDown2, Calendar, CloseSquare, SearchNormal1 } from 'iconsax-react-native';
 import moment from 'moment';
 import { HStack, Text, VStack } from 'native-base';

@@ -3,7 +3,7 @@ import { TouchableOpacity } from 'react-native';
 import { VStack, Text, Center, HStack, Divider } from 'native-base';
 import { AppScreen, HeaderScreen } from '../../src/components/common';
 import { useDispatch, useSelector } from 'react-redux';
-import { ArrowRight2, Profile, ShieldSecurity, DriverRefresh, Calendar2, Stickynote, Convert, MonitorMobbile, House2, Civic, Logout } from 'iconsax-react-native';
+import { ArrowRight2, Profile, Whatsapp, ShieldSecurity, DriverRefresh, Calendar2, Stickynote, Convert, MonitorMobbile, House2, Civic, Logout } from 'iconsax-react-native';
 import { logout } from '../../src/store/slices/authSlice';
 import { saveTheme } from '../../src/store/slices/themeSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,6 +27,8 @@ export default function SettingScreen() {
         if (val.access.includes(user?.usertype)) {
           if (val.uri === 'Profile') {
             router.push('/setting/profile');
+          } else if (val.uri === 'Pairing') {
+            router.push('/setting/pairing');
           } else if (val.uri === 'Keamanan-Akun') {
             router.push('/setting/security');
           } else if (val.uri === 'izin-aplikasi-screen') {
@@ -57,6 +59,8 @@ export default function SettingScreen() {
       } else {
         if (val.uri === 'Profile') {
           router.push('/setting/profile');
+        } else if (val.uri === 'Pairing') {
+          router.push('/setting/pairing');
         } else if (val.uri === 'Keamanan-Akun') {
           router.push('/setting/security');
         } else if (val.uri === 'izin-aplikasi-screen') {
@@ -112,13 +116,20 @@ export default function SettingScreen() {
     },
     {
       key: 2,
+      title: 'Hubungkan Whatapps',
+      access: '',
+      uri: 'Pairing',
+      grpIcon: <Whatsapp size="28" color="#787b83" variant="Bulk" />,
+    },
+    {
+      key: 3,
       title: 'Keamanan Akun',
       access: '',
       uri: 'Keamanan-Akun',
       grpIcon: <ShieldSecurity size="28" color="#787b83" variant="Bulk" />,
     },
     {
-      key: 3,
+      key: 4,
       title: 'Download Data Options',
       access: '',
       uri: 'download-data-screen',
@@ -126,42 +137,42 @@ export default function SettingScreen() {
       grpIcon: <DriverRefresh size={28} color="#787b83" variant="Bulk"/>,
     },
     {
-      key: 4,
+      key: 5,
       title: 'Absensi Bulanan',
       access: '',
       uri: 'riwayat-absensi-screen',
       grpIcon: <Calendar2 size="28" color="#787b83" variant="Bulk" />,
     },
     {
-      key: 5,
+      key: 6,
       title: 'Internal Memo',
       access: '',
       uri: 'internal-memo-screen',
       grpIcon: <Stickynote size="28" color="#787b83" variant="Bulk" />,
     },
     {
-      key: 6,
+      key: 7,
       title: 'Gagal Kirim',
       access: '',
       uri: 'unsending-screen',
       grpIcon: <Convert size="28" color="#787b83" variant="Bulk" />,
     },
     {
-      key: 7,
+      key: 8,
       title: 'Reset UUID Devices',
       access: ['developer', 'administrator', 'hrd'],
       uri: 'Reset-User-Devices',
       grpIcon: <MonitorMobbile size="28" color="#787b83" variant="Bulk" />,
     },
     {
-      key: 8,
+      key: 9,
       title: 'Ubah Lingkup Kerja',
       access: '',
       uri: 'lingkup-kerja-screen',
       grpIcon: <House2 size="28" color="#787b83" variant="Bulk" />,
     },
     {
-      key: 9,
+      key: 10,
       title: 'Izin Aplikasi',
       access: '',
       uri: 'izin-aplikasi-screen',

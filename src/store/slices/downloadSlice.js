@@ -18,6 +18,9 @@ const updateReduxState = async (dataType, data, dispatch) => {
       case 'karyawan':
         actionType = 'karyawan/getList/fulfilled';
         break;
+      case 'pengawas':
+        actionType = 'pengawas/getList/fulfilled';
+        break;
       case 'gudang':
         actionType = 'gudang/getList/fulfilled';
         break;
@@ -154,6 +157,11 @@ export const downloadSpecificData = createAsyncThunk(
           endpoint: API_ENDPOINTS.KARYAWAN.LIST,
           syncFn: database.syncKaryawan.bind(database),
           cacheKey: '@karyawan',
+        },
+        'pengawas': {
+          endpoint: API_ENDPOINTS.PENGAWAS.LIST,
+          syncFn: database.syncPengawas.bind(database),
+          cacheKey: '@pengawas',
         },
         'kegiatanpit': {
           endpoint: API_ENDPOINTS.KEGIATAN_PIT.LIST,

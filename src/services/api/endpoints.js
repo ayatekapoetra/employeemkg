@@ -43,6 +43,10 @@ export const API_ENDPOINTS = {
     DETAIL: id => `/master/karyawan/${id}`,
   },
 
+  PENGAWAS: {
+    LIST: '/master/karyawan/pengawas',
+  },
+
   EQUIPMENT: {
     LIST: 'master/equipment/produksi',
     DETAIL: id => `mobile/equipment/${id}`,

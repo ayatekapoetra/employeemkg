@@ -1,4 +1,4 @@
-import * as Camera from 'expo-camera';
+import { requestCameraPermissionsAsync } from 'expo-camera';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -6,12 +6,12 @@ export class PermissionService {
   static async requestCamera() {
     try {
       // Try to request camera permissions using expo-camera
-      if (Camera.requestCameraPermissionsAsync) {
-        const { status } = await Camera.requestCameraPermissionsAsync();
+      if (requestCameraPermissionsAsync) {
+        const { status } = await requestCameraPermissionsAsync();
         await AsyncStorage.setItem('@camera_permission', status);
         return status === 'granted';
       } else {
-        console.warn('⚠️ Camera.requestCameraPermissionsAsync not available');
+        console.warn('⚠️ requestCameraPermissionsAsync not available');
         return false;
       }
     } catch (error) {
@@ -29,12 +29,12 @@ export class PermissionService {
       }
 
       // Try to check/request camera permissions
-      if (Camera.requestCameraPermissionsAsync) {
-        const { status } = await Camera.requestCameraPermissionsAsync();
+      if (requestCameraPermissionsAsync) {
+        const { status } = await requestCameraPermissionsAsync();
         await AsyncStorage.setItem('@camera_permission', status);
         return status === 'granted';
       } else {
-        console.warn('⚠️ Camera.requestCameraPermissionsAsync not available');
+        console.warn('⚠️ requestCameraPermissionsAsync not available');
         return false;
       }
     } catch (error) {
@@ -133,13 +133,13 @@ export class PermissionService {
       // Camera permission - use try-catch as it might not be available
       try {
         console.log('📷 Requesting camera permission...');
-        if (typeof Camera.requestCameraPermissionsAsync === 'function') {
-          const cameraResult = await Camera.requestCameraPermissionsAsync();
+        if (typeof requestCameraPermissionsAsync === 'function') {
+          const cameraResult = await requestCameraPermissionsAsync();
           permissions.camera = cameraResult.status === 'granted';
           await AsyncStorage.setItem('@camera_permission', cameraResult.status);
           console.log(`✅ Camera permission: ${permissions.camera ? 'GRANTED' : 'DENIED'}`);
         } else {
-          console.warn('⚠️ Camera.requestCameraPermissionsAsync not available, skipping');
+          console.warn('⚠️ requestCameraPermissionsAsync not available, skipping');
           permissions.camera = false;
         }
       } catch (error) {

@@ -13,6 +13,7 @@ import { showAlert } from '../../../src/store/slices/alertSlice';
 import { useCrewWorksheet } from '../../../src/hooks/crewWorksheet/useCrewWorksheet';
 import { validateTimeRange, calculateTotalHours } from '../../../src/utils/crewWorksheet/utils/validation';
 import { loadSQLiteDataToRedux } from '../../../src/store/slices/appSlice';
+import { getPengawas } from '../../../src/store/slices/pengawasSlice';
 import BottomSheetSelect from '../../../src/components/common/BottomSheetSelect';
 
 export default function CrewWorksheetCreateScreen() {
@@ -31,9 +32,10 @@ export default function CrewWorksheetCreateScreen() {
         jam_kerja_normal: CrewWorksheetConstants.DEFAULT_WORK_HOURS
     }));
 
-    const [penanggungJawabList, setPenanggungJawabList] = useState([]);
+    const [pengawasList, setPengawasList] = useState([]);
     const [errors, setErrors] = useState({});
-    const [loading, setLoading] = useState(false);
+    const [loadingData, setLoadingData] = useState(false);
+    const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [confirmAlert, setConfirmAlert] = useState({
         visible: false,
         type: 'warning',
@@ -43,11 +45,11 @@ export default function CrewWorksheetCreateScreen() {
         action: null // 'update' or 'delete'
     });
 
-    const pengawasOptions = useMemo(() => penanggungJawabList.map(item => ({
+    const pengawasOptions = useMemo(() => pengawasList.map(item => ({
         id: item.id?.toString(),
         nama: item.nama || item.nama_lengkap || 'Tanpa nama',
         subtitle: item.section || item.jabatan || item.posisi || item.department || ''
-    })), [penanggungJawabList]);
+    })), [pengawasList]);
 
     // Date picker states
     const [tanggalPickerOpen, setTanggalPickerOpen] = useState(false);
@@ -58,11 +60,13 @@ export default function CrewWorksheetCreateScreen() {
 
     const { createWorksheet, updateWorksheet } = useCrewWorksheet();
     const token = useSelector(state => state.auth?.token || '');
-    const karyawanData = useSelector(state => state.karyawan?.data || []);
+    const userArea = useSelector(state => state.auth?.karyawan?.area || state.auth?.user?.cabang?.area || '');
+    const pengawasData = useSelector(state => state.pengawas?.data || []);
     const mode = useSelector(state => state.themes?.value || 'light');
     const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1];
     const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
     const cardBg = mode === 'dark' ? '#3a3c4a' : '#ffffff';
+    
 
     // Check if editing - memoize to prevent re-renders
     const editingWorksheet = useMemo(() => {
@@ -91,31 +95,65 @@ export default function CrewWorksheetCreateScreen() {
         }
     }, [isEditing, editingWorksheet]);
 
-    const loadKaryawanData = useCallback(async () => {
-        setLoading(true)
+    const loadPengawasData = useCallback(async () => {
+        setLoadingData(true)
         try {
-            console.log('🚀 Loading karyawan data...');
-            // Load data from SQLite/AsyncStorage to Redux
+            console.log('🚀 Loading pengawas data...');
+            
+            // Try to load from SQLite/AsyncStorage first
             console.log('📡 Loading data to Redux (SQLite → AsyncStorage fallback)...');
             const result = await dispatch(loadSQLiteDataToRedux()).unwrap();
             console.log('📊 Load data result:', result);
-            setLoading(false)
+            
+            // Check if we need to fetch from API
+            // Note: We'll check in useEffect if data is empty
         } catch (error) {
-            setLoading(false)
-            console.error('❌ Error loading karyawan data:', error);
+            console.error('❌ Error loading pengawas data:', error);
+        } finally {
+            setLoadingData(false);
         }
     }, [dispatch]);
 
     useEffect(() => {
-        loadKaryawanData();
-    }, [loadKaryawanData]);
+        loadPengawasData();
+    }, [loadPengawasData]);
 
-    const handleKaryawanDataChange = useCallback(() => {
-        if (karyawanData.length > 0) {
-            console.log('Karyawan data updated, re-fetching penanggung jawab...');
-            fetchPenanggungJawab();
+    // Fetch from API if data is empty
+    useEffect(() => {
+        const fetchIfEmpty = async () => {
+            if (!loadingData && (!pengawasData || pengawasData.length === 0)) {
+                console.log('📡 Pengawas data empty, fetching from API...');
+                try {
+                    await dispatch(getPengawas(true)).unwrap();
+                    console.log('✅ Pengawas data fetched from API');
+                } catch (err) {
+                    console.error('❌ Failed to fetch pengawas from API:', err);
+                }
+            }
+        };
+        fetchIfEmpty();
+    }, [loadingData, pengawasData, dispatch]);
+
+    // Update pengawasList when pengawasData changes
+    useEffect(() => {
+        if (pengawasData && pengawasData.length > 0) {
+            console.log('Pengawas data updated:', pengawasData.length, 'items');
+            console.log('User area:', userArea);
+            
+            // Filter pengawas berdasarkan area user
+            let filteredPengawas = pengawasData;
+            if (userArea) {
+                filteredPengawas = pengawasData.filter(pengawas => {
+                    const pengawasArea = pengawas.area || '';
+                    const match = pengawasArea.toLowerCase() === userArea.toLowerCase();
+                    return match;
+                });
+                console.log('Filtered pengawas by area:', filteredPengawas.length, 'items');
+            }
+            
+            setPengawasList(filteredPengawas);
         }
-    }, [karyawanData, fetchPenanggungJawab]);
+    }, [pengawasData, userArea]);
 
     const showConfirmAlert = (title, message, onConfirm, action) => {
         setConfirmAlert({
@@ -131,101 +169,6 @@ export default function CrewWorksheetCreateScreen() {
     const hideConfirmAlert = () => {
         setConfirmAlert(prev => ({ ...prev, visible: false }));
     };
-
-    useEffect(() => {
-        handleKaryawanDataChange();
-    }, [handleKaryawanDataChange]);
-
-    // Re-filter penanggung jawab when karyawan data changes
-    useEffect(() => {
-        if (karyawanData.length > 0) {
-            console.log('Karyawan data updated, re-fetching penanggung jawab...');
-            fetchPenanggungJawab();
-        }
-    }, [karyawanData]);
-
-    const fetchPenanggungJawab = useCallback(async () => {
-        try {
-            console.log('Karyawan Data from Redux:', karyawanData);
-            if (karyawanData.length > 0) {
-                console.log('First Karyawan:', karyawanData[0]);
-            }
-
-            // Filter karyawan data from Redux to only show specific sections
-            const targetSections = [
-                'PENGAWAS LOGISTIK', 
-                'DIREKTUR OPERATIONAL', 
-                'pengawas', 
-                'koordinator', 
-                'foreman', 
-                'supervisor', 
-                'pjo'
-            ];
-
-            const filteredKaryawan = karyawanData.filter(karyawan => {
-                // Check various possible field names for section/jabatan
-                const sectionFields = ['section', 'jabatan', 'posisi', 'department', 'role'];
-
-                for (const field of sectionFields) {
-                    if (karyawan[field]) {
-                        const sectionValue = karyawan[field].toString().toLowerCase();
-                        return targetSections.some(target => sectionValue.includes(target));
-                    }
-                }
-
-                return false;
-            });
-
-            console.log('Filtered Penanggung Jawab:', filteredKaryawan);
-            setPenanggungJawabList(filteredKaryawan);
-
-            // If no data in Redux, try to fetch from API (fallback)
-            if (karyawanData.length === 0) {
-                console.log('No karyawan data in Redux, attempting API fallback...');
-                try {
-                    const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/master/karyawan/list`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
-
-                    if (!response.ok) {
-                        const text = await response.text();
-                        console.error('Error fetching penanggung jawab from API:', response.status, text.slice(0, 200));
-                        return;
-                    }
-
-                    const data = await response.json();
-                    let apiData = [];
-                    if (Array.isArray(data.rows)) {
-                        apiData = data.rows;
-                    } else if (Array.isArray(data.data)) {
-                        apiData = data.data;
-                    }
-
-                    // Filter API data as well
-                    const filteredApiData = apiData.filter(karyawan => {
-                        const sectionFields = ['section', 'jabatan', 'posisi', 'department', 'role'];
-
-                        for (const field of sectionFields) {
-                            if (karyawan[field]) {
-                                const sectionValue = karyawan[field].toString().toLowerCase();
-                                return targetSections.some(target => sectionValue.includes(target));
-                            }
-                        }
-
-                        return false;
-                    });
-
-                    setPenanggungJawabList(filteredApiData);
-                } catch (apiError) {
-                    console.error('API fallback also failed:', apiError);
-                }
-            }
-        } catch (error) {
-            console.error('Error processing penanggung jawab data:', error);
-        }
-    }, [karyawanData, token]);
 
     const validateForm = () => {
         const newErrors = {};
@@ -258,21 +201,6 @@ export default function CrewWorksheetCreateScreen() {
             newErrors.keterangan = CrewWorksheetConstants.VALIDATION_MESSAGES.REQUIRED;
         }
 
-        // Validate time ranges
-        if (formData.jam_mulai && formData.jam_selesai) {
-            const workTimeError = validateTimeRange(formData.jam_mulai, formData.jam_selesai);
-            if (workTimeError) {
-                newErrors.jam_selesai = workTimeError;
-            }
-        }
-
-        if (formData.istirahat_mulai && formData.istirahat_selesai) {
-            const breakTimeError = validateTimeRange(formData.istirahat_mulai, formData.istirahat_selesai);
-            if (breakTimeError) {
-                newErrors.istirahat_selesai = breakTimeError;
-            }
-        }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -289,7 +217,7 @@ export default function CrewWorksheetCreateScreen() {
         }
 
         try {
-            setLoading(true);
+            setLoadingSubmit(true);
 
             // Only send fields that are expected by the backend
             const submitData = {
@@ -305,7 +233,7 @@ export default function CrewWorksheetCreateScreen() {
 
             // Remove any NaN values
             Object.keys(submitData).forEach(key => {
-                if (submitData[key] === NaN || submitData[key] === 'NaN') {
+                if (Number.isNaN(submitData[key]) || submitData[key] === 'NaN') {
                     submitData[key] = '';
                 }
             });
@@ -338,7 +266,7 @@ export default function CrewWorksheetCreateScreen() {
                 duration: 4000
             }));
         } finally {
-            setLoading(false);
+            setLoadingSubmit(false);
         }
     };
 
@@ -405,12 +333,6 @@ export default function CrewWorksheetCreateScreen() {
     };
 
     const previewData = calculatePreviewData();
-
-    if(loading){
-        <AppScreen>
-            <LoadingHauler/>
-        </AppScreen>
-    }
 
     return (
         <>
@@ -705,18 +627,16 @@ export default function CrewWorksheetCreateScreen() {
                                     )}
                                 </VStack>
                             </VStack>
-
-
-
+                            
                             {/* Action Buttons */}
                             {isEditing ? (
                                 <HStack space={3}>
                                     <TouchableOpacity
                                         onPress={handleSubmit}
-                                        disabled={loading}
+                                        disabled={loadingSubmit}
                                         style={{
                                             flex: 2,
-                                            backgroundColor: loading ? '#9ca3af' : '#0180c7',
+                                            backgroundColor: loadingSubmit ? '#9ca3af' : '#0180c7',
                                             borderRadius: 12,
                                             paddingVertical: 16,
                                             flexDirection: 'row',
@@ -728,7 +648,7 @@ export default function CrewWorksheetCreateScreen() {
                                             shadowOpacity: 0.2,
                                             shadowRadius: 4,
                                         }}>
-                                        {loading ? (
+                                        {loadingSubmit ? (
                                             <ActivityIndicator color="white" size="small" />
                                         ) : (
                                             <Text color="white" fontFamily="Quicksand-Bold" fontSize={16}>
@@ -740,9 +660,9 @@ export default function CrewWorksheetCreateScreen() {
                             ) : (
                                 <TouchableOpacity
                                     onPress={handleSubmit}
-                                    disabled={loading}
+                                    disabled={loadingSubmit}
                                     style={{
-                                        backgroundColor: loading ? '#9ca3af' : '#0180c7',
+                                        backgroundColor: loadingSubmit ? '#9ca3af' : '#0180c7',
                                         borderRadius: 12,
                                         paddingVertical: 16,
                                         paddingHorizontal: 24,
@@ -755,7 +675,7 @@ export default function CrewWorksheetCreateScreen() {
                                         shadowOpacity: 0.2,
                                         shadowRadius: 4,
                                     }}>
-                                    {loading ? (
+                                    {loadingSubmit ? (
                                         <ActivityIndicator color="white" size="small" />
                                     ) : (
                                         <Text color="white" fontFamily="Quicksand-Bold" fontSize={16}>

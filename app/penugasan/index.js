@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { VStack, HStack, ScrollView, Text, Center } from 'native-base';

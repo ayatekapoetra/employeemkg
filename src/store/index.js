@@ -6,6 +6,7 @@ import authReducer from './slices/authSlice';
 import themeReducer from './slices/themeSlice';
 import alertReducer from './slices/alertSlice';
 import karyawanReducer from './slices/karyawanSlice';
+import pengawasReducer from './slices/pengawasSlice';
 import oprdrvReducer from './slices/oprdrvSlice';
 import penugasanReducer from './slices/penugasanSlice';
 import equipmentReducer from './slices/equipmentSlice';
@@ -42,6 +43,7 @@ const store = configureStore({
     themes: themeReducer,
     alert: alertReducer,
     karyawan: karyawanReducer,
+    pengawas: pengawasReducer,
     oprdrv: oprdrvReducer,
     datapenugasan: penugasanReducer,
     equipment: equipmentReducer,

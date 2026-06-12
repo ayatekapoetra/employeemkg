@@ -28,6 +28,8 @@ const createApiClient = (baseURL) => {
       'Content-type': 'application/json',
       'Cache-Control': 'no-cache',
       appsversion: '1.0.1',
+      'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
+      'ngrok-skip-browser-warning': 'true',
     },
   });
 

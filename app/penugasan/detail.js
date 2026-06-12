@@ -1,5 +1,6 @@
+/* eslint-disable react/no-unescaped-entities */
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppScreen, HeaderScreen, CustomAlert } from '../../src/components/common';

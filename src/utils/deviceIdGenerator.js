@@ -61,18 +61,7 @@ class DeviceIdGenerator {
       console.warn('⚠️ Failed to get Android ID from Application:', e.message);
     }
 
-    // Method 2: Device.deviceId (expo-device)
-    try {
-      const deviceId = Device.deviceId;
-      if (deviceId && deviceId !== 'unknown' && deviceId.length > 5) {
-        console.log('📱 Android ID from Device.deviceId:', deviceId);
-        return deviceId;
-      }
-    } catch (e) {
-      console.warn('⚠️ Failed to get device ID from expo-device:', e.message);
-    }
-
-    // Method 3: Using ApplicationId + Device.modelName
+    // Method 2: Using ApplicationId + Device.modelName
     try {
       const appId = Application.applicationId;
       const modelName = Device.modelName;
@@ -109,18 +98,7 @@ class DeviceIdGenerator {
       console.warn('⚠️ Failed to get composite iOS ID:', e.message);
     }
 
-    // Method 2: Device.deviceId (expo-device)
-    try {
-      const deviceId = Device.deviceId;
-      if (deviceId && deviceId !== 'unknown' && deviceId.length > 5) {
-        console.log('📱 iOS ID from Device.deviceId:', deviceId);
-        return deviceId;
-      }
-    } catch (e) {
-      console.warn('⚠️ Failed to get device ID from expo-device:', e.message);
-    }
-
-    // Method 3: Using ApplicationId + manufacturer
+    // Method 2: Using ApplicationId + manufacturer
     try {
       const appId = Application.applicationId;
       const manufacturer = Device.manufacturer;

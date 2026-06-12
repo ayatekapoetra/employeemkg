@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
-import { VStack, HStack, ScrollView, Text, Badge, Pressable, Center, useToast } from 'native-base';
+import { VStack, HStack, Text, Badge, Pressable, Center, Spinner, useToast } from 'native-base';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppScreen, HeaderScreen, LoadingHauler } from '../../../src/components/common';
 import { COLORS } from '../../../src/constants/colors';
@@ -8,8 +8,8 @@ import { getPenyewa } from '../../../src/store/slices/penyewaSlice';
 import { getEquipment } from '../../../src/store/slices/equipmentSlice';
 import { getShift } from '../../../src/store/slices/shiftSlice';
 import { getOprDrv } from '../../../src/store/slices/oprdrvSlice';
-import { Calendar, Clock, User, TickCircle, CloseCircle, TruckFast, Filter } from 'iconsax-react-native';
-import { View, RefreshControl, Alert } from 'react-native';
+import { Calendar, Clock, User, TruckFast, Filter } from 'iconsax-react-native';
+import { View, RefreshControl, FlatList } from 'react-native';
 import moment from 'moment';
 import 'moment/locale/id';
 import apiClient from '../../../src/services/api/client';
@@ -18,6 +18,23 @@ import FilterTimesheetModal from '../../../src/features/approval/components/Filt
 
 moment.locale('id');
 
+const mergeUniqueTimesheets = (currentItems, incomingItems) => {
+  const seen = new Set();
+
+  return [...currentItems, ...incomingItems].filter((item, index) => {
+    const uniqueKey = item?.id != null
+      ? `id-${item.id}`
+      : `fallback-${item?.kode || 'unknown'}-${item?.date_ops || item?.tanggal || index}`;
+
+    if (seen.has(uniqueKey)) {
+      return false;
+    }
+
+    seen.add(uniqueKey);
+    return true;
+  });
+};
+
 export default function ApprovalTimesheet() {
   const router = useRouter();
   const toast = useToast();
@@ -25,16 +42,13 @@ export default function ApprovalTimesheet() {
   const mode = useSelector(state => state.themes)?.value || 'light';
   const { user } = useSelector(state => state.auth);
 
-  // Redux state for filter options
-  const penyewaState = useSelector(state => state.penyewa);
-  const equipmentState = useSelector(state => state.equipment);
-  const shiftState = useSelector(state => state.shift);
-  const oprdrvState = useSelector(state => state.oprdrv);
-
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [approvalList, setApprovalList] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const [showFilter, setShowFilter] = useState(false);
   const [filterParams, setFilterParams] = useState({
@@ -61,48 +75,81 @@ export default function ApprovalTimesheet() {
   const cardBg = mode === 'dark' ? '#2a2c3e' : '#ffffff';
   const cardBorder = mode === 'dark' ? '#3a3c4e' : '#e5e7eb';
   const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280';
+  const ITEMS_PER_PAGE = 25;
+
+  const buildQueryParams = useCallback((pageNum = 1) => {
+    const params = {
+      ...filterParams,
+      page: pageNum,
+      perPage: ITEMS_PER_PAGE,
+    };
+
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
+    });
+
+    return params;
+  }, [filterParams]);
+
+  const buildQueryString = useCallback((pageNum = 1) => {
+    const params = buildQueryParams(pageNum);
+    const searchParams = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+      searchParams.append(key, value);
+    });
+
+    return searchParams.toString();
+  }, [buildQueryParams]);
 
   const fetchCount = useCallback(async () => {
     try {
-      // Build query params with filters
-      const params = { ...filterParams };
+      const params = buildQueryParams();
+      delete params.page;
+      delete params.perPage;
 
-      // Remove empty params
-      Object.keys(params).forEach(key => {
-        if (params[key] === '' || params[key] === null || params[key] === undefined) {
-          delete params[key];
-        }
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        searchParams.append(key, value);
       });
 
-      const response = await apiClient.get(API_ENDPOINTS.TIMESHEET.APPROVAL_LIST_COUNT, { params });
+      const response = await apiClient.get(`${API_ENDPOINTS.TIMESHEET.APPROVAL_LIST_COUNT}?${searchParams.toString()}`);
       const count = response.data?.count || 0;
       setPendingCount(count);
-    } catch (error) {
-      // Fallback to local count if API fails
-      setPendingCount(approvalList.length);
+    } catch {
+      // Keep existing count if count API fails.
     }
-  }, [filterParams, approvalList.length]);
+  }, [buildQueryParams]);
 
-  const fetchApprovals = useCallback(async () => {
+  const fetchApprovals = useCallback(async (pageNum = 1, isLoadMore = false) => {
     try {
-      setLoading(true);
+      if (isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
 
       try {
-        // Build query params with filters
-        const params = { ...filterParams };
+        const queryString = buildQueryString(pageNum);
+        const response = await apiClient.get(`${API_ENDPOINTS.TIMESHEET.APPROVAL_LIST}?${queryString}`);
+        const rows = response.data?.rows;
+        const data = response.data?.data || rows?.data || rows || [];
+        const currentPage = rows?.page || pageNum;
+        const hasNextPage = rows?.lastPage
+          ? currentPage < rows.lastPage
+          : data.length === ITEMS_PER_PAGE;
 
-        // Remove empty params
-        Object.keys(params).forEach(key => {
-          if (params[key] === '' || params[key] === null || params[key] === undefined) {
-            delete params[key];
-          }
-        });
+        if (isLoadMore) {
+          setApprovalList(prev => mergeUniqueTimesheets(prev, data));
+        } else {
+          setApprovalList(data);
+        }
 
-        const response = await apiClient.get(API_ENDPOINTS.TIMESHEET.APPROVAL_LIST, { params });
-        const data = response.data?.data || response.data?.rows?.data || response.data?.rows || [];
-
-        setApprovalList(data);
-      } catch (apiError) {
+        setPage(currentPage);
+        setHasMore(hasNextPage);
+      } catch {
         // Fallback data for development
         const fallbackData = [
           {
@@ -133,7 +180,11 @@ export default function ApprovalTimesheet() {
           },
         ];
 
-        setApprovalList(fallbackData);
+        if (pageNum === 1) {
+          setApprovalList(fallbackData);
+          setPage(1);
+          setHasMore(false);
+        }
 
         toast.show({
           description: 'Menggunakan data fallback - Backend error',
@@ -141,13 +192,16 @@ export default function ApprovalTimesheet() {
           bg: 'orange.500',
         });
       }
-    } catch (error) {
-      setApprovalList([]);
+    } catch {
+      if (!isLoadMore) {
+        setApprovalList([]);
+      }
     } finally {
       setLoading(false);
+      setLoadingMore(false);
       setRefreshing(false);
     }
-  }, [filterParams, user?.karyawan?.id, toast]);
+  }, [buildQueryString, toast]);
 
   useEffect(() => {
     // Load master data for filters
@@ -155,7 +209,7 @@ export default function ApprovalTimesheet() {
     dispatch(getEquipment());
     dispatch(getShift());
     dispatch(getOprDrv());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     // Initialize karyawan_id with active user on mount
@@ -174,7 +228,9 @@ export default function ApprovalTimesheet() {
 
   useEffect(() => {
     // Fetch approvals whenever filterParams changes
-    fetchApprovals();
+    setPage(1);
+    setHasMore(true);
+    fetchApprovals(1, false);
     fetchCount();
   }, [filterParams, fetchApprovals, fetchCount]);
 
@@ -182,8 +238,18 @@ export default function ApprovalTimesheet() {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchApprovals();
+    setPage(1);
+    setHasMore(true);
+    fetchApprovals(1, false);
     fetchCount();
+  };
+
+  const handleLoadMore = () => {
+    if (loading || loadingMore || !hasMore || approvalList.length === 0) {
+      return;
+    }
+
+    fetchApprovals(page + 1, true);
   };
 
   const handleOpenFilter = () => {
@@ -260,7 +326,6 @@ export default function ApprovalTimesheet() {
 
     return (
       <Pressable
-        key={item.id}
         onPress={() => handleCardPress(item)}
         _pressed={{ opacity: 0.7 }}
       >
@@ -365,100 +430,118 @@ export default function ApprovalTimesheet() {
         onNotification={true}
       />
 
-      <ScrollView
+      <FlatList
+        data={approvalList}
+        renderItem={({ item }) => renderTimesheetCard(item)}
+        keyExtractor={(item, index) => item.id?.toString() || index.toString()}
         flex={1}
-        bg={backgroundColor}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+        style={{ backgroundColor }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-      >
-        <VStack p={4} space={4}>
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
+        ItemSeparatorComponent={() => <VStack h={3} />}
+        ListHeaderComponent={
           <VStack
-            bg={mode === 'dark' ? '#1e3a8a' : '#dbeafe'}
-            p={4}
-            rounded="xl"
-            borderWidth={1}
-            borderColor={mode === 'dark' ? '#1e40af' : '#bfdbfe'}
+            space={4}
+            mb={4}
           >
-            <HStack alignItems="center" justifyContent="space-between">
-              <VStack flex={1}>
-                <Text
-                  fontSize="xs"
-                  fontFamily="Poppins-Light"
-                  color={mode === 'dark' ? '#bfdbfe' : '#1e40af'}
-                >
-                  Menunggu Persetujuan
-                </Text>
-                <Text
-                  fontSize="2xl"
-                  fontFamily="Quicksand-Bold"
-                  color={mode === 'dark' ? '#ffffff' : '#1e3a8a'}
-                >
-                  {pendingCount}
-                </Text>
-              </VStack>
-              <HStack px={4} py={2} justifyContent="flex-end">
-        <Pressable
-          onPress={handleOpenFilter}
-          bg={getActiveFilterCount() > 0 ? (mode === 'dark' ? '#3b82f6' : '#2563eb') : 'transparent'}
-          borderWidth={1}
-          borderColor={mode === 'dark' ? '#3b82f6' : '#2563eb'}
-          px={3}
-          py={2}
-          rounded="lg"
-          flexDirection="row"
-          alignItems="center"
-          _pressed={{ opacity: 0.7 }}
-        >
-          <Filter size={18} color={getActiveFilterCount() > 0 ? '#ffffff' : (mode === 'dark' ? '#3b82f6' : '#2563eb')} />
-          <Text 
-            ml={2} 
-            fontSize="sm" 
-            fontFamily="Poppins-Medium"
-            color={getActiveFilterCount() > 0 ? '#ffffff' : (mode === 'dark' ? '#3b82f6' : '#2563eb')}
-          >
-            Filter
-          </Text>
-          {getActiveFilterCount() > 0 && (
-            <Badge
-              ml={2}
-              bg="#ffffff"
-              rounded="full"
-              px={2}
-              _text={{
-                color: mode === 'dark' ? '#3b82f6' : '#2563eb',
-                fontSize: 10,
-                fontFamily: 'Poppins-Bold',
-              }}
+            <VStack
+              bg={mode === 'dark' ? '#1e3a8a' : '#dbeafe'}
+              p={4}
+              rounded="xl"
+              borderWidth={1}
+              borderColor={mode === 'dark' ? '#1e40af' : '#bfdbfe'}
             >
-              {getActiveFilterCount()}
-            </Badge>
-          )}
-        </Pressable>
-      </HStack>
-            </HStack>
+              <HStack alignItems="center" justifyContent="space-between">
+                <VStack flex={1}>
+                  <Text
+                    fontSize="xs"
+                    fontFamily="Poppins-Light"
+                    color={mode === 'dark' ? '#bfdbfe' : '#1e40af'}
+                  >
+                    Menunggu Persetujuan
+                  </Text>
+                  <Text
+                    fontSize="2xl"
+                    fontFamily="Quicksand-Bold"
+                    color={mode === 'dark' ? '#ffffff' : '#1e3a8a'}
+                  >
+                    {pendingCount}
+                  </Text>
+                </VStack>
+                <HStack px={4} py={2} justifyContent="flex-end">
+                  <Pressable
+                    onPress={handleOpenFilter}
+                    bg={getActiveFilterCount() > 0 ? (mode === 'dark' ? '#3b82f6' : '#2563eb') : 'transparent'}
+                    borderWidth={1}
+                    borderColor={mode === 'dark' ? '#3b82f6' : '#2563eb'}
+                    px={3}
+                    py={2}
+                    rounded="lg"
+                    flexDirection="row"
+                    alignItems="center"
+                    _pressed={{ opacity: 0.7 }}
+                  >
+                    <Filter size={18} color={getActiveFilterCount() > 0 ? '#ffffff' : (mode === 'dark' ? '#3b82f6' : '#2563eb')} />
+                    <Text 
+                      ml={2} 
+                      fontSize="sm" 
+                      fontFamily="Poppins-Medium"
+                      color={getActiveFilterCount() > 0 ? '#ffffff' : (mode === 'dark' ? '#3b82f6' : '#2563eb')}
+                    >
+                      Filter
+                    </Text>
+                    {getActiveFilterCount() > 0 && (
+                      <Badge
+                        ml={2}
+                        bg="#ffffff"
+                        rounded="full"
+                        px={2}
+                        _text={{
+                          color: mode === 'dark' ? '#3b82f6' : '#2563eb',
+                          fontSize: 10,
+                          fontFamily: 'Poppins-Bold',
+                        }}
+                      >
+                        {getActiveFilterCount()}
+                      </Badge>
+                    )}
+                  </Pressable>
+                </HStack>
+              </HStack>
+            </VStack>
           </VStack>
-
-          {loading ? (
+        }
+        ListEmptyComponent={
+          loading ? (
             <LoadingHauler
               message="Memuat daftar approval..."
               subMessage="Mengambil data timesheet yang menunggu persetujuan"
               type="default"
             />
-          ) : approvalList.length === 0 ? (
+          ) : (
             <Center py={10}>
               <Text fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
                 Tidak ada timesheet yang menunggu persetujuan
               </Text>
             </Center>
-          ) : (
-            <VStack space={3}>
-              {approvalList.map(renderTimesheetCard)}
-            </VStack>
-          )}
-        </VStack>
-      </ScrollView>
+          )
+        }
+        ListFooterComponent={
+          loadingMore ? (
+            <Center py={4}>
+              <Spinner size="sm" color={mode === 'dark' ? '#60a5fa' : '#2563eb'} />
+              <Text mt={2} fontSize="xs" fontFamily="Poppins-Light" color={subtitleColor}>
+                Memuat lebih banyak...
+              </Text>
+            </Center>
+          ) : null
+        }
+      />
       <FilterTimesheetModal
         visible={showFilter}
         onClose={() => setShowFilter(false)}
@@ -471,5 +554,3 @@ export default function ApprovalTimesheet() {
     </AppScreen>
   );
 }
-
-

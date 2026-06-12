@@ -8,20 +8,15 @@ import {
   ArrowLeft, 
   Camera,
   Location,
-  GalleryAdd,
   Setting2,
   TickCircle,
   CloseCircle,
   InfoCircle,
-  Lock1,
-  Microphone,
-  DocumentText
+  Lock1
 } from 'iconsax-react-native';
 import { COLORS } from '../../src/constants/colors';
 import * as ExpoCamera from 'expo-camera';
 import * as ExpoLocation from 'expo-location';
-import * as MediaLibrary from 'expo-media-library';
-import * as ImagePicker from 'expo-image-picker';
 
 export default function PermissionsScreen() {
   const router = useRouter();
@@ -31,10 +26,7 @@ export default function PermissionsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [permissions, setPermissions] = useState({
     camera: { granted: false, canAskAgain: true },
-    microphone: { granted: false, canAskAgain: true },
     location: { granted: false, canAskAgain: true },
-    mediaLibrary: { granted: false, canAskAgain: true },
-    files: { granted: false, canAskAgain: true },
   });
 
   const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
@@ -54,17 +46,8 @@ export default function PermissionsScreen() {
       // Check Camera Permission
       const cameraStatus = await ExpoCamera.Camera.getCameraPermissionsAsync();
       
-      // Check Microphone Permission
-      const microphoneStatus = await ExpoCamera.Camera.getMicrophonePermissionsAsync();
-      
       // Check Location Permission
       const locationStatus = await ExpoLocation.getForegroundPermissionsAsync();
-      
-      // Check Media Library Permission
-      const mediaLibraryStatus = await MediaLibrary.getPermissionsAsync();
-      
-      // Check Files/Media Library Permission (using ImagePicker as proxy for file access)
-      const filesStatus = await ImagePicker.getMediaLibraryPermissionsAsync();
 
       setPermissions({
         camera: {
@@ -72,25 +55,10 @@ export default function PermissionsScreen() {
           canAskAgain: cameraStatus.canAskAgain,
           status: cameraStatus.status
         },
-        microphone: {
-          granted: microphoneStatus.granted,
-          canAskAgain: microphoneStatus.canAskAgain,
-          status: microphoneStatus.status
-        },
         location: {
           granted: locationStatus.granted,
           canAskAgain: locationStatus.canAskAgain,
           status: locationStatus.status
-        },
-        mediaLibrary: {
-          granted: mediaLibraryStatus.granted,
-          canAskAgain: mediaLibraryStatus.canAskAgain,
-          status: mediaLibraryStatus.status
-        },
-        files: {
-          granted: filesStatus.granted,
-          canAskAgain: filesStatus.canAskAgain,
-          status: filesStatus.status
         },
       });
     } catch (error) {
@@ -123,47 +91,11 @@ export default function PermissionsScreen() {
           }));
           break;
           
-        case 'microphone':
-          result = await ExpoCamera.Camera.requestMicrophonePermissionsAsync();
-          setPermissions(prev => ({
-            ...prev,
-            microphone: { 
-              granted: result.granted, 
-              canAskAgain: result.canAskAgain,
-              status: result.status
-            }
-          }));
-          break;
-          
         case 'location':
           result = await ExpoLocation.requestForegroundPermissionsAsync();
           setPermissions(prev => ({
             ...prev,
             location: { 
-              granted: result.granted, 
-              canAskAgain: result.canAskAgain,
-              status: result.status
-            }
-          }));
-          break;
-          
-        case 'mediaLibrary':
-          result = await MediaLibrary.requestPermissionsAsync();
-          setPermissions(prev => ({
-            ...prev,
-            mediaLibrary: { 
-              granted: result.granted, 
-              canAskAgain: result.canAskAgain,
-              status: result.status
-            }
-          }));
-          break;
-          
-        case 'files':
-          result = await ImagePicker.requestMediaLibraryPermissionsAsync();
-          setPermissions(prev => ({
-            ...prev,
-            files: { 
               granted: result.granted, 
               canAskAgain: result.canAskAgain,
               status: result.status
@@ -451,7 +383,7 @@ export default function PermissionsScreen() {
                     mt={1}
                     lineHeight={18}
                   >
-                    Aplikasi memerlukan izin untuk mengakses fitur-fitur perangkat Anda agar dapat berfungsi dengan optimal. Anda dapat mengatur izin sesuai kebutuhan.
+                    Aplikasi memerlukan izin kamera dan lokasi agar fitur inti seperti absensi dan dokumentasi pekerjaan dapat berjalan dengan benar.
                   </Text>
                 </VStack>
               </HStack>
@@ -472,35 +404,11 @@ export default function PermissionsScreen() {
               />
 
               <PermissionCard
-                icon={<Microphone />}
-                title="Mikrofon"
-                description="Untuk merekam suara saat video conference atau voice notes"
-                type="microphone"
-                permission={permissions.microphone}
-              />
-
-              <PermissionCard
                 icon={<Location />}
                 title="Lokasi"
                 description="Untuk memverifikasi lokasi saat melakukan absensi"
                 type="location"
                 permission={permissions.location}
-              />
-
-              <PermissionCard
-                icon={<GalleryAdd />}
-                title="Galeri & Media"
-                description="Untuk upload foto dari galeri dan menyimpan dokumen"
-                type="mediaLibrary"
-                permission={permissions.mediaLibrary}
-              />
-
-              <PermissionCard
-                icon={<DocumentText />}
-                title="File & Dokumen"
-                description="Untuk akses dan upload file dokumen dari penyimpanan perangkat"
-                type="files"
-                permission={permissions.files}
               />
             </VStack>
 

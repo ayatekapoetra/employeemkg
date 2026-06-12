@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import { memo } from 'react';
 import { Dimensions, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { Spinner, Text } from 'native-base';

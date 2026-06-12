@@ -576,6 +576,7 @@ onPress={async () => {
           )}
         </VStack>
 
+        {!showAddAction && (
         <VStack mt={4} space={3} bg={cardBg} borderRadius={14} borderWidth={1} borderColor={cardBorder} p={4}
           shadow={1} style={{ shadowColor: mode === 'dark' ? '#000' : '#d1d5db', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 2 }}
         >
@@ -641,6 +642,7 @@ onPress={async () => {
             <Text fontFamily="Quicksand-Bold" fontSize="md" color="#ffffff">{updating ? 'Menyimpan...' : 'Update Status'}</Text>
           </TouchableOpacity>
         </VStack>
+        )}
       </ScrollView>
       }
 

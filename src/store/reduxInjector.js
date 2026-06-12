@@ -12,6 +12,8 @@ export const setReduxStore = (store) => {
 };
 
 export const injectDataToRedux = (dataType, data) => {
+  let actualSliceName = dataType;
+
   if (!reduxStore) {
     console.error('[ReduxInjector] Redux store not initialized');
     return false;
@@ -42,7 +44,7 @@ export const injectDataToRedux = (dataType, data) => {
       'koordinatChecklog': 'koordinatChecklog'
     };
     
-    const actualSliceName = sliceNameMapping[dataType] || dataType;
+    actualSliceName = sliceNameMapping[dataType] || dataType;
     
     // Check if the slice exists
     if (!currentState[actualSliceName]) {
@@ -161,6 +163,8 @@ export const injectDataToRedux = (dataType, data) => {
 };
 
 export const getReduxState = (dataType) => {
+  let actualSliceName = dataType;
+
   if (!reduxStore) {
     console.error('[ReduxInjector] Redux store not initialized');
     return null;
@@ -183,7 +187,7 @@ export const getReduxState = (dataType) => {
       'koordinatChecklog': 'koordinatChecklog'
     };
     
-    const actualSliceName = sliceNameMapping[dataType] || dataType;
+    actualSliceName = sliceNameMapping[dataType] || dataType;
     return state[actualSliceName];
   } catch (error) {
     console.error(`[ReduxInjector] ❌ Failed to get Redux state:`, error);

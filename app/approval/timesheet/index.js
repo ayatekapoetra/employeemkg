@@ -430,118 +430,138 @@ export default function ApprovalTimesheet() {
         onNotification={true}
       />
 
-      <FlatList
-        data={approvalList}
-        renderItem={({ item }) => renderTimesheetCard(item)}
-        keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-        flex={1}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
-        style={{ backgroundColor }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.4}
-        ItemSeparatorComponent={() => <VStack h={3} />}
-        ListHeaderComponent={
-          <VStack
-            space={4}
-            mb={4}
+      <View style={{ flex: 1 }}>
+        <FlatList
+          data={approvalList}
+          renderItem={({ item }) => renderTimesheetCard(item)}
+          keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+          flex={1}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+          style={{ backgroundColor }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.4}
+          ItemSeparatorComponent={() => <VStack h={3} />}
+          ListHeaderComponent={
+            <VStack
+              space={4}
+              mb={4}
+            >
+              <VStack
+                bg={mode === 'dark' ? '#1e3a8a' : '#dbeafe'}
+                p={4}
+                rounded="xl"
+                borderWidth={1}
+                borderColor={mode === 'dark' ? '#1e40af' : '#bfdbfe'}
+              >
+                <HStack alignItems="center" justifyContent="space-between">
+                  <VStack flex={1}>
+                    <Text
+                      fontSize="xs"
+                      fontFamily="Poppins-Light"
+                      color={mode === 'dark' ? '#bfdbfe' : '#1e40af'}
+                    >
+                      Menunggu Persetujuan
+                    </Text>
+                    <Text
+                      fontSize="2xl"
+                      fontFamily="Quicksand-Bold"
+                      color={mode === 'dark' ? '#ffffff' : '#1e3a8a'}
+                    >
+                      {pendingCount}
+                    </Text>
+                  </VStack>
+                  <HStack px={4} py={2} justifyContent="flex-end">
+                    <Pressable
+                      onPress={handleOpenFilter}
+                      bg={getActiveFilterCount() > 0 ? (mode === 'dark' ? '#3b82f6' : '#2563eb') : 'transparent'}
+                      borderWidth={1}
+                      borderColor={mode === 'dark' ? '#3b82f6' : '#2563eb'}
+                      px={3}
+                      py={2}
+                      rounded="lg"
+                      flexDirection="row"
+                      alignItems="center"
+                      _pressed={{ opacity: 0.7 }}
+                    >
+                      <Filter size={18} color={getActiveFilterCount() > 0 ? '#ffffff' : (mode === 'dark' ? '#3b82f6' : '#2563eb')} />
+                      <Text 
+                        ml={2} 
+                        fontSize="sm" 
+                        fontFamily="Poppins-Medium"
+                        color={getActiveFilterCount() > 0 ? '#ffffff' : (mode === 'dark' ? '#3b82f6' : '#2563eb')}
+                      >
+                        Filter
+                      </Text>
+                      {getActiveFilterCount() > 0 && (
+                        <Badge
+                          ml={2}
+                          bg="#ffffff"
+                          rounded="full"
+                          px={2}
+                          _text={{
+                            color: mode === 'dark' ? '#3b82f6' : '#2563eb',
+                            fontSize: 10,
+                            fontFamily: 'Poppins-Bold',
+                          }}
+                        >
+                          {getActiveFilterCount()}
+                        </Badge>
+                      )}
+                    </Pressable>
+                  </HStack>
+                </HStack>
+              </VStack>
+            </VStack>
+          }
+          ListEmptyComponent={
+            loading ? (
+              <LoadingHauler
+                message="Memuat daftar approval..."
+                subMessage="Mengambil data timesheet yang menunggu persetujuan"
+                type="default"
+              />
+            ) : (
+              <Center py={10}>
+                <Text fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
+                  Tidak ada timesheet yang menunggu persetujuan
+                </Text>
+              </Center>
+            )
+          }
+        />
+
+        {loadingMore && hasMore ? (
+          <Center
+            position="absolute"
+            top={0}
+            right={0}
+            bottom={0}
+            left={0}
+            pointerEvents="none"
           >
             <VStack
-              bg={mode === 'dark' ? '#1e3a8a' : '#dbeafe'}
-              p={4}
+              px={5}
+              py={4}
               rounded="xl"
+              bg={mode === 'dark' ? 'rgba(31,41,55,0.92)' : 'rgba(255,255,255,0.96)'}
+              alignItems="center"
+              shadow={3}
               borderWidth={1}
-              borderColor={mode === 'dark' ? '#1e40af' : '#bfdbfe'}
+              borderColor={mode === 'dark' ? '#374151' : '#e5e7eb'}
             >
-              <HStack alignItems="center" justifyContent="space-between">
-                <VStack flex={1}>
-                  <Text
-                    fontSize="xs"
-                    fontFamily="Poppins-Light"
-                    color={mode === 'dark' ? '#bfdbfe' : '#1e40af'}
-                  >
-                    Menunggu Persetujuan
-                  </Text>
-                  <Text
-                    fontSize="2xl"
-                    fontFamily="Quicksand-Bold"
-                    color={mode === 'dark' ? '#ffffff' : '#1e3a8a'}
-                  >
-                    {pendingCount}
-                  </Text>
-                </VStack>
-                <HStack px={4} py={2} justifyContent="flex-end">
-                  <Pressable
-                    onPress={handleOpenFilter}
-                    bg={getActiveFilterCount() > 0 ? (mode === 'dark' ? '#3b82f6' : '#2563eb') : 'transparent'}
-                    borderWidth={1}
-                    borderColor={mode === 'dark' ? '#3b82f6' : '#2563eb'}
-                    px={3}
-                    py={2}
-                    rounded="lg"
-                    flexDirection="row"
-                    alignItems="center"
-                    _pressed={{ opacity: 0.7 }}
-                  >
-                    <Filter size={18} color={getActiveFilterCount() > 0 ? '#ffffff' : (mode === 'dark' ? '#3b82f6' : '#2563eb')} />
-                    <Text 
-                      ml={2} 
-                      fontSize="sm" 
-                      fontFamily="Poppins-Medium"
-                      color={getActiveFilterCount() > 0 ? '#ffffff' : (mode === 'dark' ? '#3b82f6' : '#2563eb')}
-                    >
-                      Filter
-                    </Text>
-                    {getActiveFilterCount() > 0 && (
-                      <Badge
-                        ml={2}
-                        bg="#ffffff"
-                        rounded="full"
-                        px={2}
-                        _text={{
-                          color: mode === 'dark' ? '#3b82f6' : '#2563eb',
-                          fontSize: 10,
-                          fontFamily: 'Poppins-Bold',
-                        }}
-                      >
-                        {getActiveFilterCount()}
-                      </Badge>
-                    )}
-                  </Pressable>
-                </HStack>
-              </HStack>
-            </VStack>
-          </VStack>
-        }
-        ListEmptyComponent={
-          loading ? (
-            <LoadingHauler
-              message="Memuat daftar approval..."
-              subMessage="Mengambil data timesheet yang menunggu persetujuan"
-              type="default"
-            />
-          ) : (
-            <Center py={10}>
-              <Text fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
-                Tidak ada timesheet yang menunggu persetujuan
-              </Text>
-            </Center>
-          )
-        }
-        ListFooterComponent={
-          loadingMore ? (
-            <Center py={4}>
               <Spinner size="sm" color={mode === 'dark' ? '#60a5fa' : '#2563eb'} />
-              <Text mt={2} fontSize="xs" fontFamily="Poppins-Light" color={subtitleColor}>
+              <Text mt={2} fontSize="xs" fontFamily="Poppins-Light" color={textColor}>
                 Memuat lebih banyak...
               </Text>
-            </Center>
-          ) : null
-        }
-      />
+            </VStack>
+          </Center>
+        ) : null}
+      </View>
+
       <FilterTimesheetModal
         visible={showFilter}
         onClose={() => setShowFilter(false)}

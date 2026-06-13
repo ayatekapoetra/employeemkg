@@ -1,44 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import apiClient from '../../services/api/client';
-import attendanceClient from '../../services/api/attendanceClient';
 import { API_ENDPOINTS } from '../../services/api/endpoints';
 import { compressSelfiePhoto } from '../../utils/imageUtils';
-import deviceIdGenerator from '../../utils/deviceIdGenerator';
-
-function buildAttendancePayload({ employeeId, statusScan, scan }) {
-  return {
-    type: 'attlog',
-    cloud_id: null,
-    karyawan_id: employeeId,
-    data: {
-      pin: null,
-      scan,
-      status_scan: statusScan,
-      verify: 10,
-    },
-  };
-}
-
-async function submitAttendanceToGateway({ employeeId, statusScan }) {
-  if (!employeeId) {
-    throw new Error('Data karyawan tidak ditemukan. Silakan login ulang.');
-  }
-
-  const deviceId = await deviceIdGenerator.getDeviceId();
-  if (!deviceId) {
-    throw new Error('Device ID tidak tersedia. Silakan restart aplikasi dan coba lagi.');
-  }
-
-  const payload = buildAttendancePayload({
-    employeeId,
-    statusScan,
-    scan: new Date().toISOString(),
-  });
-
-  payload.cloud_id = deviceId;
-
-  return attendanceClient.post(API_ENDPOINTS.CHECKLOG.ATTENDANCE_GATEWAY, payload);
-}
 
 export const checkIn = createAsyncThunk('checklog/checkIn', async (data, { rejectWithValue, getState }) => {
   try {
@@ -49,27 +12,48 @@ export const checkIn = createAsyncThunk('checklog/checkIn', async (data, { rejec
     const karyawan = state.auth.karyawan;
     
     const employeeId = karyawan?.id || user?.karyawan?.id;
-
+    const employeePin = karyawan?.pin || user?.karyawan?.pin;
+    
+    const formData = new FormData();
+    formData.append('latitude', data.latitude);
+    formData.append('longitude', data.longitude);
+    formData.append('jarak', data.jarak);
+    
+    if (employeeId) {
+      formData.append('karyawan_id', employeeId);
+    }
+    if (employeePin) {
+      formData.append('pin', employeePin);
+    }
+    
+    let photoToUpload = data.photo;
     if (data.photo) {
       // Compress photo before upload to reduce network payload
       console.log('[CheckIn] Compressing selfie photo...');
       try {
-        await compressSelfiePhoto(data.photo, {
+        photoToUpload = await compressSelfiePhoto(data.photo, {
           maxWidth: 640,    // Selffies don't need to be large
           maxHeight: 640,   // Maintain aspect ratio
           quality: 0.6,     // 60% quality is sufficient for attendance photos
         });
         console.log('[CheckIn] Photo compression completed');
       } catch (compressError) {
-        console.warn('[CheckIn] Compression failed, continuing without upload photo:', compressError?.message);
+        console.warn('[CheckIn] Compression failed, using original photo:', compressError?.message);
+        photoToUpload = data.photo;
       }
+      
+      formData.append('photo', {
+        uri: photoToUpload.uri,
+        type: 'image/jpeg',
+        name: 'checklog.jpg',
+      });
     }
 
-    const resp = await submitAttendanceToGateway({
-      employeeId,
-      statusScan: 0,
+    const resp = await apiClient.post(API_ENDPOINTS.CHECKLOG.CHECK_IN, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
-
     return resp.data;
   } catch (error) {
     if (error.response?.status === 422 && error.response?.data?.diagnostic) {
@@ -100,27 +84,48 @@ export const checkOut = createAsyncThunk('checklog/checkOut', async (data, { rej
     });
     
     const employeeId = karyawan?.id || user?.karyawan?.id;
-
+    const employeePin = karyawan?.pin || user?.karyawan?.pin;
+    
+    const formData = new FormData();
+    formData.append('latitude', data.latitude);
+    formData.append('longitude', data.longitude);
+    formData.append('jarak', data.jarak);
+    
+    if (employeeId) {
+      formData.append('karyawan_id', employeeId);
+    }
+    if (employeePin) {
+      formData.append('pin', employeePin);
+    }
+    
+    let photoToUpload = data.photo;
     if (data.photo) {
       // Compress photo before upload to reduce network payload
       console.log('[CheckOut] Compressing selfie photo...');
       try {
-        await compressSelfiePhoto(data.photo, {
+        photoToUpload = await compressSelfiePhoto(data.photo, {
           maxWidth: 640,    // Selffies don't need to be large
           maxHeight: 640,   // Maintain aspect ratio
           quality: 0.6,     // 60% quality is sufficient for attendance photos
         });
         console.log('[CheckOut] Photo compression completed');
       } catch (compressError) {
-        console.warn('[CheckOut] Compression failed, continuing without upload photo:', compressError?.message);
+        console.warn('[CheckOut] Compression failed, using original photo:', compressError?.message);
+        photoToUpload = data.photo;
       }
+      
+      formData.append('photo', {
+        uri: photoToUpload.uri,
+        type: 'image/jpeg',
+        name: 'checklog.jpg',
+      });
     }
 
-    const resp = await submitAttendanceToGateway({
-      employeeId,
-      statusScan: 1,
+    const resp = await apiClient.post(API_ENDPOINTS.CHECKLOG.CHECK_OUT, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
-
     return resp.data;
   } catch (error) {
     if (error.response?.status === 422 && error.response?.data?.diagnostic) {

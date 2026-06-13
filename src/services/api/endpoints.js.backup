@@ -12,7 +12,6 @@ export const API_ENDPOINTS = {
     CHECK_IN: 'mobile/check-in-mobile/karyawan',
     CHECK_IN_PHOTO: 'mobile/check-in/karyawan/photo',
     CHECK_OUT: 'mobile/check-out-mobile/karyawan',
-    ATTENDANCE_GATEWAY: 'api/fingerspot/webhook',
     CHECK_OUT_VERIFY: id => `mobile/check-out-mobile/${id}/verify`,
     CHECK_OUT_APPROVE: id => `mobile/check-out-mobile/${id}/approve`,
     DETAIL: id => `mobile/checklog/${id}/show`,
@@ -222,7 +221,6 @@ export const API_ENDPOINTS = {
     FINISH: id => `/event/${id}/finish`,
     DELETE: id => `/event/${id}/destroy`,
   },
-
 };
 
 export const PHOTO_BASE_URL = 'https://cdn.makkuragatama.id/';

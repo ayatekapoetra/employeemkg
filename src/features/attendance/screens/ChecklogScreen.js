@@ -367,17 +367,35 @@ function ChecklogScreen() {
       let resultAction;
       if (openKamera.metode === 'in') {
         resultAction = await dispatch(checkIn(checklogData));
-        setLogmasuk(false);
-        setLogpulang(true);
       } else {
         resultAction = await dispatch(checkOut(checklogData));
-        setLogpulang(false);
       }
 
       setLoading(false);
 
+      if (checkIn.rejected.match(resultAction) || checkOut.rejected.match(resultAction)) {
+        const errorMessage = resultAction.payload || `Check-${openKamera.metode === 'in' ? 'in' : 'out'} gagal`;
+        dispatch(
+          applyAlert({
+            show: true,
+            status: 'error',
+            title: 'Gagal',
+            subtitle: errorMessage,
+            duration: 5000,
+          })
+        );
+        return;
+      }
+
       const result = resultAction.payload;
       const diagnostic = result?.diagnostic;
+
+      if (openKamera.metode === 'in') {
+        setLogmasuk(false);
+        setLogpulang(true);
+      } else {
+        setLogpulang(false);
+      }
 
       if (diagnostic && diagnostic.message) {
         console.log('Using diagnostic message:', diagnostic.message);

@@ -3,7 +3,7 @@
     "name": "employeemkg",
     "slug": "employeemkg",
     "owner": "ayateka",
-    "version": "1.2.31",
+    "version": "1.2.32",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -27,6 +27,7 @@
         "googleMapsApiKey": "AIzaSyCYMnlvt-xY5PrinwHmw6qGRfPzD6_sZxA"
       },
       "bundleIdentifier": "com.ayateka.appemployee",
+      "appleTeamId": "ZZXA4KQS76",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Aplikasi membutuhkan akses kamera untuk mengambil foto absensi (check in/out)",
@@ -34,7 +35,7 @@
       }
     },
     "android": {
-      "versionCode": 31,
+      "versionCode": 35,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -44,6 +45,7 @@
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "resize",
       "predictiveBackGestureEnabled": false,
+      "usesCleartextTraffic": true,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyDgpw4bFVEE_z6YzlgbiGvxMa9BegDVCMM"
@@ -115,6 +117,10 @@
           "android": {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35
+          },
+          "ios": {
+            "deploymentTarget": "15.1",
+            "buildReactNativeFromSource": true
           }
         }
       ]

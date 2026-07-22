@@ -1,18 +1,19 @@
 import { useState, useEffect, useCallback, Fragment } from 'react';
-import { View, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
-import { HStack, Text, VStack, Pressable } from 'native-base';
+import { View, TouchableOpacity, FlatList, ActivityIndicator, Modal, Pressable as RNPressable, Alert } from 'react-native';
+import { HStack, Text, VStack, Pressable, Box, Center } from 'native-base';
 import { useRouter } from 'expo-router';
-import { Filter, Calendar, Clock, Location, Printer } from 'iconsax-react-native';
+import { Filter, Calendar, Clock, Location, More, DocumentDownload, Chart21 } from 'iconsax-react-native';
 import { useSelector, useDispatch } from 'react-redux';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
 import { COLORS } from '../../../src/constants/colors'
 import { AppScreen, HeaderScreen } from '../../../src/components/common';
 import { getBreakdownList, getBreakdownStatistics } from '../../../src/store/slices/breakdownSlice';
 import { useFilterData, useFilterFormat } from './hooks/useFilterData';
 import FilterBottomSheet from './components/FilterBottomSheet';
-import moment from 'moment';
 import { calculateDuration } from '../../../src/utils/dailyBreakdown/utils';
-import { Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function DailyBreakdownScreen() {
     const router = useRouter();
@@ -20,6 +21,8 @@ export default function DailyBreakdownScreen() {
     const { data, loading, error } = useSelector(state => state.breakdown);
     const [refreshing, setRefreshing] = useState(false);
     const [filterVisible, setFilterVisible] = useState(false);
+    const [reportMenuVisible, setReportMenuVisible] = useState(false);
+    const [downloadingReport, setDownloadingReport] = useState(false);
     const [filters, setFilters] = useState({
         status: [],
         cabang_id: null,
@@ -143,56 +146,135 @@ export default function DailyBreakdownScreen() {
     // Check if any filter is active
     const hasActiveFilters = hasActiveFiltersHook(filters);
 
-    const printPDFHandle = async () => {
+    const buildApiBaseUrl = () => {
+        const rawBase = process.env.EXPO_PUBLIC_API_URL || 'https://apinext.makkuragatama.id/api';
+        let base = rawBase.trim();
+        if (!base.endsWith('/')) base = `${base}/`;
+        if (!/\bapi\/?$/i.test(base)) base = `${base}api/`;
+        return base;
+    };
+
+    const buildQueryString = (params = {}) =>
+        Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null && v !== '')
+            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+            .join('&');
+
+    const downloadPdfFile = async ({ url, filename, dialogTitle }) => {
+        if (downloadingReport) return;
+        setDownloadingReport(true);
         try {
-            // Lazy import native modules untuk mengurangi potensi crash saat mount
-            const FileSystem = await import('expo-file-system/legacy');
-            const Sharing = await import('expo-sharing');
+            const cacheDirectory = FileSystem.cacheDirectory;
+            if (!cacheDirectory || typeof FileSystem.downloadAsync !== 'function') {
+                throw new Error('Modul FileSystem tidak tersedia di perangkat ini');
+            }
 
-            const apiFilters = formatApiFilters(filters);
-            const startdate = apiFilters.startdate || moment().format('YYYY-MM-DD');
-            const enddate = apiFilters.enddate || moment().format('YYYY-MM-DD');
+            console.log('[DailyBreakdown] download URL:', url);
 
-            // Bangun query string tanpa bergantung pada URLSearchParams (hindari issue Hermes)
-            const params = { ...apiFilters, startdate, enddate };
-            const query = Object.entries(params)
-                .filter(([, v]) => v !== undefined && v !== null && v !== '')
-                .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-                .join('&');
-
-            const rawBase = process.env.EXPO_PUBLIC_API_URL || 'https://apinext.makkuragatama.id/api';
-            let base = rawBase.trim();
-            if (!base.endsWith('/')) base = `${base}/`;
-            if (!/\bapi\/?$/i.test(base)) base = `${base}api/`;
-
-            const url = `${base}operation/daily-breakdown/download${query ? `?${query}` : ''}`;
-
-            const filename = `laporan-breakdown-${startdate}-${enddate}.pdf`;
-            const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-
+            const fileUri = `${cacheDirectory}${filename}`;
             const token = await AsyncStorage.getItem('@token');
-            const { uri, status } = await FileSystem.downloadAsync(url, fileUri, {
+            const result = await FileSystem.downloadAsync(url, fileUri, {
                 headers: {
                     Accept: 'application/pdf',
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
             });
 
+            const uri = result?.uri;
+            const status = result?.status;
+
             if (status !== 200 || !uri) {
-                throw new Error(`Gagal mengunduh PDF (status ${status || 'unknown'}) - ${url}`);
+                throw new Error(`Gagal mengunduh PDF (status ${status || 'unknown'})`);
             }
 
             const available = await Sharing.isAvailableAsync();
             if (available) {
-                await Sharing.shareAsync(uri, { mimeType: 'application/pdf' });
+                await Sharing.shareAsync(uri, {
+                    mimeType: 'application/pdf',
+                    dialogTitle: dialogTitle || 'Download PDF',
+                    UTI: 'com.adobe.pdf',
+                });
             } else {
                 Alert.alert('Unduh Berhasil', `File tersimpan di ${uri}`);
             }
         } catch (err) {
-            console.error('[DailyBreakdown] printPDFHandle error:', err);
+            console.error('[DailyBreakdown] downloadPdfFile error:', err);
             Alert.alert('Gagal', err?.message || 'Gagal mengunduh PDF');
+        } finally {
+            setDownloadingReport(false);
         }
-    }
+    };
+
+    /** Outstanding Breakdown — sama seperti tombol print lama */
+    const printPDFHandle = async () => {
+        const apiFilters = formatApiFilters(filters);
+        const startdate = apiFilters.startdate || moment().format('YYYY-MM-DD');
+        const enddate = apiFilters.enddate || moment().format('YYYY-MM-DD');
+        const params = { ...apiFilters, startdate, enddate };
+        const query = buildQueryString(params);
+        const base = buildApiBaseUrl();
+        const url = `${base}operation/daily-breakdown/download${query ? `?${query}` : ''}`;
+
+        await downloadPdfFile({
+            url,
+            filename: `laporan-breakdown-${startdate}-${enddate}.pdf`,
+            dialogTitle: 'Outstanding Breakdown Report',
+        });
+    };
+
+    /**
+     * Equipment Downtime Report — sama dengan #web-next /laporan/summary-breakdown download
+     * Endpoint: GET /api/laporan/summary-breakdown/download
+     */
+    const downloadEquipmentDowntimePdf = async () => {
+        const apiFilters = formatApiFilters(filters);
+        // Default tanggal sama web-next: awal bulan → hari ini
+        const startdate = apiFilters.startdate || moment().startOf('month').format('YYYY-MM-DD');
+        const enddate = apiFilters.enddate || moment().format('YYYY-MM-DD');
+
+        const params = {
+            startdate,
+            enddate,
+        };
+
+        // Map filter mobile → query summary-breakdown (web-next)
+        if (apiFilters.equipment_id) {
+            params.equipment_ids = apiFilters.equipment_id;
+        }
+        if (apiFilters.lokasi_id) {
+            params.lokasi_ids = apiFilters.lokasi_id;
+        }
+        // status di summary-breakdown: open | close (bukan status code daily breakdown)
+        // lewati mapping status numeric agar tidak salah filter
+
+        const query = buildQueryString(params);
+        const base = buildApiBaseUrl();
+        const url = `${base}laporan/summary-breakdown/download${query ? `?${query}` : ''}`;
+
+        await downloadPdfFile({
+            url,
+            filename: `report-summary-breakdown-${startdate}-to-${enddate}.pdf`,
+            dialogTitle: 'Equipment Downtime Report',
+        });
+    };
+
+    const handleOutstandingReport = () => {
+        setReportMenuVisible(false);
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                printPDFHandle();
+            }, 350);
+        });
+    };
+
+    const handleEquipmentDowntimeReport = () => {
+        setReportMenuVisible(false);
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                downloadEquipmentDowntimePdf();
+            }, 350);
+        });
+    };
 
     // Render item untuk FlatList
     const renderBreakdownItem = ({ item }) => {
@@ -385,15 +467,22 @@ export default function DailyBreakdownScreen() {
                     </TouchableOpacity>
                     <TouchableOpacity 
                         style={{height: 40, width: 40, borderRadius: 5}}
-                        onPress={printPDFHandle}>
+                        disabled={downloadingReport}
+                        onPress={() => setReportMenuVisible(true)}>
                         <VStack
                             p={2}
                             flex={1} 
-                            bg={'warmGray.300'}
+                            bg={mode === 'dark' ? '#374151' : '#e5e7eb'}
                             justifyContent={'center'} 
                             alignItems={'center'}
-                            rounded={'md'}>
-                            <Printer size={26} color={COLORS.teks.light[2]}/>
+                            rounded={'md'}
+                            opacity={downloadingReport ? 0.6 : 1}
+                        >
+                            {downloadingReport ? (
+                                <ActivityIndicator size="small" color={textColor} />
+                            ) : (
+                                <More size={26} color={textColor} variant="Bold" />
+                            )}
                         </VStack>
                     </TouchableOpacity>
                 </HStack>
@@ -413,6 +502,136 @@ export default function DailyBreakdownScreen() {
                 />
             </AppScreen>
             
+            {/* Report menu bottom sheet */}
+            <Modal
+                visible={reportMenuVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setReportMenuVisible(false)}
+            >
+                <Box flex={1} justifyContent="flex-end">
+                    <RNPressable
+                        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)' }}
+                        onPress={() => setReportMenuVisible(false)}
+                    />
+                    <Box
+                        bg={cardBg}
+                        borderTopRadius={24}
+                        px={4}
+                        pt={3}
+                        pb={6}
+                        borderTopWidth={1}
+                        borderColor={cardBorder}
+                    >
+                        <Center mb={3}>
+                            <Box w={10} h={1} rounded="full" bg={mode === 'dark' ? '#4b5563' : '#d1d5db'} />
+                        </Center>
+
+                        <Text fontSize={16} fontFamily="Quicksand-Bold" color={textColor} mb={1}>
+                            Laporan Breakdown
+                        </Text>
+                        <Text fontSize={12} fontFamily="Poppins-Regular" color={mode === 'dark' ? '#9ca3af' : '#6b7280'} mb={4}>
+                            Pilih jenis laporan yang ingin diunduh
+                        </Text>
+
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            disabled={downloadingReport}
+                            onPress={handleOutstandingReport}
+                        >
+                            <HStack
+                                alignItems="center"
+                                space={3}
+                                p={3.5}
+                                mb={2}
+                                rounded="xl"
+                                borderWidth={1}
+                                borderColor={cardBorder}
+                                bg={mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.03)'}
+                                opacity={downloadingReport ? 0.7 : 1}
+                            >
+                                <Center
+                                    w={11}
+                                    h={11}
+                                    rounded="xl"
+                                    bg={mode === 'dark' ? 'rgba(59,130,246,0.2)' : 'rgba(37,99,235,0.12)'}
+                                >
+                                    {downloadingReport ? (
+                                        <ActivityIndicator size="small" color={mode === 'dark' ? '#60a5fa' : '#2563eb'} />
+                                    ) : (
+                                        <DocumentDownload size={22} color={mode === 'dark' ? '#60a5fa' : '#2563eb'} variant="Bold" />
+                                    )}
+                                </Center>
+                                <VStack flex={1}>
+                                    <Text fontSize={14} fontFamily="Quicksand-Bold" color={textColor}>
+                                        Outstanding Breakdown Report
+                                    </Text>
+                                    <Text fontSize={11} fontFamily="Poppins-Regular" color={mode === 'dark' ? '#9ca3af' : '#6b7280'}>
+                                        {downloadingReport
+                                            ? 'Mengunduh PDF...'
+                                            : 'Unduh PDF laporan breakdown (filter aktif)'}
+                                    </Text>
+                                </VStack>
+                            </HStack>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            disabled={downloadingReport}
+                            onPress={handleEquipmentDowntimeReport}
+                        >
+                            <HStack
+                                alignItems="center"
+                                space={3}
+                                p={3.5}
+                                mb={2}
+                                rounded="xl"
+                                borderWidth={1}
+                                borderColor={cardBorder}
+                                bg={mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.03)'}
+                                opacity={downloadingReport ? 0.7 : 1}
+                            >
+                                <Center
+                                    w={11}
+                                    h={11}
+                                    rounded="xl"
+                                    bg={mode === 'dark' ? 'rgba(168,85,247,0.2)' : 'rgba(147,51,234,0.12)'}
+                                >
+                                    {downloadingReport ? (
+                                        <ActivityIndicator size="small" color={mode === 'dark' ? '#c084fc' : '#9333ea'} />
+                                    ) : (
+                                        <Chart21 size={22} color={mode === 'dark' ? '#c084fc' : '#9333ea'} variant="Bold" />
+                                    )}
+                                </Center>
+                                <VStack flex={1}>
+                                    <Text fontSize={14} fontFamily="Quicksand-Bold" color={textColor}>
+                                        Equipment Downtime Report
+                                    </Text>
+                                    <Text fontSize={11} fontFamily="Poppins-Regular" color={mode === 'dark' ? '#9ca3af' : '#6b7280'}>
+                                        {downloadingReport
+                                            ? 'Mengunduh PDF...'
+                                            : 'Unduh PDF summary downtime (sama web-next)'}
+                                    </Text>
+                                </VStack>
+                            </HStack>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity activeOpacity={0.85} onPress={() => setReportMenuVisible(false)}>
+                            <Center
+                                mt={2}
+                                py={3}
+                                rounded="xl"
+                                bg={mode === 'dark' ? '#374151' : '#e5e7eb'}
+                            >
+                                <Text fontFamily="Quicksand-Bold" color={textColor}>
+                                    Batal
+                                </Text>
+                            </Center>
+                        </TouchableOpacity>
+                    </Box>
+                </Box>
+            </Modal>
+
             {/* Filter Bottom Sheet - Outside AppScreen for proper Modal rendering */}
             <FilterBottomSheet
                 visible={filterVisible}

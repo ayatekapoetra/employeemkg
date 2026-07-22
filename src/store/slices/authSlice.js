@@ -145,11 +145,16 @@ export const login = createAsyncThunk(
         triggerAutoSync: true, // Flag to trigger auto-sync
       };
     } catch (error) {
-      console.error('Login error:', error);
-      console.error('Error response:', error.response?.data);
+      console.error('Login error:', error?.message || error);
+      console.error('Error code:', error?.code);
+      console.error('Error config URL:', error?.config?.baseURL, error?.config?.url);
+      console.error('Error response:', error.response?.data ?? '(no response - network/CORS/cleartext blocked)');
       
-      if (error.message?.includes('Network Error') || error.code === 'ERR_NETWORK') {
-        return rejectWithValue('Backend tidak tersedia. Gunakan username: "demo" dan password: "demo123" untuk demo mode.');
+      if (error.message?.includes('Network Error') || error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
+        const target = `${error?.config?.baseURL || ''}${error?.config?.url || ''}`;
+        return rejectWithValue(
+          `Tidak bisa terhubung ke backend (${target || 'unknown'}). Pastikan ops-be running di 0.0.0.0 dan HP satu WiFi dengan Mac. Demo: username "demo" / password "demo123".`
+        );
       }
       
       const message = error.response?.data?.diagnostic?.message || error.response?.data?.message || error.message || 'Login gagal, silakan coba lagi';
@@ -450,6 +455,36 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    patchContactData: (state, action) => {
+      const { email, phone } = action.payload || {};
+
+      if (state.user) {
+        if (email !== undefined) {
+          state.user.email = email;
+        }
+
+        if (phone !== undefined) {
+          state.user.phone = phone;
+
+          if (state.user.karyawan) {
+            state.user.karyawan = {
+              ...state.user.karyawan,
+              phone,
+            };
+          }
+        }
+      }
+
+      if (state.karyawan) {
+        if (phone !== undefined) {
+          state.karyawan.phone = phone;
+        }
+
+        if (email !== undefined) {
+          state.karyawan.email = email;
+        }
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -510,5 +545,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, clearError, patchContactData } = authSlice.actions;
 export default authSlice.reducer;

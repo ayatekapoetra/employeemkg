@@ -285,34 +285,45 @@ export default function FilterAbsensi({ onApplyFilter, setFilter, qstring, setQs
   }, []);
 
   const handleSelectKaryawan = useCallback((item) => {
-    setQstring({
-      ...qstring,
-      karyawan_id: item?.id || '',
+    setQstring(prev => ({
+      ...prev,
+      karyawan_id: item?.id ?? null,
       karyawan: item || null,
-    });
+    }));
     closeKaryawanSheet();
-  }, [qstring, closeKaryawanSheet]);
+  }, [setQstring, closeKaryawanSheet]);
 
   const handleClearKaryawan = useCallback(() => {
-    setQstring({
-      ...qstring,
-      karyawan_id: '',
+    setQstring(prev => ({
+      ...prev,
+      karyawan_id: null,
       karyawan: null,
-    });
+    }));
     closeKaryawanSheet();
-  }, [qstring, closeKaryawanSheet]);
+  }, [setQstring, closeKaryawanSheet]);
 
   const onResetHandle = async () => {
-    setQstring({
-      karyawan_id: user?.karyawan?.id,
-      karyawan: user?.karyawan,
-      dateStart: moment().add(-1, 'month').format('YYYY-MM-DD'),
+    const resetValues = {
+      karyawan_id: user?.karyawan?.id || null,
+      karyawan: user?.karyawan || null,
+      dateStart: moment().startOf('month').format('YYYY-MM-DD'),
       dateEnd: moment().format('YYYY-MM-DD'),
       verify_sts: '',
       approve_sts: '',
-    });
-    onApplyFilter();
-    setFilter(false);
+    };
+    setQstring(resetValues);
+    // Kirim override agar parent tidak pakai state lama (stale)
+    await onApplyFilter(resetValues);
+  };
+
+  const onApplyHandle = async () => {
+    const next = {
+      ...qstring,
+      karyawan_id: qstring.karyawan_id || qstring.karyawan?.id || user?.karyawan?.id || null,
+      dateStart: qstring.dateStart || moment().startOf('month').format('YYYY-MM-DD'),
+      dateEnd: qstring.dateEnd || moment().format('YYYY-MM-DD'),
+    };
+    await onApplyFilter(next);
   };
 
   return (
@@ -351,8 +362,10 @@ export default function FilterAbsensi({ onApplyFilter, setFilter, qstring, setQs
         <DatePickerModal
           isOpen={showStartDate}
           onClose={() => setShowStartDate(false)}
-          onConfirm={(date) => setQstring({ ...qstring, dateStart: moment(date).format('YYYY-MM-DD') })}
-          date={new Date(qstring.dateStart)}
+          onConfirm={(date) =>
+            setQstring(prev => ({ ...prev, dateStart: moment(date).format('YYYY-MM-DD') }))
+          }
+          date={qstring.dateStart ? new Date(qstring.dateStart) : new Date()}
           title="Mulai Tanggal"
         />
 
@@ -373,8 +386,10 @@ export default function FilterAbsensi({ onApplyFilter, setFilter, qstring, setQs
         <DatePickerModal
           isOpen={showEndDate}
           onClose={() => setShowEndDate(false)}
-          onConfirm={(date) => setQstring({ ...qstring, dateEnd: moment(date).format('YYYY-MM-DD') })}
-          date={new Date(qstring.dateEnd)}
+          onConfirm={(date) =>
+            setQstring(prev => ({ ...prev, dateEnd: moment(date).format('YYYY-MM-DD') }))
+          }
+          date={qstring.dateEnd ? new Date(qstring.dateEnd) : new Date()}
           title="Hingga Tanggal"
         />
 
@@ -385,7 +400,7 @@ export default function FilterAbsensi({ onApplyFilter, setFilter, qstring, setQs
         <Button flex={1} bg="muted.400" onPress={onResetHandle} _text={{ fontFamily: 'Poppins-SemiBold' }}>
           Reset
         </Button>
-        <Button flex={1} bg="error.600" onPress={onApplyFilter} _text={{ fontFamily: 'Poppins-SemiBold' }}>
+        <Button flex={1} bg="error.600" onPress={onApplyHandle} _text={{ fontFamily: 'Poppins-SemiBold' }}>
           Terapkan
         </Button>
       </HStack>

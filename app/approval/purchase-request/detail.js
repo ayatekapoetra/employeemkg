@@ -102,7 +102,7 @@ export default function PurchaseRequestDetail() {
   };
 
   const canValidate = ['procurement', 'partadmin', 'partcounter'].includes(user?.usertype);
-  const canApprove = ['developer', 'pjo', 'direktur', 'administrator', 'keuangan'].includes(user?.usertype);
+  const canApprove = ['developer', 'pjo', 'direktur', 'administrator', 'keuangan', 'logistik'].includes(user?.usertype);
 
   const handleCopyCode = () => {
     Clipboard.setString(purchaseRequest.kode);

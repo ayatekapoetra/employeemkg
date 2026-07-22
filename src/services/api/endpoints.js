@@ -23,9 +23,17 @@ export const API_ENDPOINTS = {
     SERVER_TIME: 'server-times',
   },
 
+  LAPORAN: {
+    SUMMARY_BREAKDOWN_LIST: 'laporan/summary-breakdown/list',
+    SUMMARY_BREAKDOWN_DOWNLOAD: 'laporan/summary-breakdown/download',
+  },
+
   ATTENDANCE: {
-    DAILY: '/attendances/daily',
-    MONTHLY: 'attendances/monthly',
+    // Jangan pakai leading slash — axios akan drop prefix /api dari baseURL
+    DAILY: 'attendances/harian', // proxy ops-be → HRIS /api-hris/kehadiran-harian
+    DAILY_LEGACY: 'attendances/daily',
+    MONTHLY: 'attendances/monthly', // legacy ops DB
+    MONTHLY_HRIS: 'attendances/bulanan-hris', // proxy ops-be → HRIS /api-hris/kehadiran-bulanan
     DAILY_DETAIL: 'attendances/daily-detail',
     SCORE_CHART: 'absensi-score-chart',
     MANUAL: 'mobile/attendance/manual',
@@ -42,6 +50,9 @@ export const API_ENDPOINTS = {
     LIST: '/master/karyawan',
     OPRDRV: '/master/karyawan/oprdrv',
     DETAIL: id => `/master/karyawan/${id}`,
+    REQUEST_UPDATE_CONTACT_OTP: id => `/master/karyawan/${id}/request-update-contact-otp`,
+    VERIFY_UPDATE_CONTACT_OTP: id => `/master/karyawan/${id}/verify-update-contact-otp`,
+    UPDATE_CONTACT: id => `/master/karyawan/update-phone/${id}`,
   },
 
   PENGAWAS: {
@@ -126,6 +137,7 @@ export const API_ENDPOINTS = {
 
   BISNIS_UNIT: {
     LIST: 'master/bisnis-unit/list',
+    MYLIST: 'master/bisnis-unit/list?my_units=true',
     DETAIL: id => `master/bisnis-unit/${id}`,
   },
 

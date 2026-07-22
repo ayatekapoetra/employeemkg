@@ -144,7 +144,7 @@ export default function ApprovalPurchaseRequest() {
   };
 
   const canValidate = userProfile?.usertype === 'procurement' || userProfile?.usertype === 'procurment';
-  const canApprove = ['developer', 'pjo', 'direktur', 'administrator', 'keuangan'].includes(userProfile?.usertype);
+  const canApprove = ['developer', 'pjo', 'direktur', 'administrator', 'keuangan', 'logistik'].includes(userProfile?.usertype);
 
   const handleFilterApply = () => {
     setShowFilterModal(false);

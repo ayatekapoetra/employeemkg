@@ -45,6 +45,7 @@ export default function ApprovalPengajuanDana() {
     max_amount: '',
     date_start: '',
     date_end: '',
+    bisnis_unit_id: '',
   });
 
   const ITEMS_PER_PAGE = 25;
@@ -76,6 +77,7 @@ export default function ApprovalPengajuanDana() {
       if (filters.max_amount) params.append('max_amount', filters.max_amount);
       if (filters.date_start) params.append('date_start', filters.date_start);
       if (filters.date_end) params.append('date_end', filters.date_end);
+      if (filters.bisnis_unit_id) params.append('bisnis_unit_id', filters.bisnis_unit_id);
       params.append('page', pageNum);
       params.append('limit', ITEMS_PER_PAGE);
 

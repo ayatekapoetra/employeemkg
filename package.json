@@ -1,7 +1,7 @@
 {
   "name": "employeemkg",
   "main": "expo-router/entry",
-  "version": "1.2.26",
+  "version": "1.2.31",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -9,6 +9,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "ota:preview": "eas update --channel prevemployeeapp --environment preview",
+    "ota:production": "eas update --channel proemployeeapp --environment production",
     "postinstall": "patch-package"
   },
   "dependencies": {

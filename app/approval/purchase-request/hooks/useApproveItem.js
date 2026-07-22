@@ -219,7 +219,7 @@ export default function useApproveItem(params, userProfile) {
     console.log('usertype:', userProfile?.usertype);
     console.log('========================');
     
-    const allowedUserTypes = ['developer', 'pjo', 'direktur', 'administrator', 'keuangan'];
+    const allowedUserTypes = ['developer', 'pjo', 'direktur', 'administrator', 'keuangan', 'logistik'];
     const usertype = userProfile?.usertype?.toLowerCase();
     
     if (!allowedUserTypes.includes(usertype)) {

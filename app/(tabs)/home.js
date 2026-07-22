@@ -9,7 +9,7 @@ import { RefreshControl, TouchableOpacity } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppScreen, HeaderScreen, LoadingHauler } from '../../src/components/common';
 import { COLORS } from '../../src/constants/colors';
-import OTA_VERSION, { getAppVersionFromOTA } from '../../src/constants/otaVersion';
+import OTA_VERSION, { OTA_CHANNEL_MARKER, getAppVersionFromOTA } from '../../src/constants/otaVersion';
 import { getEquipment } from '../../src/store/slices/equipmentSlice';
 import { getOprDrv } from '../../src/store/slices/oprdrvSlice';
 import { getLokasiPit } from '../../src/store/slices/lokasiPitSlice';
@@ -406,6 +406,9 @@ export default function HomeScreen() {
                 </Text>
                 <Text fontSize={12} fontFamily="Poppins-Light" fontWeight={300} color={COLORS.teks[mode][2]}>
                   {OTA_VERSION}
+                </Text>
+                <Text fontSize={11} fontFamily="Poppins-Light" fontWeight={300} color={COLORS.teks[mode][2]}>
+                  Channel {OTA_CHANNEL_MARKER}
                 </Text>
               </Center>
             </VStack>

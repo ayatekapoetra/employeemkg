@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { TouchableOpacity } from 'react-native';
-import { VStack, Text, Center, HStack, Divider } from 'native-base';
+import { VStack, Text, Center, HStack, Divider, ScrollView } from 'native-base';
 import { AppScreen, HeaderScreen } from '../../src/components/common';
 import { useDispatch, useSelector } from 'react-redux';
 import { ArrowRight2, Profile, Whatsapp, ShieldSecurity, DriverRefresh, Calendar2, Stickynote, Convert, MonitorMobbile, House2, Civic, Logout } from 'iconsax-react-native';
@@ -9,6 +9,7 @@ import { saveTheme } from '../../src/store/slices/themeSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
+import OTA_VERSION, { OTA_CHANNEL_MARKER } from '../../src/constants/otaVersion';
 
 export default function SettingScreen() {
   const dispatch = useDispatch();
@@ -17,6 +18,7 @@ export default function SettingScreen() {
   const mode = useSelector(state => state.themes).value;
 
   const textColor = mode === 'dark' ? '#F5F5F5' : '#2f313e';
+  const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280';
   const backgroundColor = mode === 'dark' ? '#2f313e' : '#F5F5F5';
   const lineColor = mode === 'dark' ? '#3a3c4a' : '#e5e7eb';
 
@@ -185,58 +187,66 @@ export default function SettingScreen() {
       <VStack h="full">
         <HeaderScreen title="Pengaturan & Informasi" onThemes onNotification />
         <Divider />
-        <VStack flex={1}>
-          {settingMenus.map(item => {
-            return (
-              <TouchableOpacity onPress={() => actionHandle(item)} key={item.key}>
+        <ScrollView flex={1} contentContainerStyle={{ flexGrow: 1 }}>
+          <VStack>
+            {settingMenus.map(item => {
+              return (
+                <TouchableOpacity onPress={() => actionHandle(item)} key={item.key}>
+                  <HStack
+                    p={3}
+                    alignItems="center"
+                    justifyContent="space-between"
+                    borderBottomWidth={1}
+                    borderBottomColor={lineColor}
+                  >
+                    <HStack space={2} alignItems="center">
+                      {item.grpIcon}
+                      <Text fontWeight={500} fontFamily="Poppins-SemiBold" color={textColor}>
+                        {item.title}
+                      </Text>
+                    </HStack>
+                    <ArrowRight2 size="12" color="#d9e3f0" variant="Outline" />
+                  </HStack>
+                </TouchableOpacity>
+              );
+            })}
+            <Center my={5} px={3}>
+              <Text fontWeight={300} fontFamily="Poppins-Regular" color={textColor} textAlign="center">
+                Mobile Attendances Aplication
+              </Text>
+              <Text fontWeight={700} fontFamily="Poppins-Regular" color={textColor} textAlign="center">
+                Makkuraga Group
+              </Text>
+              <Text fontFamily="Poppins-Regular" color={mode === 'dark' ? '#9a8f90' : '#b31e02'} textAlign="center">
+                version {Constants.expoConfig?.version || '1.0.0'}
+              </Text>
+              <Text fontFamily="Poppins-Regular" color={textColor} textAlign="center">
+                {OTA_VERSION}
+              </Text>
+              <Text fontFamily="Poppins-Regular" color={subtitleColor} textAlign="center">
+                Channel {OTA_CHANNEL_MARKER}
+              </Text>
+            </Center>
+          </VStack>
+        </ScrollView>
+        <VStack>
+          <TouchableOpacity onPress={onUserLogout}>
                 <HStack
                   p={3}
+                  bg="error.500"
                   alignItems="center"
                   justifyContent="space-between"
                   borderBottomWidth={1}
                   borderBottomColor={lineColor}
                 >
                   <HStack space={2} alignItems="center">
-                    {item.grpIcon}
-                    <Text fontWeight={500} fontFamily="Poppins-SemiBold" color={textColor}>
-                      {item.title}
+                    <Logout size="28" color="#FFF" variant="Bulk" />
+                    <Text fontWeight={500} fontFamily="Poppins-SemiBold" color="#FFF">
+                      Keluar
                     </Text>
                   </HStack>
-                  <ArrowRight2 size="12" color="#d9e3f0" variant="Outline" />
+                  <ArrowRight2 size="12" color="#FFF" variant="Outline" />
                 </HStack>
-              </TouchableOpacity>
-            );
-          })}
-        </VStack>
-        <Center mb={5}>
-          <Text fontWeight={300} fontFamily="Poppins-Regular" color={textColor}>
-            Mobile Attendances Aplication
-          </Text>
-          <Text fontWeight={700} fontFamily="Poppins-Regular" color={textColor}>
-            Makkuraga Group
-          </Text>
-          <Text fontFamily="Poppins-Regular" color={mode === 'dark' ? '#9a8f90' : '#b31e02'}>
-            version {Constants.expoConfig?.version || '1.0.0'}
-          </Text>
-        </Center>
-        <VStack>
-          <TouchableOpacity onPress={onUserLogout}>
-            <HStack
-              p={3}
-              bg="error.500"
-              alignItems="center"
-              justifyContent="space-between"
-              borderBottomWidth={1}
-              borderBottomColor={lineColor}
-            >
-              <HStack space={2} alignItems="center">
-                <Logout size="28" color="#FFF" variant="Bulk" />
-                <Text fontWeight={500} fontFamily="Poppins-SemiBold" color="#FFF">
-                  Keluar
-                </Text>
-              </HStack>
-              <ArrowRight2 size="12" color="#FFF" variant="Outline" />
-            </HStack>
           </TouchableOpacity>
         </VStack>
       </VStack>

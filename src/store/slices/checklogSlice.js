@@ -5,21 +5,50 @@ import { API_ENDPOINTS } from '../../services/api/endpoints';
 import { compressSelfiePhoto } from '../../utils/imageUtils';
 import deviceIdGenerator from '../../utils/deviceIdGenerator';
 
-function buildAttendancePayload({ employeeId, statusScan, scan }) {
+/**
+ * Kompres foto selfie sebelum upload.
+ * Mengembalikan foto yang sudah dikompres, atau foto asli jika gagal.
+ */
+async function preparePhoto(photo) {
+  if (!photo) return null;
+
+  try {
+    console.log('[Checklog] Compressing selfie photo...');
+    const compressed = await compressSelfiePhoto(photo, {
+      maxWidth: 640,
+      maxHeight: 640,
+      quality: 0.6,
+    });
+    console.log('[Checklog] Photo compression completed');
+    return compressed;
+  } catch (err) {
+    console.warn('[Checklog] Compression failed, using original photo:', err?.message);
+    return photo;
+  }
+}
+
+/**
+ * Bangun payload absensi sebagai JSON fields (untuk dimasukkan ke FormData).
+ */
+function buildAttendanceFields({ employeeId, statusScan, scan, deviceId }) {
   return {
     type: 'attlog',
-    cloud_id: null,
-    karyawan_id: employeeId,
-    data: {
+    cloud_id: deviceId,
+    karyawan_id: String(employeeId),
+    data: JSON.stringify({
       pin: null,
       scan,
       status_scan: statusScan,
       verify: 10,
-    },
+    }),
   };
 }
 
-async function submitAttendanceToGateway({ employeeId, statusScan }) {
+/**
+ * Kirim data absensi ke gateway (app-aichat) menggunakan multipart/form-data
+ * agar foto bisa ikut terkirim dan gateway dapat memprosesnya ke HRIS.
+ */
+async function submitAttendanceToGateway({ employeeId, statusScan, photo }) {
   if (!employeeId) {
     throw new Error('Data karyawan tidak ditemukan. Silakan login ulang.');
   }
@@ -29,46 +58,83 @@ async function submitAttendanceToGateway({ employeeId, statusScan }) {
     throw new Error('Device ID tidak tersedia. Silakan restart aplikasi dan coba lagi.');
   }
 
-  const payload = buildAttendancePayload({
+  const fields = buildAttendanceFields({
     employeeId,
     statusScan,
     scan: new Date().toISOString(),
+    deviceId,
   });
 
-  payload.cloud_id = deviceId;
+  const formData = new FormData();
+  formData.append('type', fields.type);
+  formData.append('cloud_id', fields.cloud_id);
+  formData.append('karyawan_id', fields.karyawan_id);
+  formData.append('data', fields.data);
 
-  return attendanceClient.post(API_ENDPOINTS.CHECKLOG.ATTENDANCE_GATEWAY, payload);
+  if (photo?.uri) {
+    // Tentukan ekstensi dari URI atau default ke jpeg
+    const uriParts = photo.uri.split('.');
+    const ext = uriParts[uriParts.length - 1]?.toLowerCase() || 'jpg';
+    const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+    const fileName = `attendance_${Date.now()}.${ext}`;
+
+    formData.append('photo', {
+      uri: photo.uri,
+      type: mimeType,
+      name: fileName,
+    });
+
+    console.log('[Checklog] Photo attached to FormData:', fileName);
+  } else {
+    console.warn('[Checklog] No photo available, request may be rejected by gateway.');
+  }
+
+  return attendanceClient.post(API_ENDPOINTS.CHECKLOG.ATTENDANCE_GATEWAY, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+}
+
+function getHrisSyncFailureMessage(responseData) {
+  const hrisSync = responseData?.data?.hris_sync;
+  if (!hrisSync || hrisSync.success !== false) return null;
+
+  if (hrisSync.code === 'HRIS_DUPLICATE_ATTENDANCE') {
+    return String(hrisSync.message || 'Anda telah melakukan absensi...');
+  }
+
+  const syncMessage = String(hrisSync.message || '').trim();
+  if (syncMessage) {
+    return `Absensi diterima gateway, tetapi gagal tersimpan ke HRIS: ${syncMessage}`;
+  }
+
+  return 'Absensi diterima gateway, tetapi gagal tersimpan ke HRIS.';
 }
 
 export const checkIn = createAsyncThunk('checklog/checkIn', async (data, { rejectWithValue, getState }) => {
   try {
-    console.log('Sending check-in request...', data);
-    
+    console.log('Sending check-in request...');
+
     const state = getState();
     const user = state.auth.user;
     const karyawan = state.auth.karyawan;
-    
     const employeeId = karyawan?.id || user?.karyawan?.id;
 
-    if (data.photo) {
-      // Compress photo before upload to reduce network payload
-      console.log('[CheckIn] Compressing selfie photo...');
-      try {
-        await compressSelfiePhoto(data.photo, {
-          maxWidth: 640,    // Selffies don't need to be large
-          maxHeight: 640,   // Maintain aspect ratio
-          quality: 0.6,     // 60% quality is sufficient for attendance photos
-        });
-        console.log('[CheckIn] Photo compression completed');
-      } catch (compressError) {
-        console.warn('[CheckIn] Compression failed, continuing without upload photo:', compressError?.message);
-      }
-    }
+    // Bug fix: simpan hasil kompresi dan teruskan ke gateway
+    const photo = await preparePhoto(data.photo);
 
     const resp = await submitAttendanceToGateway({
       employeeId,
       statusScan: 0,
+      photo,
     });
+
+    const hrisSyncFailure = getHrisSyncFailureMessage(resp.data);
+    if (hrisSyncFailure) {
+      console.warn('[Checklog] HRIS sync failed after check-in:', resp.data?.data?.hris_sync);
+      return rejectWithValue(hrisSyncFailure);
+    }
 
     return resp.data;
   } catch (error) {
@@ -78,19 +144,19 @@ export const checkIn = createAsyncThunk('checklog/checkIn', async (data, { rejec
         data: error.response.data.data || null,
       };
     }
-    
+
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });
 
 export const checkOut = createAsyncThunk('checklog/checkOut', async (data, { rejectWithValue, getState }) => {
   try {
-    console.log('Sending check-out request...', data);
-    
+    console.log('Sending check-out request...');
+
     const state = getState();
     const user = state.auth.user;
     const karyawan = state.auth.karyawan;
-    
+
     console.log('Auth state:', {
       hasUser: !!user,
       hasKaryawan: !!karyawan,
@@ -98,28 +164,23 @@ export const checkOut = createAsyncThunk('checklog/checkOut', async (data, { rej
       karyawanId: karyawan?.id,
       karyawanNama: karyawan?.nama,
     });
-    
+
     const employeeId = karyawan?.id || user?.karyawan?.id;
 
-    if (data.photo) {
-      // Compress photo before upload to reduce network payload
-      console.log('[CheckOut] Compressing selfie photo...');
-      try {
-        await compressSelfiePhoto(data.photo, {
-          maxWidth: 640,    // Selffies don't need to be large
-          maxHeight: 640,   // Maintain aspect ratio
-          quality: 0.6,     // 60% quality is sufficient for attendance photos
-        });
-        console.log('[CheckOut] Photo compression completed');
-      } catch (compressError) {
-        console.warn('[CheckOut] Compression failed, continuing without upload photo:', compressError?.message);
-      }
-    }
+    // Bug fix: simpan hasil kompresi dan teruskan ke gateway
+    const photo = await preparePhoto(data.photo);
 
     const resp = await submitAttendanceToGateway({
       employeeId,
       statusScan: 1,
+      photo,
     });
+
+    const hrisSyncFailure = getHrisSyncFailureMessage(resp.data);
+    if (hrisSyncFailure) {
+      console.warn('[Checklog] HRIS sync failed after check-out:', resp.data?.data?.hris_sync);
+      return rejectWithValue(hrisSyncFailure);
+    }
 
     return resp.data;
   } catch (error) {
@@ -129,7 +190,7 @@ export const checkOut = createAsyncThunk('checklog/checkOut', async (data, { rej
         data: error.response.data.data || null,
       };
     }
-    
+
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });
@@ -173,7 +234,7 @@ const checklogSlice = createSlice({
       })
       .addCase(checkIn.fulfilled, (state, action) => {
         state.loading = false;
-        state.lastCheckIn = action.payload.data;
+        state.lastCheckIn = action.payload?.data ?? null;
         state.error = null;
       })
       .addCase(checkIn.rejected, (state, action) => {
@@ -186,7 +247,7 @@ const checklogSlice = createSlice({
       })
       .addCase(checkOut.fulfilled, (state, action) => {
         state.loading = false;
-        state.lastCheckOut = action.payload.data;
+        state.lastCheckOut = action.payload?.data ?? null;
         state.error = null;
       })
       .addCase(checkOut.rejected, (state, action) => {

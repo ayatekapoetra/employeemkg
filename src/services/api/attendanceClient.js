@@ -37,6 +37,7 @@ attendanceClient.interceptors.request.use(
 
     if (attendanceToken) {
       config.headers['x-internal-token'] = attendanceToken;
+      config.headers.Authorization = `Bearer ${attendanceToken}`;
     }
 
     return config;

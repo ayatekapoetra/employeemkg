@@ -19,6 +19,9 @@ const normalizeBaseUrl = (url) => {
 
 const API_URL = normalizeBaseUrl(rawApiUrl);
 
+// Log sekali saat module load agar mudah debug env HTTP/HTTPS
+console.log('[apiClient] baseURL =', API_URL);
+
 const createApiClient = (baseURL) => {
   
   const client = axios.create({

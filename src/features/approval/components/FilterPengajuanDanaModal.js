@@ -5,6 +5,8 @@ import { useSelector } from 'react-redux';
 import { Calendar, SearchNormal } from 'iconsax-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
+import apiClient from '../../../services/api/client';
+import { API_ENDPOINTS } from '../../../services/api/endpoints';
 
 const FilterPengajuanDanaModal = ({ isOpen, onClose, onApplyFilter, currentFilters }) => {
   const mode = useSelector(state => state.themes)?.value || 'light';
@@ -18,10 +20,32 @@ const FilterPengajuanDanaModal = ({ isOpen, onClose, onApplyFilter, currentFilte
     max_amount: '',
     date_start: '',
     date_end: '',
+    bisnis_unit_id: '',
     ...currentFilters
   });
 
   const [showDatePicker, setShowDatePicker] = useState({ visible: false, type: '' });
+  const [bisnisUnitList, setBisnisUnitList] = useState([]);
+
+  useEffect(() => {
+    fetchBisnisUnits();
+  }, []);
+
+  const fetchBisnisUnits = async () => {
+    try {
+      const response = await apiClient.get(API_ENDPOINTS.BISNIS_UNIT.MYLIST);
+      if (response.data?.diagnostic?.error === false) {
+        const rows = response.data.rows;
+        if (Array.isArray(rows)) {
+          setBisnisUnitList(rows);
+        } else if (rows?.data && Array.isArray(rows.data)) {
+          setBisnisUnitList(rows.data);
+        }
+      }
+    } catch (error) {
+      console.error('[FilterPengajuanDana] Error fetching bisnis units:', error.response?.data || error.message);
+    }
+  };
 
   const textColor = mode === 'dark' ? '#ffffff' : '#1f2937';
   const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280';
@@ -96,6 +120,7 @@ const FilterPengajuanDanaModal = ({ isOpen, onClose, onApplyFilter, currentFilte
       max_amount: '',
       date_start: '',
       date_end: '',
+      bisnis_unit_id: '',
     };
     setFilters(resetFilters);
     onApplyFilter(resetFilters);
@@ -172,6 +197,55 @@ const FilterPengajuanDanaModal = ({ isOpen, onClose, onApplyFilter, currentFilte
             contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16 }}
           >
             <VStack space={4}>
+              {/* Unit Bisnis Filter */}
+              {bisnisUnitList.length > 0 && (
+                <VStack space={2}>
+                  <Text fontSize="sm" fontFamily="Quicksand-SemiBold" color={textColor}>
+                    Unit Bisnis
+                  </Text>
+                  <HStack flexWrap="wrap" space={2}>
+                    <Pressable
+                      onPress={() => setFilters({ ...filters, bisnis_unit_id: '' })}
+                      bg={!filters.bisnis_unit_id ? (mode === 'dark' ? '#4b5563' : '#e5e7eb') : (mode === 'dark' ? '#374151' : '#f3f4f6')}
+                      px={4}
+                      py={2}
+                      rounded="full"
+                      mb={2}
+                    >
+                      <Text
+                        fontSize="xs"
+                        fontFamily="Quicksand-SemiBold"
+                        color={!filters.bisnis_unit_id ? (mode === 'dark' ? '#d1d5db' : '#374151') : subtitleColor}
+                      >
+                        Semua
+                      </Text>
+                    </Pressable>
+                    {bisnisUnitList.map((unit) => {
+                      const isActive = filters.bisnis_unit_id === unit.id;
+                      return (
+                        <Pressable
+                          key={unit.id}
+                          onPress={() => setFilters({ ...filters, bisnis_unit_id: isActive ? '' : unit.id })}
+                          bg={isActive ? (mode === 'dark' ? '#065f46' : '#d1fae5') : (mode === 'dark' ? '#374151' : '#f3f4f6')}
+                          px={4}
+                          py={2}
+                          rounded="full"
+                          mb={2}
+                        >
+                          <Text
+                            fontSize="xs"
+                            fontFamily="Quicksand-SemiBold"
+                            color={isActive ? (mode === 'dark' ? '#6ee7b7' : '#059669') : subtitleColor}
+                          >
+                            {unit.initial || unit.name}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </HStack>
+                </VStack>
+              )}
+
               {/* Status Filter */}
               <VStack space={2}>
                 <Text fontSize="sm" fontFamily="Quicksand-SemiBold" color={textColor}>

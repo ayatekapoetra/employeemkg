@@ -224,8 +224,7 @@ export default function ProfileScreen() {
           </Text>
           <TouchableOpacity
             onPress={() => {
-              // TODO: Navigate to edit profile
-              alert('Edit profile coming soon!');
+              router.push('/setting/edit-profile');
             }}
           >
             <Center

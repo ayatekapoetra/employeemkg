@@ -38,6 +38,8 @@ yarn-error.*
 
 # Credentials & Keystore
 credentials/
+google-services.json
+GoogleService-Info.plist
 
 # Environment files
 .env

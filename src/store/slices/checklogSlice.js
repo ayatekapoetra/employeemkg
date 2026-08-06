@@ -27,6 +27,37 @@ async function preparePhoto(photo) {
   }
 }
 
+function buildUploadPhoto(photo, fallbackPhoto = null) {
+  const candidate = photo || fallbackPhoto;
+  const fallback = fallbackPhoto || null;
+
+  const rawUri = candidate?.uri || candidate?.path || fallback?.uri || fallback?.path || null;
+  if (!rawUri) {
+    throw new Error('Foto absensi tidak memiliki URI/path yang valid untuk upload.');
+  }
+
+  const uriParts = String(rawUri).split('.');
+  const ext = uriParts[uriParts.length - 1]?.toLowerCase() || 'jpg';
+  const mimeType = candidate?.mimeType || candidate?.type || fallback?.mimeType || fallback?.type || (ext === 'png' ? 'image/png' : 'image/jpeg');
+
+  return {
+    uri: rawUri,
+    type: mimeType,
+    name: candidate?.fileName || candidate?.name || fallback?.fileName || fallback?.name || `attendance_${Date.now()}.${ext}`,
+    compressed: !!candidate?.compressed,
+    source: candidate === photo ? 'prepared' : 'fallback-original',
+  };
+}
+
+function buildDetailedNetworkError(error, uploadPhoto) {
+  const target = `${error?.config?.baseURL || ''}${error?.config?.url || ''}` || attendanceClient.defaults?.baseURL || 'unknown target';
+  const photoInfo = uploadPhoto
+    ? `uri=${uploadPhoto.uri}, type=${uploadPhoto.type || 'unknown'}, source=${uploadPhoto.source || 'unknown'}`
+    : 'photo=unavailable';
+
+  return `Tidak bisa mengirim absensi ke gateway (${target}). Detail: ${photoInfo}. Pada Android ini biasanya terkait koneksi ke gateway, timeout upload foto, atau format URI foto yang tidak dapat dibaca native upload.`;
+}
+
 /**
  * Bangun payload absensi sebagai JSON fields (untuk dimasukkan ke FormData).
  */
@@ -48,7 +79,7 @@ function buildAttendanceFields({ employeeId, statusScan, scan, deviceId }) {
  * Kirim data absensi ke gateway (app-aichat) menggunakan multipart/form-data
  * agar foto bisa ikut terkirim dan gateway dapat memprosesnya ke HRIS.
  */
-async function submitAttendanceToGateway({ employeeId, statusScan, photo }) {
+async function submitAttendanceToGateway({ employeeId, statusScan, photo, originalPhoto }) {
   if (!employeeId) {
     throw new Error('Data karyawan tidak ditemukan. Silakan login ulang.');
   }
@@ -71,20 +102,22 @@ async function submitAttendanceToGateway({ employeeId, statusScan, photo }) {
   formData.append('karyawan_id', fields.karyawan_id);
   formData.append('data', fields.data);
 
-  if (photo?.uri) {
-    // Tentukan ekstensi dari URI atau default ke jpeg
-    const uriParts = photo.uri.split('.');
-    const ext = uriParts[uriParts.length - 1]?.toLowerCase() || 'jpg';
-    const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
-    const fileName = `attendance_${Date.now()}.${ext}`;
+  const uploadPhoto = buildUploadPhoto(photo, originalPhoto);
 
+  if (uploadPhoto?.uri) {
     formData.append('photo', {
-      uri: photo.uri,
-      type: mimeType,
-      name: fileName,
+      uri: uploadPhoto.uri,
+      type: uploadPhoto.type,
+      name: uploadPhoto.name,
     });
 
-    console.log('[Checklog] Photo attached to FormData:', fileName);
+    console.log('[Checklog] Photo attached to FormData:', {
+      name: uploadPhoto.name,
+      uri: uploadPhoto.uri,
+      type: uploadPhoto.type,
+      source: uploadPhoto.source,
+      compressed: uploadPhoto.compressed,
+    });
   } else {
     console.warn('[Checklog] No photo available, request may be rejected by gateway.');
   }
@@ -120,14 +153,16 @@ export const checkIn = createAsyncThunk('checklog/checkIn', async (data, { rejec
     const user = state.auth.user;
     const karyawan = state.auth.karyawan;
     const employeeId = karyawan?.id || user?.karyawan?.id;
+    const originalPhoto = data.photo;
 
     // Bug fix: simpan hasil kompresi dan teruskan ke gateway
-    const photo = await preparePhoto(data.photo);
+    const photo = await preparePhoto(originalPhoto);
 
     const resp = await submitAttendanceToGateway({
       employeeId,
       statusScan: 0,
       photo,
+      originalPhoto,
     });
 
     const hrisSyncFailure = getHrisSyncFailureMessage(resp.data);
@@ -145,6 +180,17 @@ export const checkIn = createAsyncThunk('checklog/checkIn', async (data, { rejec
       };
     }
 
+    if (!error.response && (error.message?.includes('Network Error') || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED')) {
+      const uploadPhoto = (() => {
+        try {
+          return buildUploadPhoto(data.photo, data.photo);
+        } catch {
+          return null;
+        }
+      })();
+      return rejectWithValue(buildDetailedNetworkError(error, uploadPhoto));
+    }
+
     return rejectWithValue(error.response?.data?.message || error.message);
   }
 });
@@ -156,6 +202,7 @@ export const checkOut = createAsyncThunk('checklog/checkOut', async (data, { rej
     const state = getState();
     const user = state.auth.user;
     const karyawan = state.auth.karyawan;
+    const originalPhoto = data.photo;
 
     console.log('Auth state:', {
       hasUser: !!user,
@@ -168,12 +215,13 @@ export const checkOut = createAsyncThunk('checklog/checkOut', async (data, { rej
     const employeeId = karyawan?.id || user?.karyawan?.id;
 
     // Bug fix: simpan hasil kompresi dan teruskan ke gateway
-    const photo = await preparePhoto(data.photo);
+    const photo = await preparePhoto(originalPhoto);
 
     const resp = await submitAttendanceToGateway({
       employeeId,
       statusScan: 1,
       photo,
+      originalPhoto,
     });
 
     const hrisSyncFailure = getHrisSyncFailureMessage(resp.data);
@@ -189,6 +237,17 @@ export const checkOut = createAsyncThunk('checklog/checkOut', async (data, { rej
         diagnostic: error.response.data.diagnostic,
         data: error.response.data.data || null,
       };
+    }
+
+    if (!error.response && (error.message?.includes('Network Error') || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED')) {
+      const uploadPhoto = (() => {
+        try {
+          return buildUploadPhoto(data.photo, data.photo);
+        } catch {
+          return null;
+        }
+      })();
+      return rejectWithValue(buildDetailedNetworkError(error, uploadPhoto));
     }
 
     return rejectWithValue(error.response?.data?.message || error.message);

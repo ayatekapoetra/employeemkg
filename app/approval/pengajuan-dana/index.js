@@ -1,23 +1,26 @@
 import { useRouter } from 'expo-router';
-import { ArrowDown2, ArrowLeft, ArrowRight2, ArrowUp2, Calendar, Filter, Money, User, DocumentText, Clock } from 'iconsax-react-native';
+import { ArrowDown2, ArrowLeft, ArrowRight2, ArrowUp2, Calendar, Filter, Money, User, DocumentText } from 'iconsax-react-native';
 import moment from 'moment';
 import 'moment/locale/id';
-import { Badge, Center, HStack, Pressable, ScrollView, Spinner, Text, VStack } from 'native-base';
+import { Badge, Button, Center, HStack, Pressable, Spinner, Text, VStack } from 'native-base';
 import { TouchableOpacity, RefreshControl, FlatList } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppScreen, LoadingHauler } from '../../../src/components/common';
 import { COLORS } from '../../../src/constants/colors';
 import apiClient from '../../../src/services/api/client';
 import { API_ENDPOINTS } from '../../../src/services/api/endpoints';
 import FilterPengajuanDanaModal from '../../../src/features/approval/components/FilterPengajuanDanaModal';
+import usePengajuanDanaAccess from '../../../src/hooks/usePengajuanDanaAccess';
 
 moment.locale('id');
+
+const ITEMS_PER_PAGE = 25;
 
 export default function ApprovalPengajuanDana() {
   const router = useRouter();
   const mode = useSelector(state => state.themes)?.value || 'light';
-  const userProfile = useSelector(state => state.userProfile)?.value || {};
+  const { permissions, loading: accessLoading, error: accessError, retry: retryAccess } = usePengajuanDanaAccess();
 
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -26,6 +29,7 @@ export default function ApprovalPengajuanDana() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalData, setTotalData] = useState(0);
+  const [listError, setListError] = useState(null);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [summary, setSummary] = useState({
@@ -48,20 +52,17 @@ export default function ApprovalPengajuanDana() {
     bisnis_unit_id: '',
   });
 
-  const ITEMS_PER_PAGE = 25;
-
   const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
   const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1];
   const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280';
   const cardBg = mode === 'dark' ? '#1f2937' : '#ffffff';
   const borderColor = mode === 'dark' ? '#374151' : '#e5e7eb';
 
-  useEffect(() => {
-    fetchPengajuan(1, false);
-  }, [filters]);
+  const fetchPengajuan = useCallback(async (pageNum = 1, isLoadMore = false) => {
+    if (!permissions.can_read) return;
 
-  const fetchPengajuan = async (pageNum = 1, isLoadMore = false) => {
     try {
+      setListError(null);
       if (isLoadMore) {
         setLoadingMore(true);
       } else {
@@ -92,25 +93,36 @@ export default function ApprovalPengajuanDana() {
           setPengajuanList(newData);
         }
 
-        setTotalData(response.data.pagination?.total || 0);
+        const pagination = response.data.pagination || {};
+        setTotalData(pagination.total || 0);
 
         if (response.data.summary) {
           setSummary(response.data.summary);
         }
 
         setPage(pageNum);
-        setHasMore(newData.length === ITEMS_PER_PAGE);
+        setHasMore(Number(pagination.page || pageNum) < Number(pagination.lastPage || 1));
+      } else {
+        throw new Error(response.data?.message || 'Gagal memuat daftar Pengajuan Dana');
       }
     } catch (error) {
       console.error('Error fetching pengajuan dana:', error);
+      setListError(error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
       setRefreshing(false);
     }
-  };
+  }, [filters, permissions.can_read]);
+
+  useEffect(() => {
+    if (!accessLoading && !accessError && permissions.can_read) {
+      fetchPengajuan(1, false);
+    }
+  }, [accessLoading, accessError, fetchPengajuan, permissions.can_read]);
 
   const handleRefresh = () => {
+    if (!permissions.can_read) return;
     setRefreshing(true);
     setPage(1);
     fetchPengajuan(1, false);
@@ -122,7 +134,7 @@ export default function ApprovalPengajuanDana() {
   };
 
   const handleLoadMore = () => {
-    if (!loadingMore && hasMore) {
+    if (permissions.can_read && !loadingMore && hasMore) {
       fetchPengajuan(page + 1, true);
     }
   };
@@ -166,49 +178,6 @@ export default function ApprovalPengajuanDana() {
         py={0.5}
       >
         {config.label}
-      </Badge>
-    );
-  };
-
-  const getPrioritasBadge = (prioritas) => {
-    if (!prioritas) return null;
-
-    const prioritasConfig = {
-      P1: { 
-        label: 'Urgent', 
-        color: '#ef4444',
-        bg: mode === 'dark' ? '#7f1d1d' : '#fee2e2',
-        icon: '🔥'
-      },
-      P2: { 
-        label: 'Normal', 
-        color: '#3b82f6',
-        bg: mode === 'dark' ? '#1e3a8a' : '#dbeafe',
-        icon: '⚡'
-      },
-      P3: { 
-        label: 'Low', 
-        color: '#6b7280',
-        bg: mode === 'dark' ? '#374151' : '#f3f4f6',
-        icon: '📋'
-      },
-    };
-
-    const config = prioritasConfig[prioritas] || prioritasConfig.P2;
-
-    return (
-      <Badge
-        bg={config.bg}
-        _text={{ 
-          color: config.color, 
-          fontSize: 9, 
-          fontFamily: 'Poppins-Light' 
-        }}
-        rounded="md"
-        px={1.5}
-        py={0.5}
-      >
-        {config.icon} {config.label}
       </Badge>
     );
   };
@@ -355,7 +324,7 @@ export default function ApprovalPengajuanDana() {
     </Center>
   );
 
-  if (loading && page === 1) {
+  if (accessLoading || (loading && page === 1)) {
     return (
       <AppScreen>
         <VStack flex={1} bg={backgroundColor}>
@@ -368,10 +337,44 @@ export default function ApprovalPengajuanDana() {
             </Text>
           </HStack>
           <LoadingHauler
-            message="Memuat data..."
-            subMessage="Mengambil daftar pengajuan dana dari server"
+            message={accessLoading ? 'Memeriksa hak akses...' : 'Memuat data...'}
+            subMessage={accessLoading ? 'Memastikan akses Pengajuan Dana' : 'Mengambil daftar pengajuan dana dari server'}
             type="default"
           />
+        </VStack>
+      </AppScreen>
+    );
+  }
+
+  if (accessError || !permissions.can_read || listError) {
+    const isDenied = !accessError && !permissions.can_read;
+    const message = isDenied ? 'Akses ditolak' : 'Gagal memuat Pengajuan Dana';
+    const description = isDenied
+      ? 'Anda tidak memiliki hak akses untuk melihat Pengajuan Dana.'
+      : 'Terjadi kesalahan saat mengambil data. Silakan coba lagi.';
+
+    return (
+      <AppScreen>
+        <VStack flex={1} bg={backgroundColor}>
+          <HStack p={4} alignItems="center" space={3} borderBottomWidth={1} borderBottomColor={borderColor}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <ArrowLeft size={24} color={textColor} />
+            </TouchableOpacity>
+            <Text fontSize="lg" fontFamily="Quicksand-Bold" color={textColor}>Pengajuan Dana</Text>
+          </HStack>
+          <Center flex={1} px={6}>
+            <Money size={64} color={subtitleColor} variant="Bulk" />
+            <Text mt={4} fontSize="md" fontFamily="Quicksand-SemiBold" color={textColor}>{message}</Text>
+            <Text mt={1} textAlign="center" fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>{description}</Text>
+            {!isDenied && (
+              <Button mt={5} bg={mode === 'dark' ? '#1e40af' : '#2563eb'} onPress={() => {
+                if (accessError) retryAccess().catch(() => {});
+                else fetchPengajuan(1, false);
+              }}>
+                Coba Lagi
+              </Button>
+            )}
+          </Center>
         </VStack>
       </AppScreen>
     );

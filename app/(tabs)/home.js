@@ -91,41 +91,6 @@ export default function HomeScreen() {
           <HeaderScreen title="Home" onThemes onNotification />
           <VStack px={3} flex={1}>
             <VStack>
-              {/* <ImageBackground
-                source={require('../../assets/images/bg-home.png')}
-                resizeMode="cover"
-                style={{ height: 200, width: 'auto', justifyContent: 'flex-start', padding: 16 }}
-              >
-                <HStack space={1}>
-                  <SecurityUser size="32" color={textColor} variant="Bulk" />
-                  <VStack>
-                    {user?.karyawan?.nama ? (
-                      <Text
-                        fontSize={20}
-                        lineHeight="xs"
-                        fontFamily="Quicksand-SemiBold"
-                        fontWeight={700}
-                        color={textColor}
-                      >
-                        {user?.karyawan?.nama}
-                      </Text>
-                    ) : (
-                      <Text lineHeight="xs" color={iconColor}>
-                        - data anda tidak terhubung dengan data karyawan -
-                      </Text>
-                    )}
-                    <Text
-                      fontSize={16}
-                      fontFamily="Quicksand-Light"
-                      fontWeight={300}
-                      lineHeight="xs"
-                      color={textColor}
-                    >
-                      {user?.usertype || 'Guest'}
-                    </Text>
-                  </VStack>
-                </HStack>
-              </ImageBackground> */}
               <HStack my={3} space={1}>
                 <SecurityUser size="32" color={textColor} variant="Bulk" />
                 <VStack>
@@ -327,7 +292,6 @@ export default function HomeScreen() {
                     >
                       <Image
                         alt="Penugasan"
-                        // source={require('../../assets/images/excavator.png')}
                         source={require('../../assets/images/operational.png')}
                         resizeMode="contain"
                         style={{ width: 50, height: 50 }}
@@ -346,53 +310,6 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               </HStack>
               <HStack space={3} justifyContent="center">
-                {/* <TouchableOpacity style={{maxHeight: 100, flex: 1, aspectRatio: 1}} onPress={() => router.push('/operational')}> */}
-                {/* <TouchableOpacity style={{maxHeight: 100, flex: 1, aspectRatio: 1}} onPress={() => router.push('/penugasan')}>
-                  <HStack
-                    p={4}
-                    space={3}
-                    bg={cardBg}
-                    rounded="xl"
-                    alignItems="center"
-                    justifyContent="flex-start"
-                    borderWidth={1}
-                    borderColor={cardBorder}
-                    shadow={2}
-                    style={{
-                      shadowColor: cardShadow,
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 4,
-                      elevation: 3,
-                    }}>
-                      <VStack
-                        bg={colorTheme === 'dark' ? '#5e5f6cff' : '#fef3e2'}
-                        p={2}
-                        rounded="full"
-                      >
-                        <Image
-                          alt="Penugasan"
-                          // source={require('../../assets/images/operational.png')}
-                          source={require('../../assets/images/excavator.png')}
-                          resizeMode="contain"
-                          style={{ width: 60, height: 60 }}
-                        />
-                      </VStack>
-                      <VStack>
-                        <Text 
-                          color={textColor}
-                          fontFamily="Quicksand-SemiBold">
-                          Penugasan{'\n'}Equipment Harian
-                        </Text>
-                        <Text
-                          fontSize={11}
-                          fontFamily="Quicksand-Regular"
-                          color={textColor}>
-                          fitur fitur penunjang operational harian
-                        </Text>
-                      </VStack>
-                  </HStack>
-                </TouchableOpacity> */}
               </HStack>
             </VStack>
 

@@ -35,7 +35,7 @@ import {
 import { COLORS } from '../../src/constants/colors';
 import apiClient from '../../src/services/api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { logout } from '../../src/store/slices/authSlice';
+import { logout, unregisterPushBeforeLogout } from '../../src/store/slices/authSlice';
 
 export default function SecurityScreen() {
   const router = useRouter();
@@ -97,7 +97,9 @@ export default function SecurityScreen() {
       const keysToRemove = keys.filter(key => 
         !key.includes('theme') && 
         !key.includes('language') &&
-        !key.includes('onboarding')
+        !key.includes('onboarding') &&
+        key !== '@push_expo_token' &&
+        key !== '@push_registered_token'
       );
       await AsyncStorage.multiRemove(keysToRemove);
     } catch (error) {
@@ -108,6 +110,11 @@ export default function SecurityScreen() {
 
   const forceLogout = async () => {
     try {
+      try {
+        await unregisterPushBeforeLogout();
+      } catch (e) {
+        // ignore push unregister errors
+      }
       await clearAllLocalData();
       dispatch(logout());
       router.replace('/login');

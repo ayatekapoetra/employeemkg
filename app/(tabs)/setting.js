@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TouchableOpacity } from 'react-native';
-import { VStack, Text, Center, HStack, Divider, ScrollView } from 'native-base';
-import { AppScreen, HeaderScreen } from '../../src/components/common';
+import { VStack, Text, Center, HStack, Divider, ScrollView, Box } from 'native-base';
+import { AppScreen, HeaderScreen, LoadingHauler } from '../../src/components/common';
 import { useDispatch, useSelector } from 'react-redux';
 import { ArrowRight2, Profile, Whatsapp, ShieldSecurity, DriverRefresh, Calendar2, Stickynote, Convert, MonitorMobbile, House2, Civic, Logout } from 'iconsax-react-native';
-import { logout } from '../../src/store/slices/authSlice';
+import { logout, unregisterPushBeforeLogout } from '../../src/store/slices/authSlice';
 import { saveTheme } from '../../src/store/slices/themeSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -16,15 +16,28 @@ export default function SettingScreen() {
   const router = useRouter();
   const { user } = useSelector(state => state.auth);
   const mode = useSelector(state => state.themes).value;
+  const [navigatingAttendanceHistory, setNavigatingAttendanceHistory] = useState(false);
 
   const textColor = mode === 'dark' ? '#F5F5F5' : '#2f313e';
   const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280';
   const backgroundColor = mode === 'dark' ? '#2f313e' : '#F5F5F5';
   const lineColor = mode === 'dark' ? '#3a3c4a' : '#e5e7eb';
 
+  useEffect(() => {
+    router.prefetch('/setting/attendance-history');
+  }, [router]);
+
   const actionHandle = (val) => {
     console.log(val);
     try {
+      if (val.uri === 'riwayat-absensi-screen') {
+        setNavigatingAttendanceHistory(true);
+        requestAnimationFrame(() => {
+          router.push('/setting/attendance-history');
+        });
+        return;
+      }
+
       if (val.access) {
         if (val.access.includes(user?.usertype)) {
           if (val.uri === 'Profile') {
@@ -95,7 +108,13 @@ export default function SettingScreen() {
 
   const onUserLogout = async () => {
     console.log('Logging out...');
-    const keys = (await AsyncStorage.getAllKeys()).filter(f => f !== '@DEVICESID');
+    try {
+      await unregisterPushBeforeLogout();
+    } catch (e) {
+      // ignore
+    }
+    const preservedKeys = ['@DEVICESID', '@push_expo_token', '@push_registered_token'];
+    const keys = (await AsyncStorage.getAllKeys()).filter(f => !preservedKeys.includes(f));
     try {
       await AsyncStorage.multiRemove(keys);
       console.log('AsyncStorage cleared');
@@ -210,6 +229,26 @@ export default function SettingScreen() {
                 </TouchableOpacity>
               );
             })}
+            <VStack>
+              <TouchableOpacity onPress={onUserLogout}>
+                    <HStack
+                      p={3}
+                      bg="error.500"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      borderBottomWidth={1}
+                      borderBottomColor={lineColor}
+                    >
+                      <HStack space={2} alignItems="center">
+                        <Logout size="28" color="#FFF" variant="Bulk" />
+                        <Text fontWeight={500} fontFamily="Poppins-SemiBold" color="#FFF">
+                          Keluar
+                        </Text>
+                      </HStack>
+                      <ArrowRight2 size="12" color="#FFF" variant="Outline" />
+                    </HStack>
+              </TouchableOpacity>
+            </VStack>
             <Center my={5} px={3}>
               <Text fontWeight={300} fontFamily="Poppins-Regular" color={textColor} textAlign="center">
                 Mobile Attendances Aplication
@@ -229,26 +268,13 @@ export default function SettingScreen() {
             </Center>
           </VStack>
         </ScrollView>
-        <VStack>
-          <TouchableOpacity onPress={onUserLogout}>
-                <HStack
-                  p={3}
-                  bg="error.500"
-                  alignItems="center"
-                  justifyContent="space-between"
-                  borderBottomWidth={1}
-                  borderBottomColor={lineColor}
-                >
-                  <HStack space={2} alignItems="center">
-                    <Logout size="28" color="#FFF" variant="Bulk" />
-                    <Text fontWeight={500} fontFamily="Poppins-SemiBold" color="#FFF">
-                      Keluar
-                    </Text>
-                  </HStack>
-                  <ArrowRight2 size="12" color="#FFF" variant="Outline" />
-                </HStack>
-          </TouchableOpacity>
-        </VStack>
+        
+
+        {navigatingAttendanceHistory ? (
+          <Box pointerEvents="none" position="absolute" top={0} right={0} bottom={0} left={0} bg={mode === 'dark' ? 'rgba(47,49,62,0.88)' : 'rgba(245,245,245,0.9)'}>
+            <LoadingHauler message="Membuka Absensi Bulanan..." />
+          </Box>
+        ) : null}
       </VStack>
     </AppScreen>
   );

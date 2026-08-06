@@ -1,241 +1,324 @@
-import React, { useEffect, useState } from 'react';
-import { TouchableOpacity, ScrollView, Animated } from 'react-native';
-import { VStack, HStack, Text, Center, Progress } from 'native-base';
-import { AppScreen } from '../../src/components/common';
+import React, { useCallback, useEffect, useState } from 'react';
+import { FlatList, RefreshControl, TouchableOpacity } from 'react-native';
+import { Button, Center, HStack, Spinner, Text, VStack } from 'native-base';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
-import { useRouter } from 'expo-router';
-import { 
-  ArrowLeft, 
+import {
+  ArrowLeft,
+  ArrowRight2,
+  CloseCircle,
   Notification,
-  Setting3,
-  Timer1,
-  Code,
-  Lovely,
-  MessageQuestion
+  Refresh,
+  TickCircle,
 } from 'iconsax-react-native';
+import { AppScreen } from '../../src/components/common';
 import { COLORS } from '../../src/constants/colors';
+import apiClient from '../../src/services/api/client';
+import { API_ENDPOINTS } from '../../src/services/api/endpoints';
+import {
+  getNotificationInbox,
+  getNotificationUnreadCount,
+  markAllNotificationsRead,
+} from '../../src/services/api/notificationInbox';
+import {
+  getNotificationDebugInfo,
+  registerForPushNotifications,
+  requestPermission,
+} from '../../src/services/notifications';
+
+const FILTERS = [
+  { label: 'Semua', value: 'all' },
+  { label: 'Belum dibaca', value: 'unread' },
+  { label: 'Sudah dibaca', value: 'read' },
+];
+
+function isNotificationRead(item) {
+  const read = item?.is_read ?? item?.read;
+  return Boolean(item?.read_at || item?.readAt || read === true || read === 1 || read === '1');
+}
+
+function notificationId(item) {
+  return item?.uuid || item?.id;
+}
+
+function formatDate(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const mode = useSelector(state => state.themes)?.value || 'light';
-  
-  const [progress] = useState(new Animated.Value(0));
-  const [fadeAnim] = useState(new Animated.Value(0));
+  const mode = useSelector((state) => state.themes)?.value || 'light';
+  const authToken = useSelector((state) => state.auth)?.token;
+  const [notifications, setNotifications] = useState([]);
+  const [meta, setMeta] = useState({});
+  const [filter, setFilter] = useState('all');
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [inboxError, setInboxError] = useState('');
+  const [infoLoading, setInfoLoading] = useState(true);
+  const [info, setInfo] = useState(null);
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
   const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1];
   const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280';
   const cardBg = mode === 'dark' ? '#1f2937' : '#ffffff';
+  const unreadBg = mode === 'dark' ? '#173446' : '#eff9fc';
   const borderColor = mode === 'dark' ? '#374151' : '#e5e7eb';
 
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(progress, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: false,
-        }),
-        Animated.timing(progress, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: false,
-        }),
-      ])
-    ).start();
+  const loadUnreadCount = useCallback(async () => {
+    try {
+      setUnreadCount(await getNotificationUnreadCount());
+    } catch {
+      // Keep the last known count when this secondary request fails.
+    }
   }, []);
 
-  const developmentStages = [
-    { label: 'Planning', progress: 100, status: 'completed' },
-    { label: 'Design', progress: 85, status: 'in-progress' },
-    { label: 'Development', progress: 60, status: 'in-progress' },
-    { label: 'Testing', progress: 30, status: 'pending' },
-    { label: 'Release', progress: 0, status: 'pending' },
-  ];
+  const loadInbox = useCallback(async (page = 1, replace = true) => {
+    if (replace) setLoading(true);
+    else setLoadingMore(true);
+    setInboxError('');
+    try {
+      const read = filter === 'all' ? undefined : filter === 'read';
+      const result = await getNotificationInbox({ page, perPage: 20, read });
+      setNotifications((current) => replace ? result.data : [...current, ...result.data]);
+      setMeta(result.meta);
+    } catch (error) {
+      setInboxError(error?.response?.data?.message || error?.message || 'Gagal memuat notifikasi');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [filter]);
 
-  const InfoCard = ({ icon, title, description }) => (
-    <VStack bg={cardBg} p={4} rounded="xl" borderWidth={1} borderColor={borderColor} space={3}>
-      <HStack space={3} alignItems="flex-start">
-        <Center w={12} h={12} bg={mode === 'dark' ? '#374151' : '#f3f4f6'} rounded="xl">
-          {icon}
-        </Center>
-        <VStack flex={1}>
-          <Text fontSize="sm" fontFamily="Quicksand-Bold" color={textColor}>
-            {title}
-          </Text>
-          <Text fontSize="xs" fontFamily="Poppins-Light" color={subtitleColor} mt={1} lineHeight={18}>
-            {description}
-          </Text>
+  const loadInfo = useCallback(async () => {
+    setInfoLoading(true);
+    try {
+      setInfo(await getNotificationDebugInfo());
+    } catch (error) {
+      setMessage(error?.message || 'Gagal memuat status notifikasi');
+    } finally {
+      setInfoLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadInfo();
+  }, [loadInfo]);
+
+  useFocusEffect(useCallback(() => {
+    loadInbox(1, true);
+    loadUnreadCount();
+  }, [loadInbox, loadUnreadCount]));
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([loadInbox(1, true), loadUnreadCount(), loadInfo()]);
+    setRefreshing(false);
+  }, [loadInbox, loadInfo, loadUnreadCount]);
+
+  const onLoadMore = () => {
+    if (loading || loadingMore) return;
+    const currentPage = Number(meta.current_page ?? meta.currentPage ?? 1);
+    const lastPage = Number(meta.last_page ?? meta.lastPage ?? currentPage);
+    const hasMore = meta.has_more ?? meta.hasMore ?? currentPage < lastPage;
+    if (hasMore) loadInbox(currentPage + 1, false);
+  };
+
+  const onOpen = (item) => {
+    const uuid = notificationId(item);
+    if (!uuid) return;
+    if (!isNotificationRead(item)) {
+      setNotifications((current) => current.map((entry) => (
+        notificationId(entry) === uuid ? { ...entry, is_read: true } : entry
+      )));
+      setUnreadCount((count) => Math.max(0, count - 1));
+    }
+    router.push(`/notifications/${encodeURIComponent(String(uuid))}`);
+  };
+
+  const onMarkAllRead = async () => {
+    setBusy(true);
+    try {
+      await markAllNotificationsRead();
+      setNotifications((current) => current.map((item) => ({ ...item, is_read: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      setInboxError(error?.response?.data?.message || error?.message || 'Gagal menandai semua notifikasi');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onEnable = async () => {
+    setBusy(true);
+    setMessage('');
+    try {
+      await requestPermission();
+      const result = await registerForPushNotifications({ force: true });
+      setMessage(result.ok
+        ? 'Notifikasi berhasil didaftarkan ke server.'
+        : `Gagal: ${result.reason || result.error || 'unknown'}`);
+      await loadInfo();
+    } catch (error) {
+      setMessage(error?.message || 'Gagal mengaktifkan notifikasi');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onTest = async () => {
+    if (!authToken || String(authToken).startsWith('demo-token')) {
+      setMessage('Login diperlukan untuk test push.');
+      return;
+    }
+    setBusy(true);
+    setMessage('');
+    try {
+      const response = await apiClient.post(API_ENDPOINTS.PUSH.TEST, { app: 'app_emp' });
+      setMessage(response?.data?.enabled === false
+        ? 'Push flag OFF di server (PUSH_NOTIFICATIONS_ENABLED=false).'
+        : response?.data?.message || 'Test push dikirim.');
+    } catch (error) {
+      setMessage(error?.response?.data?.message || error?.message || 'Gagal kirim test push');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const granted = Boolean(info?.permission?.granted);
+  const hasToken = Boolean(info?.registeredToken || info?.storedToken);
+
+  const listHeader = (
+    <VStack space={4} pb={4}>
+      <HStack justifyContent="space-between" alignItems="center">
+        <VStack>
+          <Text fontFamily="Quicksand-Bold" fontSize="md" color={textColor}>Kotak Masuk</Text>
+          <Text fontSize="xs" color={subtitleColor}>{unreadCount} belum dibaca</Text>
         </VStack>
+        <Button size="sm" variant="ghost" isDisabled={unreadCount === 0} isLoading={busy}
+          _text={{ color: '#0A7EA4', fontSize: 'xs' }} onPress={onMarkAllRead}>
+          Tandai semua dibaca
+        </Button>
       </HStack>
+
+      <HStack space={2}>
+        {FILTERS.map((option) => (
+          <TouchableOpacity key={option.value} onPress={() => setFilter(option.value)}>
+            <Center px={3} py={2} rounded="full"
+              bg={filter === option.value ? '#0A7EA4' : cardBg}
+              borderWidth={1} borderColor={filter === option.value ? '#0A7EA4' : borderColor}>
+              <Text fontSize="xs" color={filter === option.value ? '#fff' : textColor}>
+                {option.label}
+              </Text>
+            </Center>
+          </TouchableOpacity>
+        ))}
+      </HStack>
+
+      {inboxError ? <Text color="red.500" fontSize="sm">{inboxError}</Text> : null}
+
+      <VStack bg={cardBg} p={3} rounded="xl" borderWidth={1} borderColor={borderColor} space={3}>
+        <HStack alignItems="center" space={3}>
+          <Center w={9} h={9} bg={mode === 'dark' ? '#374151' : '#e0f2fe'} rounded="lg">
+            <Notification size={19} color="#0A7EA4" variant="Bold" />
+          </Center>
+          <VStack flex={1}>
+            <Text fontFamily="Quicksand-Bold" color={textColor}>Push Notification</Text>
+            {infoLoading ? <Spinner size="sm" alignSelf="flex-start" color="#0A7EA4" /> : (
+              <Text fontSize="xs" color={subtitleColor}>
+                Izin {granted ? 'aktif' : 'belum aktif'} · Perangkat {hasToken ? 'terdaftar' : 'belum terdaftar'}
+              </Text>
+            )}
+          </VStack>
+          {granted && hasToken
+            ? <TickCircle size={20} color="#16a34a" variant="Bold" />
+            : <CloseCircle size={20} color="#dc2626" variant="Bold" />}
+        </HStack>
+        {message ? <Text fontSize="xs" color={textColor}>{message}</Text> : null}
+        <HStack space={2}>
+          <Button flex={1} size="sm" bg="#0A7EA4" isLoading={busy} onPress={onEnable}
+            leftIcon={<Refresh size={15} color="#fff" />}>
+            Aktifkan / Daftar Ulang
+          </Button>
+          <Button flex={1} size="sm" variant="outline" borderColor="#0A7EA4" isLoading={busy}
+            _text={{ color: '#0A7EA4' }} onPress={onTest}>
+            Test Push
+          </Button>
+        </HStack>
+      </VStack>
     </VStack>
   );
 
   return (
     <AppScreen>
       <VStack flex={1} bg={backgroundColor}>
-        <HStack p={4} alignItems="center" space={3} borderBottomWidth={1} borderBottomColor={borderColor}>
+        <HStack px={4} py={3} alignItems="center" space={3}>
           <TouchableOpacity onPress={() => router.back()}>
             <ArrowLeft size={24} color={textColor} />
           </TouchableOpacity>
-          <Text fontSize="lg" fontFamily="Quicksand-Bold" color={textColor}>
-            Notifikasi
-          </Text>
+          <Text fontSize="lg" fontFamily="Quicksand-Bold" color={textColor}>Notifikasi</Text>
         </HStack>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <VStack space={6} p={4}>
-            <Animated.View style={{ opacity: fadeAnim }}>
-              <VStack bg={mode === 'dark' ? '#78350f' : '#fef3c7'} p={8} rounded="3xl" alignItems="center" space={4}>
-                <Center w={32} h={32} bg="rgba(255,255,255,0.3)" rounded="full" mb={2}>
-                  <Text fontSize="6xl">🔔</Text>
-                </Center>
-                <VStack alignItems="center" space={2}>
-                  <Text fontSize="2xl" fontFamily="Quicksand-Bold" color={mode === 'dark' ? '#f59e0b' : '#d97706'} textAlign="center">
-                    Segera Hadir!
-                  </Text>
-                  <Text fontSize="sm" fontFamily="Poppins-Light" color={mode === 'dark' ? '#f59e0b' : '#d97706'} textAlign="center" opacity={0.9}>
-                    Fitur Notifikasi sedang dalam pengembangan
-                  </Text>
-                </VStack>
-                <HStack space={2} mt={2}>
-                  {[0, 1, 2].map((i) => (
-                    <Animated.View
-                      key={i}
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: mode === 'dark' ? '#f59e0b' : '#d97706',
-                        opacity: progress.interpolate({
-                          inputRange: [0, 0.5, 1],
-                          outputRange: i === 0 ? [0.3, 1, 0.3] : i === 1 ? [1, 0.3, 1] : [0.3, 1, 0.3],
-                        }),
-                      }}
-                    />
-                  ))}
-                </HStack>
-              </VStack>
-            </Animated.View>
-
-            <VStack bg={cardBg} p={5} rounded="2xl" borderWidth={1} borderColor={borderColor} space={4}>
-              <HStack space={3} alignItems="center">
-                <Center w={12} h={12} bg={mode === 'dark' ? '#374151' : '#f3f4f6'} rounded="xl">
-                  <Code size={24} color={mode === 'dark' ? '#60a5fa' : '#2563eb'} variant="Bold" />
-                </Center>
-                <VStack flex={1}>
-                  <Text fontSize="md" fontFamily="Quicksand-Bold" color={textColor}>
-                    Status Pengembangan
-                  </Text>
-                  <Text fontSize="xs" fontFamily="Poppins-Light" color={subtitleColor}>
-                    Tahapan development saat ini
-                  </Text>
-                </VStack>
-              </HStack>
-              <VStack space={3}>
-                {developmentStages.map((stage, index) => (
-                  <VStack key={index} space={2}>
-                    <HStack justifyContent="space-between" alignItems="center">
-                      <HStack space={2} alignItems="center">
-                        <Center
-                          w={6}
-                          h={6}
-                          bg={
-                            stage.status === 'completed' ? '#10b981' :
-                            stage.status === 'in-progress' ? '#f59e0b' :
-                            mode === 'dark' ? '#374151' : '#e5e7eb'
-                          }
-                          rounded="full"
-                        >
-                          <Text fontSize="xs" fontFamily="Quicksand-Bold" color="#ffffff">
-                            {stage.status === 'completed' ? '✓' : index + 1}
-                          </Text>
-                        </Center>
-                        <Text fontSize="sm" fontFamily="Quicksand-SemiBold" color={stage.status === 'pending' ? subtitleColor : textColor}>
-                          {stage.label}
-                        </Text>
-                      </HStack>
-                      <Text
-                        fontSize="xs"
-                        fontFamily="Poppins-Light"
-                        color={
-                          stage.status === 'completed' ? '#10b981' :
-                          stage.status === 'in-progress' ? '#f59e0b' :
-                          subtitleColor
-                        }
-                      >
-                        {stage.progress}%
+        <FlatList
+          data={notifications}
+          keyExtractor={(item, index) => String(notificationId(item) || index)}
+          contentContainerStyle={{ padding: 16, paddingBottom: 40, flexGrow: 1 }}
+          ListHeaderComponent={listHeader}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          onEndReached={onLoadMore}
+          onEndReachedThreshold={0.4}
+          renderItem={({ item }) => {
+            const read = isNotificationRead(item);
+            return (
+              <TouchableOpacity onPress={() => onOpen(item)}>
+                <HStack mb={2} p={3} rounded="xl" bg={read ? cardBg : unreadBg}
+                  borderWidth={1} borderColor={read ? borderColor : '#7dd3fc'} space={3} alignItems="center">
+                  <Center w={10} h={10} rounded="full" bg={read ? borderColor : '#0A7EA4'}>
+                    <Notification size={19} color={read ? subtitleColor : '#fff'} variant="Bold" />
+                  </Center>
+                  <VStack flex={1} space={1}>
+                    <HStack alignItems="center" space={2}>
+                      {!read ? <Center w={2} h={2} rounded="full" bg="#0A7EA4" /> : null}
+                      <Text flex={1} numberOfLines={1} color={textColor}
+                        fontFamily={read ? 'Quicksand-Regular' : 'Quicksand-Bold'}>
+                        {item.title || item.subject || 'Notifikasi'}
                       </Text>
                     </HStack>
-                    <Progress
-                      value={stage.progress}
-                      bg={mode === 'dark' ? '#374151' : '#e5e7eb'}
-                      _filledTrack={{
-                        bg: stage.status === 'completed' ? '#10b981' :
-                            stage.status === 'in-progress' ? '#f59e0b' :
-                            mode === 'dark' ? '#4b5563' : '#d1d5db'
-                      }}
-                      rounded="full"
-                      size="xs"
-                    />
+                    <Text numberOfLines={2} fontSize="xs" color={subtitleColor}>
+                      {item.body || item.message || item.content || 'Buka untuk melihat detail.'}
+                    </Text>
+                    <Text fontSize="2xs" color={subtitleColor}>
+                      {formatDate(item.created_at || item.createdAt || item.sent_at)}
+                    </Text>
                   </VStack>
-                ))}
-              </VStack>
-            </VStack>
-
-            <VStack space={3}>
-              <InfoCard
-                icon={<Timer1 size={24} color={mode === 'dark' ? '#60a5fa' : '#2563eb'} variant="Bold" />}
-                title="Estimasi Waktu"
-                description="Fitur ini diperkirakan akan tersedia dalam beberapa minggu ke depan"
-              />
-              <InfoCard
-                icon={<Setting3 size={24} color={mode === 'dark' ? '#10b981' : '#059669'} variant="Bold" />}
-                title="Dalam Pengembangan"
-                description="Tim developer kami sedang bekerja keras untuk menghadirkan fitur terbaik untuk Anda"
-              />
-              <InfoCard
-                icon={<Lovely size={24} color={mode === 'dark' ? '#ec4899' : '#db2777'} variant="Bold" />}
-                title="Terima Kasih"
-                description="Kami menghargai kesabaran Anda. Nantikan update selanjutnya!"
-              />
-            </VStack>
-
-            <VStack bg={mode === 'dark' ? '#1e3a8a' : '#dbeafe'} p={5} rounded="2xl" borderWidth={1} borderColor={mode === 'dark' ? '#3b82f6' : '#93c5fd'} space={3}>
-              <HStack space={3} alignItems="center">
-                <MessageQuestion size={24} color={mode === 'dark' ? '#93c5fd' : '#1e40af'} variant="Bold" />
-                <Text fontSize="md" fontFamily="Quicksand-Bold" color={mode === 'dark' ? '#dbeafe' : '#1e3a8a'}>
-                  Punya Pertanyaan?
-                </Text>
-              </HStack>
-              <Text fontSize="sm" fontFamily="Poppins-Light" color={mode === 'dark' ? '#bfdbfe' : '#1e40af'} lineHeight={22}>
-                Jika Anda memiliki pertanyaan atau saran tentang fitur ini, silakan hubungi tim support kami atau kirim feedback melalui menu pengaturan.
-              </Text>
-            </VStack>
-
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={{
-                backgroundColor: mode === 'dark' ? '#60a5fa' : '#2563eb',
-                padding: 16,
-                borderRadius: 12,
-                alignItems: 'center',
-              }}
-            >
-              <Text fontSize="sm" fontFamily="Quicksand-Bold" color="#ffffff">
-                Kembali ke Pengaturan
-              </Text>
-            </TouchableOpacity>
-
-            <VStack h={6} />
-          </VStack>
-        </ScrollView>
+                  <ArrowRight2 size={17} color={subtitleColor} />
+                </HStack>
+              </TouchableOpacity>
+            );
+          }}
+          ListEmptyComponent={loading ? (
+            <Center py={10}><Spinner color="#0A7EA4" /></Center>
+          ) : (
+            <Center py={10}>
+              <Notification size={38} color={subtitleColor} />
+              <Text mt={2} color={subtitleColor}>Belum ada notifikasi.</Text>
+            </Center>
+          )}
+          ListFooterComponent={loadingMore ? <Spinner my={4} color="#0A7EA4" /> : null}
+        />
       </VStack>
     </AppScreen>
   );

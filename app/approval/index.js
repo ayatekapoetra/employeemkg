@@ -1,18 +1,24 @@
 import { useRouter } from 'expo-router';
-import { VStack, ScrollView, Text, HStack, Center } from 'native-base';
+import { VStack, ScrollView, Text, HStack } from 'native-base';
 import { useSelector } from 'react-redux';
 import { AppScreen, HeaderScreen, LoadingHauler } from '../../src/components/common';
 import { COLORS } from '../../src/constants/colors';
 import ApprovalCard from '../../src/features/approval/components/ApprovalCard';
 import { ClipboardTick } from 'iconsax-react-native';
 import { View, RefreshControl } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import apiClient from '../../src/services/api/client';
 import { API_ENDPOINTS } from '../../src/services/api/endpoints';
+import usePengajuanDanaAccess from '../../src/hooks/usePengajuanDanaAccess';
 
 export default function ApprovalManagement() {
   const router = useRouter();
   const mode = useSelector(state => state.themes)?.value || 'light';
+  const {
+    permissions: pengajuanAccess,
+    loading: accessLoading,
+    retry: retryAccess,
+  } = usePengajuanDanaAccess();
 
   const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1];
   const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
@@ -20,6 +26,7 @@ export default function ApprovalManagement() {
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const refreshRequested = useRef(false);
   const [counts, setCounts] = useState({
     timesheet: 0,
     purchaseRequest: 0,
@@ -28,7 +35,7 @@ export default function ApprovalManagement() {
     pengajuanDana: 0,
   });
 
-  const fetchApprovalCounts = async (isRefreshing = false) => {
+  const fetchApprovalCounts = useCallback(async (isRefreshing = false, canReadPengajuan = false) => {
     try {
       if (isRefreshing) {
         setRefreshing(true);
@@ -40,7 +47,9 @@ export default function ApprovalManagement() {
         apiClient.get(API_ENDPOINTS.TIMESHEET.APPROVAL_LIST_COUNT),
         apiClient.get(`${API_ENDPOINTS.PURCHASE_REQUEST.LIST}?status=active&limit=1`),
         apiClient.get(`${API_ENDPOINTS.PURCHASE_REQUEST.LIST}?status=approved&limit=1`),
-        apiClient.get(API_ENDPOINTS.PENGAJUAN.APPROVAL_LIST_COUNT),
+        canReadPengajuan
+          ? apiClient.get(API_ENDPOINTS.PENGAJUAN.APPROVAL_LIST_COUNT)
+          : Promise.resolve(null),
       ]);
 
       const activeCount = purchaseRequestActiveRes.status === 'fulfilled' ? (purchaseRequestActiveRes.value?.data?.total || 0) : 0;
@@ -51,7 +60,7 @@ export default function ApprovalManagement() {
         purchaseRequest: activeCount + approvedCount,
         purchaseRequestActive: activeCount,
         purchaseRequestApproved: approvedCount,
-        pengajuanDana: pengajuanDanaRes.status === 'fulfilled' ? (pengajuanDanaRes.value?.data?.count || 0) : 0,
+        pengajuanDana: canReadPengajuan && pengajuanDanaRes.status === 'fulfilled' ? (pengajuanDanaRes.value?.data?.count || 0) : 0,
       });
     } catch (error) {
       console.error('Error fetching approval counts:', error);
@@ -59,14 +68,19 @@ export default function ApprovalManagement() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
-
-  useEffect(() => {
-    fetchApprovalCounts();
   }, []);
 
+  useEffect(() => {
+    if (!accessLoading) {
+      fetchApprovalCounts(refreshRequested.current, pengajuanAccess.can_read);
+      refreshRequested.current = false;
+    }
+  }, [accessLoading, fetchApprovalCounts, pengajuanAccess.can_read]);
+
   const onRefresh = () => {
-    fetchApprovalCounts(true);
+    refreshRequested.current = true;
+    setRefreshing(true);
+    retryAccess().catch(() => {});
   };
 
   const approvalData = [
@@ -108,7 +122,7 @@ export default function ApprovalManagement() {
       iconBgColor: mode === 'dark' ? '#7c2d12' : '#fed7aa',
     },
     
-  ];
+  ].filter(item => item.id !== 'funds' || pengajuanAccess.can_read);
 
   const totalPending = approvalData.reduce((sum, item) => sum + parseInt(item.count), 0);
 

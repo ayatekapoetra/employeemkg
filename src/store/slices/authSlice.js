@@ -546,4 +546,15 @@ const authSlice = createSlice({
 });
 
 export const { logout, clearError, patchContactData } = authSlice.actions;
+
+/** Keep the installation subscribed to public broadcasts after logout. */
+export async function unregisterPushBeforeLogout() {
+  try {
+    const { rebindPushTokenToAnonymous } = require('../../services/notifications');
+    await rebindPushTokenToAnonymous();
+  } catch (e) {
+    // ignore
+  }
+}
+
 export default authSlice.reducer;

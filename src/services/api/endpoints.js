@@ -6,6 +6,21 @@ export const API_ENDPOINTS = {
     REFRESH: 'auth/refresh',
     PROFILE: 'auth/profile',
   },
+
+  PUSH: {
+    REGISTER: 'mobile/push/register',
+    REGISTER_PUBLIC: 'public/mobile/push/register',
+    UNREGISTER: 'mobile/push/unregister',
+    TEST: 'mobile/push/test',
+  },
+
+  APP_NOTIFICATIONS: {
+    INBOX: 'app-notifications/inbox',
+    UNREAD_COUNT: 'app-notifications/unread-count',
+    DETAIL: uuid => `app-notifications/inbox/${uuid}`,
+    READ: uuid => `app-notifications/inbox/${uuid}/read`,
+    READ_ALL: 'app-notifications/inbox/read-all',
+  },
   
   CHECKLOG: {
     LIST: 'mobile/checklog',
@@ -206,11 +221,13 @@ export const API_ENDPOINTS = {
 
   PENGAJUAN: {
     LIST: 'pengajuan-dana',
+    ACCESS: 'pengajuan-dana/access',
     APPROVAL_LIST_COUNT: 'pengajuan-dana/approval-count',
     CREATE: 'pengajuan-dana',
     UPDATE: id => `pengajuan-dana/${id}`,
     DETAIL: id => `pengajuan-dana/${id}`,
     PERMISSIONS: id => `pengajuan-dana/${id}/permissions`,
+    ATTACHMENTS: id => `pengajuan-dana/${id}/attachments`,
     APPROVE: id => `pengajuan-dana/${id}/approve`,
     REJECT: id => `pengajuan-dana/${id}/reject`,
     VERIFY: id => `pengajuan-dana/${id}/verify`,

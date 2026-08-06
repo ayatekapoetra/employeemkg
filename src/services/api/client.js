@@ -41,6 +41,8 @@ const createApiClient = (baseURL) => {
       // Check if we're in demo mode
       const token = await AsyncStorage.getItem('@token');
       const isDemoMode = token && token.startsWith('demo-token');
+      const skipAuth = config.skipAuth === true;
+      delete config.skipAuth;
       
       // Allow login endpoint to work even in demo mode
       const isLoginEndpoint = config.url && (
@@ -48,7 +50,7 @@ const createApiClient = (baseURL) => {
         config.url.includes('signin-employee')
       );
       
-      if (isDemoMode && !isLoginEndpoint) {
+      if (isDemoMode && !isLoginEndpoint && !skipAuth) {
         // Reject the request with a special error that indicates demo mode
         const demoError = new Error('DEMO_MODE');
         demoError.isDemoMode = true;
@@ -62,7 +64,14 @@ const createApiClient = (baseURL) => {
         config.headers['X-UUID-DEVICE'] = deviceId;
       }
 
-      if (token) {
+      if (skipAuth) {
+        if (typeof config.headers.delete === 'function') {
+          config.headers.delete('Authorization');
+        } else {
+          delete config.headers.Authorization;
+          delete config.headers.authorization;
+        }
+      } else if (token) {
         config.headers.Authorization = 'Bearer ' + token;
       }
 

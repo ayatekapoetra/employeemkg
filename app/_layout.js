@@ -21,6 +21,10 @@ import { downloadSpecificData } from '../src/store/slices/downloadSlice';
 import database from '../src/database/SQLiteService';
 
 import { loadMasterDataAfterLogin, loadSQLiteToReduxAfterSync } from '../src/store/slices/authSlice';
+import {
+  registerForPushNotifications,
+  setupNotificationListeners,
+} from '../src/services/notifications';
 
 // OTA version marker for tracking
 import OTA_VERSION from '../src/constants/otaVersion';
@@ -89,7 +93,7 @@ function AppContent() {
           console.log('[OTA] App reloaded');
         }
       } catch (e) {
-        console.error('[OTA] Check/fetch failed:', e?.message || e);
+        console.warn('[OTA] Check/fetch failed:', e?.message || e);
       } finally {
         isChecking = false;
       }
@@ -105,6 +109,27 @@ function AppContent() {
 
     return () => sub?.remove?.();
   }, []);
+
+  // Notification delivery and deep links must work before login.
+  useEffect(() => {
+    const cleanupListeners = setupNotificationListeners() || (() => {});
+
+    return () => {
+      try {
+        cleanupListeners();
+      } catch (e) {
+        // ignore
+      }
+    };
+  }, []);
+
+  // Prompt on first launch, then upsert under the current user or anonymous identity.
+  useEffect(() => {
+    const authenticated = Boolean(authToken && !String(authToken).startsWith('demo-token'));
+    void registerForPushNotifications({ authenticated })
+      .then((result) => console.log('[push] register result:', result))
+      .catch((e) => console.warn('[push] bootstrap failed:', e?.message || e));
+  }, [authToken]);
 
 
 

@@ -1,43 +1,58 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeft, Calendar, User, Building, Location, Money,
-  DocumentText, TickCircle, CloseCircle, Clock, InfoCircle, CloseSquare,
-  ArrowLeft2, ArrowRight2, Copy
+  DocumentText, TickCircle, CloseCircle, InfoCircle, CloseSquare,
+  ArrowLeft2, ArrowRight2, Copy, DocumentUpload
 } from 'iconsax-react-native';
 import moment from 'moment';
 import 'moment/locale/id';
 import { Badge, Center, HStack, Pressable, ScrollView, Spinner, Text, VStack, Modal, Button, TextArea, useToast } from 'native-base';
-import { TouchableOpacity, RefreshControl, Image, Dimensions } from 'react-native';
-import { useEffect, useState, useRef } from 'react';
+import { TouchableOpacity, RefreshControl, Image, Dimensions, Linking } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppScreen, LoadingHauler } from '../../../src/components/common';
 import { COLORS } from '../../../src/constants/colors';
 import apiClient from '../../../src/services/api/client';
 import { API_ENDPOINTS } from '../../../src/services/api/endpoints';
 import * as Clipboard from 'expo-clipboard';
+import * as DocumentPicker from 'expo-document-picker';
 
 moment.locale('id');
 
 const { width, height } = Dimensions.get('window');
 
+const DEFAULT_DETAIL_PERMISSIONS = {
+  can_read: false,
+  can_insert: false,
+  can_update: false,
+  can_remove: false,
+  can_approve: false,
+  can_verify: false,
+  can_reject: false,
+  can_return: false,
+  can_validate: false,
+  can_upload_attachment: false,
+};
+
+const isPdfAttachment = file => String(file?.datatype || '').toLowerCase() === 'pdf' || String(file?.url || '').toLowerCase().endsWith('.pdf');
+
 export default function PengajuanDanaDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const mode = useSelector(state => state.themes)?.value || 'light';
-  const userProfile = useSelector(state => state.userProfile)?.value || {};
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pengajuan, setPengajuan] = useState(null);
-  const [permissions, setPermissions] = useState({
-    can_approve: false,
-    can_verify: false,
-    can_reject: false
-  });
+  const [permissions, setPermissions] = useState(DEFAULT_DETAIL_PERMISSIONS);
+  const [detailError, setDetailError] = useState(null);
+  const [permissionsError, setPermissionsError] = useState(null);
+  const [permissionsLoaded, setPermissionsLoaded] = useState(false);
   const [selectedTab, setSelectedTab] = useState('info');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [attachmentLoading, setAttachmentLoading] = useState(false);
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -48,27 +63,40 @@ export default function PengajuanDanaDetail() {
   const subtitleColor = mode === 'dark' ? '#9ca3af' : '#6b7280';
   const cardBg = mode === 'dark' ? '#1f2937' : '#ffffff';
   const borderColor = mode === 'dark' ? '#374151' : '#e5e7eb';
+  const imageFiles = (pengajuan?.files || []).filter(file => !isPdfAttachment(file));
 
-  useEffect(() => {
-    fetchDetail();
-  }, [id]);
+  const fetchDetail = useCallback(async () => {
+    setLoading(true);
+    setDetailError(null);
+    setPermissionsError(null);
+    setPermissionsLoaded(false);
 
-  const fetchDetail = async () => {
     try {
-      setLoading(true);
-      const [detailResponse, permissionsResponse] = await Promise.all([
+      const [detailResult, permissionsResult] = await Promise.allSettled([
         apiClient.get(API_ENDPOINTS.PENGAJUAN.DETAIL(id)),
         apiClient.get(API_ENDPOINTS.PENGAJUAN.PERMISSIONS(id))
       ]);
 
-      if (detailResponse.data.success) {
-        console.log('Pengajuan Detail:', JSON.stringify(detailResponse.data.data, null, 2));
-        setPengajuan(detailResponse.data.data);
+      if (detailResult.status === 'fulfilled' && detailResult.value.data.success) {
+        setPengajuan(detailResult.value.data.data);
+      } else {
+        const error = detailResult.status === 'rejected'
+          ? detailResult.reason
+          : new Error(detailResult.value.data?.message || 'Gagal memuat detail Pengajuan Dana');
+        setDetailError(error);
       }
 
-      if (permissionsResponse.data.success) {
-        console.log('Permissions:', permissionsResponse.data.data.permissions);
-        setPermissions(permissionsResponse.data.data.permissions);
+      if (permissionsResult.status === 'fulfilled' && permissionsResult.value.data.success) {
+        setPermissions({
+          ...DEFAULT_DETAIL_PERMISSIONS,
+          ...permissionsResult.value.data?.data?.permissions,
+        });
+        setPermissionsLoaded(true);
+      } else {
+        const error = permissionsResult.status === 'rejected'
+          ? permissionsResult.reason
+          : new Error(permissionsResult.value.data?.message || 'Gagal memuat hak akses Pengajuan Dana');
+        setPermissionsError(error);
       }
     } catch (error) {
       console.error('Error fetching detail:', error);
@@ -76,11 +104,57 @@ export default function PengajuanDanaDetail() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    setPengajuan(null);
+    fetchDetail();
+  }, [fetchDetail]);
 
   const handleRefresh = () => {
     setRefreshing(true);
     fetchDetail();
+  };
+
+  const handleUploadAttachment = async () => {
+    if (attachmentLoading || !permissions.can_upload_attachment) return;
+
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['image/jpeg', 'image/png', 'image/gif'],
+      multiple: true,
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.length) return;
+
+    const oversized = result.assets.find(file => Number(file.size || 0) > 10 * 1024 * 1024);
+    if (oversized) {
+      toast.show({ description: `${oversized.name} melebihi batas 10 MB`, placement: 'top', bg: '#dc2626' });
+      return;
+    }
+
+    const formData = new FormData();
+    result.assets.forEach((file, index) => {
+      formData.append('lampiran', {
+        uri: file.uri,
+        name: file.name || `nota-${index + 1}.jpg`,
+        type: file.mimeType || 'image/jpeg',
+      });
+    });
+
+    try {
+      setAttachmentLoading(true);
+      const response = await apiClient.post(API_ENDPOINTS.PENGAJUAN.ATTACHMENTS(id), formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (!response.data?.success) throw new Error(response.data?.message || 'Gagal mengunggah nota tambahan');
+
+      toast.show({ description: response.data.message || 'Nota tambahan berhasil diunggah', placement: 'top', bg: '#059669' });
+      await fetchDetail();
+    } catch (error) {
+      toast.show({ description: error?.response?.data?.message || error.message || 'Gagal mengunggah nota tambahan', placement: 'top', bg: '#dc2626' });
+    } finally {
+      setAttachmentLoading(false);
+    }
   };
 
   const handleApprove = async () => {
@@ -369,7 +443,7 @@ export default function PengajuanDanaDetail() {
         </VStack>
       </VStack>
 
-      {pengajuan?.files && pengajuan.files.length > 0 && (
+      {((pengajuan?.files && pengajuan.files.length > 0) || permissions.can_upload_attachment) && (
         <VStack
           bg={cardBg}
           p={4}
@@ -378,31 +452,45 @@ export default function PengajuanDanaDetail() {
           borderColor={borderColor}
           space={3}
         >
-          <Text fontSize="sm" fontFamily="Quicksand-SemiBold" color={textColor}>
-            Lampiran ({pengajuan.files.length})
-          </Text>
+          <HStack justifyContent="space-between" alignItems="center" space={2}>
+            <Text fontSize="sm" fontFamily="Quicksand-SemiBold" color={textColor}>
+              Lampiran ({pengajuan?.files?.length || 0})
+            </Text>
+            {permissions.can_upload_attachment && (
+              <Button size="sm" leftIcon={<DocumentUpload size={16} color="#ffffff" />} isLoading={attachmentLoading} onPress={handleUploadAttachment}>
+                Upload Nota
+              </Button>
+            )}
+          </HStack>
 
           <HStack flexWrap="wrap" space={2}>
             {pengajuan.files.map((file, index) => (
               <Pressable 
                 key={index}
                 onPress={() => {
-                  setSelectedImageIndex(index);
+                  if (isPdfAttachment(file)) {
+                    Linking.openURL(file.url);
+                    return;
+                  }
+                  setSelectedImageIndex(imageFiles.findIndex(image => image.id === file.id));
                   setShowImageViewer(true);
                 }}
                 width={(width - 64) / 3}
                 height={100}
                 mb={2}
               >
-                <Image
-                  source={{ uri: file.url }}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: 8,
-                  }}
-                  resizeMode="cover"
-                />
+                {isPdfAttachment(file) ? (
+                  <Center flex={1} bg={mode === 'dark' ? '#374151' : '#f3f4f6'} rounded="lg">
+                    <DocumentText size={28} color={subtitleColor} />
+                    <Text mt={1} fontSize="xs" color={subtitleColor}>PDF</Text>
+                  </Center>
+                ) : (
+                  <Image
+                    source={{ uri: file.url }}
+                    style={{ width: '100%', height: '100%', borderRadius: 8 }}
+                    resizeMode="cover"
+                  />
+                )}
               </Pressable>
             ))}
           </HStack>
@@ -713,11 +801,33 @@ export default function PengajuanDanaDetail() {
     );
   }
 
-  console.log('Render action buttons check:', {
-    pengajuan: !!pengajuan,
-    permissions,
-    showButtons: pengajuan && (permissions.can_approve || permissions.can_verify || permissions.can_reject)
-  });
+  if ((permissionsLoaded && !permissions.can_read) || (!pengajuan && detailError)) {
+    const isDenied = permissionsLoaded && !permissions.can_read;
+    return (
+      <AppScreen>
+        <VStack flex={1} bg={backgroundColor}>
+          <HStack p={4} alignItems="center" space={3} borderBottomWidth={1} borderBottomColor={borderColor}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <ArrowLeft size={24} color={textColor} />
+            </TouchableOpacity>
+            <Text fontSize="lg" fontFamily="Quicksand-Bold" color={textColor}>Detail Pengajuan Dana</Text>
+          </HStack>
+          <Center flex={1} px={6}>
+            <InfoCircle size={64} color={subtitleColor} variant="Bulk" />
+            <Text mt={4} fontSize="md" fontFamily="Quicksand-SemiBold" color={textColor}>
+              {isDenied ? 'Akses ditolak' : 'Gagal memuat detail'}
+            </Text>
+            <Text mt={1} textAlign="center" fontSize="sm" fontFamily="Poppins-Light" color={subtitleColor}>
+              {isDenied
+                ? 'Anda tidak memiliki hak akses untuk melihat Pengajuan Dana ini.'
+                : 'Terjadi kesalahan saat mengambil detail. Silakan coba lagi.'}
+            </Text>
+            {!isDenied && <Button mt={5} onPress={fetchDetail}>Coba Lagi</Button>}
+          </Center>
+        </VStack>
+      </AppScreen>
+    );
+  }
 
   return (
     <AppScreen>
@@ -730,6 +840,21 @@ export default function PengajuanDanaDetail() {
             Detail Pengajuan Dana
           </Text>
         </HStack>
+
+        {(permissionsError || detailError) && (
+          <VStack mx={4} mt={4} p={3} rounded="lg" bg={mode === 'dark' ? '#78350f' : '#fef3c7'}>
+            <Text fontSize="xs" fontFamily="Poppins-Light" color={mode === 'dark' ? '#fde68a' : '#92400e'}>
+              {permissionsError
+                ? 'Hak akses tindakan gagal dimuat. Detail tetap ditampilkan, tetapi tindakan dinonaktifkan.'
+                : 'Pembaruan detail gagal. Data terakhir yang berhasil dimuat tetap ditampilkan.'}
+            </Text>
+            <Pressable mt={2} onPress={fetchDetail}>
+              <Text fontSize="xs" fontFamily="Quicksand-Bold" color={mode === 'dark' ? '#fbbf24' : '#b45309'}>
+                Coba Lagi
+              </Text>
+            </Pressable>
+          </VStack>
+        )}
 
         <VStack
           bg={mode === 'dark' ? '#7c2d12' : '#ea580c'}
@@ -832,7 +957,7 @@ export default function PengajuanDanaDetail() {
           {selectedTab === 'history' && renderHistoryTab()}
         </ScrollView>
 
-        {pengajuan && (permissions.can_approve || permissions.can_verify || permissions.can_reject) && (
+        {pengajuan && !permissionsError && (permissions.can_approve || permissions.can_verify || permissions.can_reject) && (
           <VStack
             bg={cardBg}
             p={4}
@@ -863,22 +988,24 @@ export default function PengajuanDanaDetail() {
                   </VStack>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={{ flex: 1 }}
-                  onPress={() => setShowRejectModal(true)}
-                  disabled={actionLoading}
-                >
-                  <VStack
-                    bg={mode === 'dark' ? '#7f1d1d' : '#ef4444'}
-                    py={3}
-                    rounded="xl"
-                    alignItems="center"
+                {permissions.can_reject && (
+                  <TouchableOpacity
+                    style={{ flex: 1 }}
+                    onPress={() => setShowRejectModal(true)}
+                    disabled={actionLoading}
                   >
-                    <Text fontSize="sm" fontFamily="Quicksand-Bold" color="#ffffff">
-                      Reject
-                    </Text>
-                  </VStack>
-                </TouchableOpacity>
+                    <VStack
+                      bg={mode === 'dark' ? '#7f1d1d' : '#ef4444'}
+                      py={3}
+                      rounded="xl"
+                      alignItems="center"
+                    >
+                      <Text fontSize="sm" fontFamily="Quicksand-Bold" color="#ffffff">
+                        Reject
+                      </Text>
+                    </VStack>
+                  </TouchableOpacity>
+                )}
               </HStack>
             )}
 
@@ -905,22 +1032,24 @@ export default function PengajuanDanaDetail() {
                   </VStack>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={{ flex: 1 }}
-                  onPress={() => setShowRejectModal(true)}
-                  disabled={actionLoading}
-                >
-                  <VStack
-                    bg={mode === 'dark' ? '#7f1d1d' : '#ef4444'}
-                    py={3}
-                    rounded="xl"
-                    alignItems="center"
+                {permissions.can_reject && (
+                  <TouchableOpacity
+                    style={{ flex: 1 }}
+                    onPress={() => setShowRejectModal(true)}
+                    disabled={actionLoading}
                   >
-                    <Text fontSize="sm" fontFamily="Quicksand-Bold" color="#ffffff">
-                      Reject
-                    </Text>
-                  </VStack>
-                </TouchableOpacity>
+                    <VStack
+                      bg={mode === 'dark' ? '#7f1d1d' : '#ef4444'}
+                      py={3}
+                      rounded="xl"
+                      alignItems="center"
+                    >
+                      <Text fontSize="sm" fontFamily="Quicksand-Bold" color="#ffffff">
+                        Reject
+                      </Text>
+                    </VStack>
+                  </TouchableOpacity>
+                )}
               </HStack>
             )}
 
@@ -1004,7 +1133,7 @@ export default function PengajuanDanaDetail() {
                 zIndex={9999}
               >
                 <Text fontSize="md" fontFamily="Quicksand-SemiBold" color="white">
-                  {selectedImageIndex + 1} / {pengajuan?.files?.length || 0}
+                  {selectedImageIndex + 1} / {imageFiles.length}
                 </Text>
                 <Pressable 
                   onPress={() => {
@@ -1018,9 +1147,9 @@ export default function PengajuanDanaDetail() {
               </HStack>
 
               <Center flex={1}>
-                {pengajuan?.files && pengajuan.files[selectedImageIndex] && (
+                {imageFiles[selectedImageIndex] && (
                   <Image
-                    source={{ uri: pengajuan.files[selectedImageIndex].url }}
+                    source={{ uri: imageFiles[selectedImageIndex].url }}
                     style={{
                       width: width,
                       height: height - 100,
@@ -1030,7 +1159,7 @@ export default function PengajuanDanaDetail() {
                 )}
               </Center>
 
-              {pengajuan?.files && pengajuan.files.length > 1 && (
+              {imageFiles.length > 1 && (
                 <HStack 
                   justifyContent="space-between" 
                   alignItems="center"
@@ -1053,17 +1182,17 @@ export default function PengajuanDanaDetail() {
                   </Pressable>
 
                   <Text fontSize="sm" fontFamily="Poppins-Light" color="white">
-                    {selectedImageIndex + 1} / {pengajuan?.files?.length || 0}
+                    {selectedImageIndex + 1} / {imageFiles.length}
                   </Text>
 
                   <Pressable
                     onPress={() => {
-                      if (selectedImageIndex < pengajuan.files.length - 1) {
+                      if (selectedImageIndex < imageFiles.length - 1) {
                         setSelectedImageIndex(selectedImageIndex + 1);
                       }
                     }}
-                    disabled={selectedImageIndex === pengajuan.files.length - 1}
-                    opacity={selectedImageIndex === pengajuan.files.length - 1 ? 0.3 : 1}
+                    disabled={selectedImageIndex === imageFiles.length - 1}
+                    opacity={selectedImageIndex === imageFiles.length - 1 ? 0.3 : 1}
                     p={2}
                     _pressed={{ opacity: 0.7 }}
                   >

@@ -122,10 +122,11 @@ const MasterDataProgress = ({
   console.log('[MasterDataProgress] Rendering progress bar');
 
   return (
-    <Animated.View 
+    <Animated.View
+      pointerEvents="none"
       style={[
-        styles.container, 
-        { 
+        styles.container,
+        {
           backgroundColor: bgColor,
           borderColor: borderColor,
           opacity: fadeAnim,

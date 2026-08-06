@@ -3,7 +3,7 @@
     "name": "employeemkg",
     "slug": "employeemkg",
     "owner": "ayateka",
-    "version": "1.2.32",
+    "version": "1.2.33",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -15,7 +15,7 @@
     "description": "Employee management application for CV. MAKKURAGA TAMA",
     "primaryColor": "#E6F4FE",
     "ios": {
-      "buildNumber": "32",
+      "buildNumber": "38",
       "supportsTablet": true,
       "splash": {
         "image": "./assets/images/sp-1.png",
@@ -31,11 +31,14 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Aplikasi membutuhkan akses kamera untuk mengambil foto absensi (check in/out)",
-        "NSPhotoLibraryUsageDescription": "Aplikasi membutuhkan akses galeri foto untuk memilih foto profil karyawan"
+        "NSPhotoLibraryUsageDescription": "Aplikasi membutuhkan akses galeri foto untuk memilih foto profil karyawan",
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
-      "versionCode": 35,
+      "versionCode": 39,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -54,7 +57,8 @@
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.POST_NOTIFICATIONS"
       ],
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
@@ -122,6 +126,13 @@
             "deploymentTarget": "15.1",
             "buildReactNativeFromSource": true
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#0A7EA4",
+          "defaultChannel": "default"
         }
       ]
     ],

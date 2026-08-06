@@ -5,6 +5,7 @@
   },
   "build": {
     "development": {
+      "environment": "development",
       "channel": "devemployeeapp",
       "developmentClient": true,
       "distribution": "internal",
@@ -13,6 +14,7 @@
       }
     },
     "preview": {
+      "environment": "preview",
       "channel": "prevemployeeapp",
       "distribution": "internal",
       "android": {
@@ -23,6 +25,7 @@
       }
     },
     "production": {
+      "environment": "production",
       "channel": "proemployeeapp",
       "android": {
         "buildType": "app-bundle",
@@ -37,7 +40,7 @@
     "production": {
       "android": {
         "track": "production",
-        "releaseStatus": "draft"
+        "releaseStatus": "completed"
       },
       "ios": {
         "ascAppId": "6756352528",

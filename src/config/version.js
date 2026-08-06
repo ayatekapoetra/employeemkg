@@ -15,10 +15,10 @@
  */
 
 // App version from environment (fallback to default)
-export const APP_VERSION = process.env.EXPO_PUBLIC_APP_VERSION || '1.2.32';
+export const APP_VERSION = process.env.EXPO_PUBLIC_APP_VERSION || '1.2.33';
 
 // Build number from environment (fallback to default)
-export const BUILD_NUMBER = process.env.EXPO_PUBLIC_BUILD_NUMBER || '35';
+export const BUILD_NUMBER = process.env.EXPO_PUBLIC_BUILD_NUMBER || '39';
 
 // OTA revision marker independent from binary build/runtime version
 export const OTA_UPDATE_VERSION = process.env.EXPO_PUBLIC_OTA_UPDATE_VERSION || '1';
@@ -82,6 +82,7 @@ export const getVersionInfo = () => ({
  * - 1.2.26 (26): Pengawas data integration
  */
 export const VERSION_HISTORY = [
+  { version: '1.2.33', build: '39', ota: '1', date: '2026-08-06', notes: 'Notification inbox and Android release bump' },
   { version: '1.2.32', build: '35', ota: '1', date: '2026-07-22', notes: 'Android versionCode bump for Play Store upload' },
   { version: '1.2.31', build: '32', ota: '1', date: '2026-06-12', notes: 'OTA marker bump for latest update delivery' },
   { version: '1.2.31', build: '31', date: '2026-06-06', notes: 'Block media permissions and target Android 15' },

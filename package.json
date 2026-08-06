@@ -9,6 +9,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "eas:build:production:android": "eas build --platform android --profile production",
+    "eas:submit:production:android": "eas submit --platform android --profile production --latest",
     "ota:preview": "eas update --channel prevemployeeapp --environment preview",
     "ota:production": "eas update --channel proemployeeapp --environment production",
     "postinstall": "patch-package"
@@ -42,6 +44,7 @@
     "expo-linking": "~8.0.12",
     "expo-location": "~19.0.8",
     "expo-media-library": "~18.2.1",
+    "expo-notifications": "~0.32.17",
     "expo-router": "~6.0.23",
     "expo-secure-store": "~15.0.8",
     "expo-sharing": "~14.0.8",

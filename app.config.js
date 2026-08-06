@@ -50,29 +50,60 @@ function withCleartextHttp(config) {
   return config;
 }
 
+function resolveGoogleServicesFile() {
+  const fromEnv = process.env.GOOGLE_SERVICES_JSON;
+  if (fromEnv && fs.existsSync(fromEnv)) {
+    return fromEnv;
+  }
+
+  // Local fallback for prebuild/dev (credentials/ is gitignored)
+  const localCandidates = [
+    path.resolve(__dirname, 'credentials/google-services.json'),
+    path.resolve(__dirname, 'google-services.json'),
+  ];
+  for (const candidate of localCandidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
 // Dynamic Expo config to inject public envs
-module.exports = ({ config }) => ({
-  ...config,
-  plugins: [
-    ...(config.plugins || []),
-    withCleartextHttp,
-  ],
-  extra: {
-    ...(config.extra || {}),
-    // Core environment variables
-    EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
-    EXPO_PUBLIC_ENV: process.env.EXPO_PUBLIC_ENV,
-    EXPO_PUBLIC_ABSENSI_API_URL: process.env.EXPO_PUBLIC_ABSENSI_API_URL,
-    TOKEN_ABSENSI: process.env.TOKEN_ABSENSI,
+module.exports = ({ config }) => {
+  const googleServicesFile = resolveGoogleServicesFile();
 
-    // App version configuration
-    EXPO_PUBLIC_APP_VERSION: process.env.EXPO_PUBLIC_APP_VERSION || '1.2.32',
-    EXPO_PUBLIC_BUILD_NUMBER: process.env.EXPO_PUBLIC_BUILD_NUMBER || '35',
-    EXPO_PUBLIC_OTA_UPDATE_VERSION: process.env.EXPO_PUBLIC_OTA_UPDATE_VERSION || '1',
-    EXPO_PUBLIC_OTA_CHANNEL: process.env.EXPO_PUBLIC_OTA_CHANNEL || 'proemployeeapp',
+  return {
+    ...config,
+    android: {
+      ...(config.android || {}),
+      ...(googleServicesFile ? { googleServicesFile } : {}),
+    },
+    plugins: [
+      ...(config.plugins || []),
+      withCleartextHttp,
+    ],
+    extra: {
+      ...(config.extra || {}),
+      // Core environment variables
+      EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
+      EXPO_PUBLIC_ENV: process.env.EXPO_PUBLIC_ENV,
+      EXPO_PUBLIC_ABSENSI_API_URL: process.env.EXPO_PUBLIC_ABSENSI_API_URL,
+      TOKEN_ABSENSI: process.env.TOKEN_ABSENSI,
 
-    // Optional: Google Maps API Keys
-    EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY,
-    EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY,
-  },
-});
+      // App version configuration
+      EXPO_PUBLIC_APP_VERSION: process.env.EXPO_PUBLIC_APP_VERSION || '1.2.33',
+      EXPO_PUBLIC_BUILD_NUMBER: process.env.EXPO_PUBLIC_BUILD_NUMBER || '39',
+      EXPO_PUBLIC_OTA_UPDATE_VERSION: process.env.EXPO_PUBLIC_OTA_UPDATE_VERSION || '1',
+      EXPO_PUBLIC_OTA_CHANNEL: process.env.EXPO_PUBLIC_OTA_CHANNEL || 'proemployeeapp',
+
+      // Optional: Google Maps API Keys
+      EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY,
+      EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY,
+
+      // Debug marker: whether google-services path resolved at config time
+      hasGoogleServicesFile: Boolean(googleServicesFile),
+    },
+  };
+};

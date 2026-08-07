@@ -1,9 +1,10 @@
 import { useRouter } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
-import { ArrowLeft2, Moon, Notification, Sun1, Filter, ArrowLeft } from 'iconsax-react-native';
+import { ArrowLeft2, Moon, Sun1, Filter, ArrowLeft } from 'iconsax-react-native';
 import { HStack, IconButton, StatusBar, Text } from 'native-base';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleTheme } from '../../store/slices/themeSlice';
+import { NotificationButton } from '../notifications';
 
 const HeaderScreen = ({ 
   title, 
@@ -89,15 +90,9 @@ const HeaderScreen = ({
             />
           )}
           {onNotification && (
-            <IconButton
-              icon={
-                <Notification
-                  size={24}
-                  variant="Bulk"
-                  color={isDark ? '#F5F5F5' : '#2f313e'}
-                />
-              }
+            <NotificationButton 
               onPress={() => router.push('/notifications')}
+              size={24}
             />
           )}
         </HStack>

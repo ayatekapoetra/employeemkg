@@ -24,6 +24,7 @@ import { loadMasterDataAfterLogin, loadSQLiteToReduxAfterSync } from '../src/sto
 import {
   registerForPushNotifications,
   setupNotificationListeners,
+  requestPermissionOnAppLaunch,
 } from '../src/services/notifications';
 
 // OTA version marker for tracking
@@ -121,6 +122,20 @@ function AppContent() {
         // ignore
       }
     };
+  }, []);
+
+  // Request notification permission on initial app launch
+  useEffect(() => {
+    void requestPermissionOnAppLaunch()
+      .then((result) => {
+        console.log('[push] initial permission request result:', result);
+        if (result.granted) {
+          console.log('[push] notification permission granted');
+        } else {
+          console.log('[push] notification permission denied or not requested');
+        }
+      })
+      .catch((e) => console.warn('[push] initial permission request failed:', e?.message || e));
   }, []);
 
   // Prompt on first launch, then upsert under the current user or anonymous identity.

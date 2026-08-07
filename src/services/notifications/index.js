@@ -60,7 +60,7 @@ export async function getPermissionStatus() {
   return settings;
 }
 
-export async function requestPermission() {
+export async function requestPermission(forceRequest = false) {
   if (!Device.isDevice) {
     return { granted: false, reason: 'not_device' };
   }
@@ -72,7 +72,9 @@ export async function requestPermission() {
     return { granted: true, status: current };
   }
 
-  if (current.status !== Notifications.PermissionStatus.UNDETERMINED) {
+  // If forceRequest is true, always show permission dialog (for initial app launch)
+  // Otherwise, only show if status is UNDETERMINED (first time)
+  if (!forceRequest && current.status !== Notifications.PermissionStatus.UNDETERMINED) {
     return { granted: false, status: current };
   }
 
@@ -82,6 +84,14 @@ export async function requestPermission() {
     requested.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
 
   return { granted, status: requested };
+}
+
+/**
+ * Request notification permission on initial app launch.
+ * This will always show the permission dialog if not yet granted.
+ */
+export async function requestPermissionOnAppLaunch() {
+  return requestPermission(true);
 }
 
 export async function getExpoPushToken() {

@@ -12,7 +12,7 @@ export default function useNotificationUnreadCount() {
   const [error, setError] = useState(null);
   const [lastValidCount, setLastValidCount] = useState(0);
   
-  const authToken = useSelector((state) => state.auth?.token);
+  const authToken = useSelector((state) => state.auth && state.auth.token);
   const hasAuthToken = Boolean(authToken && !String(authToken).startsWith('demo-token'));
 
   const fetchCount = useCallback(async () => {
@@ -30,7 +30,8 @@ export default function useNotificationUnreadCount() {
 
       if (Platform.OS === 'ios') {
         const permissions = await Notifications.getPermissionsAsync();
-        if (permissions.granted || permissions.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL) {
+        const iosStatus = permissions.ios && permissions.ios.status;
+        if (permissions.granted || iosStatus === Notifications.IosAuthorizationStatus.PROVISIONAL) {
           await Notifications.setBadgeCountAsync(result);
         }
       }
@@ -66,8 +67,12 @@ export default function useNotificationUnreadCount() {
 
     return () => {
       active = false;
-      appStateSubscription?.remove();
-      badgeRefreshSubscription?.remove();
+      if (appStateSubscription && appStateSubscription.remove) {
+        appStateSubscription.remove();
+      }
+      if (badgeRefreshSubscription && badgeRefreshSubscription.remove) {
+        badgeRefreshSubscription.remove();
+      }
     };
   }, [fetchCount, authToken]);
 

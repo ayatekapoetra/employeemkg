@@ -7,7 +7,7 @@ import useNotificationUnreadCount from '../../hooks/useNotificationUnreadCount';
 import { COLORS } from '../../constants/colors';
 
 export default function NotificationButton({ onPress, size = 24, showBadge = true, maxBadgeValue = 99 }) {
-  const mode = useSelector((state) => state.themes)?.value || 'light';
+  const mode = useSelector((state) => state.themes && state.themes.value) || 'light';
   const isDark = mode === 'dark';
   const { count } = useNotificationUnreadCount();
 

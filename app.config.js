@@ -70,12 +70,40 @@ function resolveGoogleServicesFile() {
   return undefined;
 }
 
+function resolveAPNsKeyFile() {
+  const fromEnv = process.env.EXPO_PUBLIC_IOS_APNS_KEY_PATH;
+  if (fromEnv && fs.existsSync(fromEnv)) {
+    return fromEnv;
+  }
+
+  // Local fallback for prebuild/dev (credentials/ is gitignored)
+  const localCandidates = [
+    path.resolve(__dirname, 'credentials/AuthKey_7H3ZQPPXQX.p8'),
+    path.resolve(__dirname, 'AuthKey_7H3ZQPPXQX.p8'),
+  ];
+  for (const candidate of localCandidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
 // Dynamic Expo config to inject public envs
 module.exports = ({ config }) => {
   const googleServicesFile = resolveGoogleServicesFile();
+  const apnsKeyFile = resolveAPNsKeyFile();
 
   return {
     ...config,
+    ios: {
+      ...(config.ios || {}),
+      ...(apnsKeyFile ? {
+        appleTeamId: 'ZZXA4KQS76',
+        bundleIdentifier: 'com.ayateka.appemployee',
+      } : {}),
+    },
     android: {
       ...(config.android || {}),
       ...(googleServicesFile ? { googleServicesFile } : {}),
@@ -83,6 +111,19 @@ module.exports = ({ config }) => {
     plugins: [
       ...(config.plugins || []),
       withCleartextHttp,
+      [
+        'expo-notifications',
+        {
+          iosMode: 'production',
+          color: '#0A7EA4',
+          defaultChannel: 'default',
+          ...(apnsKeyFile ? {
+            appleTeamId: 'ZZXA4KQS76',
+            apnsKey: apnsKeyFile,
+            apnsKeyId: '7H3ZQPPXQX',
+          } : {}),
+        },
+      ],
     ],
     extra: {
       ...(config.extra || {}),
@@ -102,8 +143,9 @@ module.exports = ({ config }) => {
       EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY,
       EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY,
 
-      // Debug marker: whether google-services path resolved at config time
+      // Debug markers
       hasGoogleServicesFile: Boolean(googleServicesFile),
+      hasAPNsKeyFile: Boolean(apnsKeyFile),
     },
   };
 };

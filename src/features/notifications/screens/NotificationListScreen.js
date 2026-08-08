@@ -11,6 +11,7 @@ import {
   getNotificationUnreadCount,
   markAllNotificationsRead,
 } from '../../../services/api/notificationInbox';
+import { triggerBadgeRefresh } from '../../../components/notifications';
 
 const FILTERS = [
   { label: 'Semua', value: 'all' },
@@ -114,6 +115,7 @@ export default function NotificationListScreen() {
           : entry
       )));
       setUnreadCount((count) => Math.max(0, count - 1));
+      triggerBadgeRefresh();
     }
     router.push(`/notifications/${encodeURIComponent(String(uuid))}`);
   };
@@ -125,6 +127,7 @@ export default function NotificationListScreen() {
     try {
       await markAllNotificationsRead();
       setUnreadCount(0);
+      triggerBadgeRefresh();
       if (filter === 'unread') setNotifications([]);
       else setNotifications((current) => current.map((item) => ({
         ...item,

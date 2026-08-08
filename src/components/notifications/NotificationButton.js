@@ -18,20 +18,22 @@ export default function NotificationButton({ onPress, size = 24, showBadge = tru
     }
   };
 
-  const badgeColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
-  const textColor = '#FFFFFF';
-  const iconColor = isDark ? '#F5F5F5' : '#2f313e';
-
+  const iconColor = isDark ? '#E5E7EB' : '#1F2937';
   const displayCount = count > maxBadgeValue ? `${maxBadgeValue}+` : String(count);
   const shouldShowBadge = showBadge && count > 0;
 
   return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={styles.button}>
+    <TouchableOpacity
+      onPress={handlePress}
+      activeOpacity={0.7}
+      style={styles.button}
+      hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+    >
       <View style={styles.iconContainer}>
-        <Notification size={size} variant="Bulk" color={iconColor} />
+        <Notification size={size} variant="Bulk" color={iconColor} style={styles.icon} />
         {shouldShowBadge && (
-          <View style={[styles.badge, { backgroundColor: badgeColor === '#1f2937' ? '#DC2626' : '#DC2626' }]}>
-            <Text style={[styles.badgeText, { color: textColor }]}>{displayCount}</Text>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{displayCount}</Text>
           </View>
         )}
       </View>
@@ -42,16 +44,23 @@ export default function NotificationButton({ onPress, size = 24, showBadge = tru
 const styles = StyleSheet.create({
   button: {
     padding: 8,
+    minWidth: 44,
+    minHeight: 44,
   },
   iconContainer: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 24,
+    minHeight: 24,
+  },
+  icon: {
+    backgroundColor: 'transparent',
   },
   badge: {
     position: 'absolute',
-    top: -2,
-    right: -2,
+    top: 0,
+    right: 0,
     minWidth: 18,
     height: 18,
     borderRadius: 9,
@@ -59,6 +68,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+    zIndex: 10,
   },
   badgeText: {
     fontSize: 10,

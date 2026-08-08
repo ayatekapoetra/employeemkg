@@ -10,6 +10,7 @@ import {
   getNotificationDetail,
   markNotificationRead,
 } from '../../../services/api/notificationInbox';
+import { triggerBadgeRefresh } from '../../../components/notifications';
 
 function formatDate(value) {
   if (!value) return '';
@@ -50,6 +51,7 @@ export default function NotificationDetailScreen() {
         is_read: true,
         read_at: current.read_at || new Date().toISOString(),
       } : current));
+      triggerBadgeRefresh();
     } catch (requestError) {
       setReadError(requestError?.response?.data?.message || requestError?.message || 'Gagal memperbarui status baca');
     }

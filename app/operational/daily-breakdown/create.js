@@ -22,6 +22,7 @@ import { TickCircle, CloseCircle } from 'iconsax-react-native'
 import { COLORS } from '../../../src/constants/colors'
 import { createBreakdown } from '../../../src/store/slices/breakdownSlice'
 import { getKaryawan } from '../../../src/store/slices/karyawanSlice'
+import { getPenyewa } from '../../../src/store/slices/penyewaSlice'
 import { KATEGORI } from '../../../src/utils/dailyBreakdown/constants'
 import { validateBreakdownForm, formatDateTime } from '../../../src/utils/dailyBreakdown/utils'
 import CategoryBadge from './components/CategoryBadge'
@@ -65,14 +66,18 @@ export default function CreateBreakdownScreen() {
   const lokasiRedux = useSelector((state) => state.lokasikerja)
   const shiftRedux = useSelector((state) => state.shift)
   const karyawanRedux = useSelector((state) => state.karyawan)
+  const penyewaRedux = useSelector((state) => state.penyewa)
 
   const [formData, setFormData] = useState({
     equipment_id: '',
     lokasi_id: '',
     breakdown_at: new Date(),
     smu: '',
+    hmkm_start: '',
+    hmkm_end: '',
     shift_id: '',
     pengawas_id: '',
+    penyewa_id: '',
     category: '',
     items: [{ problem_issue: '', status: 'WT' }],
   })
@@ -83,6 +88,7 @@ export default function CreateBreakdownScreen() {
   const [lokasiLocal, setLokasiLocal] = useState([])
   const [shiftLocal, setShiftLocal] = useState([])
   const [karyawanLocal, setKaryawanLocal] = useState([])
+  const [penyewaLocal, setPenyewaLocal] = useState([])
   const [modalState, setModalState] = useState({ visible: false, type: 'success', title: '', message: '' })
 
   const isDark = mode === 'dark'
@@ -102,10 +108,12 @@ export default function CreateBreakdownScreen() {
         if (!kary || kary.length === 0) {
           kary = await database.getOprDrv?.()
         }
+        const peny = await database.getPenyewa?.()
         setEquipmentLocal(Array.isArray(eq) ? eq : [])
         setLokasiLocal(Array.isArray(lok) ? lok : [])
         setShiftLocal(Array.isArray(shift) ? shift : [])
         setKaryawanLocal(Array.isArray(kary) ? kary : [])
+        setPenyewaLocal(Array.isArray(peny) ? peny : [])
       } catch (e) {
         console.warn('[CreateBreakdown] loadLocal error:', e?.message || e)
       }
@@ -127,6 +135,21 @@ export default function CreateBreakdownScreen() {
       dispatch(getKaryawan())
     }
   }, [dispatch, karyawanRedux?.data, karyawanRedux?.loading])
+
+  // ensure penyewa redux populated from API/AsyncStorage
+  useEffect(() => {
+    const data = penyewaRedux?.data
+    const hasData = Array.isArray(data)
+      ? data.length > 0
+      : Array.isArray(data?.rows)
+        ? data.rows.length > 0
+        : Array.isArray(data?.data)
+          ? data.data.length > 0
+          : false
+    if (!penyewaRedux?.loading && !hasData) {
+      dispatch(getPenyewa())
+    }
+  }, [dispatch, penyewaRedux?.data, penyewaRedux?.loading])
 
   const equipmentOptions = useMemo(() => {
     let data = equipmentRedux?.data || []
@@ -273,6 +296,24 @@ export default function CreateBreakdownScreen() {
       .filter(Boolean)
   }, [karyawanRedux?.data, karyawanLocal])
 
+  const penyewaOptions = useMemo(() => {
+    let data = penyewaRedux?.data || []
+    if (!Array.isArray(data)) data = data?.rows || data?.data || []
+    if ((!data || data.length === 0) && penyewaLocal.length) {
+      data = penyewaLocal
+    }
+    if (!data || data.length === 0) return []
+    return data
+      .map((item) => {
+        const id = item.id?.toString() || ''
+        if (!id) return null
+        const nama = item.nama || item.name || ''
+        const abbr = item.abbr || item.kode || ''
+        return { id, nama: nama || '[No Name]', subtitle: abbr }
+      })
+      .filter(Boolean)
+  }, [penyewaRedux?.data, penyewaLocal])
+
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
@@ -330,6 +371,11 @@ export default function CreateBreakdownScreen() {
       : ''
     const pengawasId = formData.pengawas_id ? formData.pengawas_id.toString() : ''
 
+    if (!formData.penyewa_id) {
+      Alert.alert('Validasi', 'Penyewa wajib dipilih')
+      return
+    }
+
     const dataToValidate = {
       equipment_id: formData.equipment_id,
       lokasi_id: formData.lokasi_id,
@@ -351,9 +397,12 @@ export default function CreateBreakdownScreen() {
       equipment_id: formData.equipment_id,
       lokasi_id: formData.lokasi_id,
       breakdown_at: breakdownAtValue,
-      smu: formData.smu ? parseFloat(formData.smu) : null,
+      smu: null,
+      hmkm_start: formData.hmkm_start ? parseFloat(formData.hmkm_start) : 0,
+      hmkm_end: 0,
       shift_id: formData.shift_id || null,
       pengawas_id: pengawasId || null,
+      penyewa_id: formData.penyewa_id || null,
       category: categoryValue,
       items: formData.items
         .map(it => ({ ...it, problem_issue: it.problem_issue?.trim() || '' }))
@@ -374,7 +423,7 @@ export default function CreateBreakdownScreen() {
         message: 'Breakdown tersimpan. Terima kasih sudah melaporkan dengan detail.',
       })
     } catch (error) {
-      console.log('[CreateBreakdown] error response:', error?.response?.data || error)
+      console.log('[CreateBreakdown] error response:', error?.response?.data || error?.message || 'unknown error')
       const backendMessage = error?.response?.data?.diagnostic?.message || error?.message || 'Gagal membuat breakdown'
       setModalState({
         visible: true,
@@ -479,14 +528,23 @@ export default function CreateBreakdownScreen() {
               displaySubKey="subtitle"
             />
 
+            <BottomSheetSelect
+              label="Penyewa *"
+              placeholder="Pilih penyewa"
+              value={formData.penyewa_id?.toString() || ''}
+              options={penyewaOptions.map(o => ({ id: o.id, nama: o.nama, subtitle: o.subtitle }))}
+              onChange={(id) => updateField('penyewa_id', id)}
+              displaySubKey="subtitle"
+            />
+
             <View style={styles.field}>
-              <Text style={[styles.label, { color: subtitleColor }]}>SMU</Text>
+              <Text style={[styles.label, { color: subtitleColor }]}>HM/KM Start</Text>
               <TextInput
                 style={[styles.input, { color: textColor, borderColor }]}
-                value={formData.smu}
-                onChangeText={(text) => updateField('smu', text)}
+                value={formData.hmkm_start}
+                onChangeText={(text) => updateField('hmkm_start', text)}
                 keyboardType="numeric"
-                placeholder="Masukkan SMU"
+                placeholder="Mulai"
                 placeholderTextColor={subtitleColor}
               />
             </View>

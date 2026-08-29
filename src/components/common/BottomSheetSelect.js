@@ -43,9 +43,10 @@ const BottomSheetSelect = ({
     const q = searchQuery.trim().toLowerCase()
     if (!q) return options
     return options.filter((item) => {
-      const main = item[displayKey]?.toLowerCase() || ''
-      const sub = item[displaySubKey]?.toLowerCase() || ''
-      return main.includes(q) || sub.includes(q)
+      const main = String(item[displayKey] ?? '').toLowerCase()
+      const sub = String(item[displaySubKey] ?? '').toLowerCase()
+      const id = String(item.id ?? '').toLowerCase()
+      return main.includes(q) || sub.includes(q) || id.includes(q)
     })
   }, [options, searchQuery, displayKey, displaySubKey])
 

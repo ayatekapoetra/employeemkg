@@ -1,1 +1,2 @@
-export { default as NotificationButton, triggerBadgeRefresh } from './NotificationButton';
+export { default as NotificationButton } from './NotificationButton';
+export { triggerBadgeRefresh } from '../../hooks/useNotificationUnreadCount';

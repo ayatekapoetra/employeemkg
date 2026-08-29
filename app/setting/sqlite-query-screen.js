@@ -273,7 +273,7 @@ export default function SQLiteQueryScreen() {
   // Check AsyncStorage data
   const checkAsyncStorageData = useCallback(async () => {
     try {
-      const keys = ['@barang', '@equipment', '@shift', '@lokasipit', '@oprdrv', '@penyewa', '@pemasok', '@gudang', '@karyawan'];
+      const keys = ['@barang', '@equipment', '@shift', '@lokasipit', '@lokasi-pit', '@lokasipit_meta', '@oprdrv', '@penyewa', '@pemasok', '@gudang', '@karyawan'];
       const storageData = {};
 
       for (const key of keys) {
@@ -372,7 +372,7 @@ export default function SQLiteQueryScreen() {
     try {
       setLoading(true);
 
-      const keys = ['@barang', '@equipment', '@shift', '@lokasipit', '@oprdrv', '@penyewa', '@pemasok'];
+      const keys = ['@barang', '@equipment', '@shift', '@lokasipit', '@lokasi-pit', '@oprdrv', '@penyewa', '@pemasok'];
       let totalSynced = 0;
       let totalFailed = 0;
 
@@ -391,6 +391,7 @@ export default function SQLiteQueryScreen() {
             '@equipment': 'master_equipment',
             '@shift': 'master_shift',
             '@lokasipit': 'master_lokasipit',
+            '@lokasi-pit': 'master_lokasipit',
             '@oprdrv': 'master_oprdrv',
             '@penyewa': 'master_penyewa',
             '@pemasok': 'master_pemasok'

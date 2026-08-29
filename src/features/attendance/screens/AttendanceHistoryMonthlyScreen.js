@@ -9,7 +9,6 @@ import {
   Animated,
   Dimensions,
   Pressable,
-  InteractionManager,
 } from 'react-native';
 import { Box, Center, HStack, Text, VStack } from 'native-base';
 import moment from 'moment';
@@ -347,7 +346,6 @@ export default function AttendanceHistoryMonthlyScreen() {
   const canUseFilter = FILTER_ALLOWED_USERTYPES.includes(usertype);
   const [selectedMonth, setSelectedMonth] = useState(moment().format('YYYY-MM'));
   const [loading, setLoading] = useState(false);
-  const [screenReady, setScreenReady] = useState(false);
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [previewVisible, setPreviewVisible] = useState(false);
@@ -358,19 +356,6 @@ export default function AttendanceHistoryMonthlyScreen() {
   const [bisnisList, setBisnisList] = useState([]);
   const [monthData, setMonthData] = useState(null);
   const [fetchError, setFetchError] = useState(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    const interactionTask = InteractionManager.runAfterInteractions(() => {
-      requestAnimationFrame(() => {
-        if (isMounted) setScreenReady(true);
-      });
-    });
-    return () => {
-      isMounted = false;
-      interactionTask.cancel?.();
-    };
-  }, []);
 
   useEffect(() => {
     if (!canUseFilter) return;
@@ -522,9 +507,8 @@ export default function AttendanceHistoryMonthlyScreen() {
   }, [selectedMonth, filter, authKaryawan]);
 
   useEffect(() => {
-    if (!screenReady) return;
     fetchMonthlyHris();
-  }, [fetchMonthlyHris, screenReady]);
+  }, [fetchMonthlyHris]);
 
   const handlePreviousMonth = () => setSelectedMonth(moment(selectedMonth, 'YYYY-MM').subtract(1, 'month').format('YYYY-MM'));
   const handleNextMonth = () => {
@@ -589,9 +573,7 @@ export default function AttendanceHistoryMonthlyScreen() {
 
           <Box mb={3} p={4} rounded="2xl" bg={t.cardBg} borderWidth={1} borderColor={t.border} style={styles.cardShadow}><HStack alignItems="center" justifyContent="space-between"><VStack space={1} flex={1} pr={3}><Text fontSize={13} fontFamily="Quicksand-Bold" color={t.text}>Ringkasan bulan ini</Text><Text fontSize={12} fontFamily="Poppins-Regular" color={t.muted}>{s.hadir + s.terlambat} hari hadir dari {s.totalHariKerja} hari kerja</Text><HStack mt={2} space={3} flexWrap="wrap"><HStack alignItems="center" space={1}><TickCircle size={14} color={STATUS_META.hadir.color} variant="Bold" /><Text fontSize={11} color={t.muted} fontFamily="Poppins-Regular">On-time {s.hadir}</Text></HStack><HStack alignItems="center" space={1}><Warning2 size={14} color={STATUS_META.terlambat.color} variant="Bold" /><Text fontSize={11} color={t.muted} fontFamily="Poppins-Regular">Telat {s.terlambat}</Text></HStack></HStack></VStack><Center w={20} h={20} rounded="full" borderWidth={6} borderColor={t.accent} bg={isDark ? 'rgba(96,165,250,0.12)' : 'rgba(37,99,235,0.08)'}><Text fontSize={16} fontFamily="Quicksand-Bold" color={t.accent}>{s.persentaseKehadiran}%</Text></Center></HStack></Box>
 
-          {!screenReady ? (
-            <Center py={12}><LoadingHauler message="Menyiapkan Absensi Bulanan..." type="default" /></Center>
-          ) : loading ? (
+          {loading ? (
             <Center py={12}><LoadingHauler message="Memuat kehadiran bulanan..." type="default" /></Center>
           ) : fetchError ? (
             <Center py={12} px={4}><InfoCircle size={36} color={STATUS_META.absen.color} variant="Bulk" /><Text mt={3} fontFamily="Quicksand-Bold" color={t.text} textAlign="center">Gagal memuat data</Text><Text mt={1} fontSize={12} fontFamily="Poppins-Regular" color={t.muted} textAlign="center">{fetchError}</Text><TouchableOpacity onPress={fetchMonthlyHris} style={{ marginTop: 16 }}><Box px={5} py={2.5} rounded="xl" bg={t.accent}><Text color="#fff" fontFamily="Quicksand-Bold">Coba lagi</Text></Box></TouchableOpacity></Center>

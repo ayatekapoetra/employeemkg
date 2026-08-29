@@ -127,6 +127,9 @@ export const downloadSpecificData = createAsyncThunk(
           endpoint: API_ENDPOINTS.LOKASI_PIT.LIST,
           syncFn: database.syncLokasiPit.bind(database),
           cacheKey: '@lokasipit',
+          // legacy key used by older builds of lokasiPitSlice
+          legacyCacheKeys: ['@lokasi-pit'],
+          cacheMetaKey: '@lokasipit_meta',
         },
         'oprdrv': {
           endpoint: API_ENDPOINTS.KARYAWAN.OPRDRV,
@@ -247,6 +250,12 @@ export const downloadSpecificData = createAsyncThunk(
       if (apiData.length > 0) {
         try {
           await AsyncStorage.setItem(config.cacheKey, JSON.stringify(apiData));
+          if (config.cacheMetaKey) {
+            await AsyncStorage.setItem(config.cacheMetaKey, JSON.stringify({ updatedAt: Date.now() }));
+          }
+          if (Array.isArray(config.legacyCacheKeys) && config.legacyCacheKeys.length > 0) {
+            await AsyncStorage.multiRemove(config.legacyCacheKeys);
+          }
           console.log(`[Download] Saved ${dataType} to AsyncStorage`);
         } catch (storageError) {
           console.warn(`[Download] AsyncStorage save failed for ${dataType}:`, storageError.message);
@@ -273,6 +282,12 @@ export const downloadSpecificData = createAsyncThunk(
       console.log(`[Download] STEP 2: Saving ${dataType} to AsyncStorage...`);
       try {
         await AsyncStorage.setItem(config.cacheKey, JSON.stringify(apiData));
+        if (config.cacheMetaKey) {
+          await AsyncStorage.setItem(config.cacheMetaKey, JSON.stringify({ updatedAt: Date.now() }));
+        }
+        if (Array.isArray(config.legacyCacheKeys) && config.legacyCacheKeys.length > 0) {
+          await AsyncStorage.multiRemove(config.legacyCacheKeys);
+        }
         console.log(`[Download] ✅ ${dataType} saved to AsyncStorage`);
       } catch (storageError) {
         console.warn(`[Download] ⚠️ AsyncStorage save failed for ${dataType}:`, storageError.message);

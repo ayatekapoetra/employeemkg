@@ -173,6 +173,11 @@ export const API_ENDPOINTS = {
     UPDATE: id => `master/barang/${id}/update`,
   },
 
+  MATERIAL_RITASE: {
+    LIST: 'master/material-ritase/list',
+    DETAIL: id => `master/material-ritase/${id}`,
+  },
+
   PENYEWA: {
     LIST: 'master/penyewa/list',
     PUBLIC_LIST: 'public/penyewa/list',
@@ -209,6 +214,34 @@ export const API_ENDPOINTS = {
     DELETE: id => `operation/equipment-plan/${id}`,
     ACCEPT: id => `operation/equipment-plan/${id}/accept`,
     REJECT: id => `operation/equipment-plan/${id}/reject`,
+  },
+
+  EQUIPMENT_MOBILIZATION: {
+    ACCESS: 'operation/equipment-mobilization/access',
+    LIST: 'operation/equipment-mobilization/list',
+    DETAIL: id => `operation/equipment-mobilization/${id}`,
+    CREATE: 'operation/equipment-mobilization/create',
+    UPDATE: id => `operation/equipment-mobilization/${id}/update`,
+    DELETE: id => `operation/equipment-mobilization/${id}`,
+    CANCEL: id => `operation/equipment-mobilization/${id}/cancel`,
+    PERMISSIONS: id => `operation/equipment-mobilization/${id}/permissions`,
+    ADD_ITEMS: id => `operation/equipment-mobilization/${id}/items`,
+    REMOVE_ITEM: (id, itemId) => `operation/equipment-mobilization/${id}/items/${itemId}`,
+    DISPATCH: (id, itemId) => `operation/equipment-mobilization/${id}/items/${itemId}/dispatch`,
+    ARRIVE: (id, itemId) => `operation/equipment-mobilization/${id}/items/${itemId}/arrive`,
+    CANCEL_ITEM: (id, itemId) => `operation/equipment-mobilization/${id}/items/${itemId}/cancel`,
+    CORRECT: (id, itemId) => `operation/equipment-mobilization/${id}/items/${itemId}/correct`,
+    CURRENT_PLACEMENT: equipmentId => `operation/equipment-mobilization/equipment/${equipmentId}/current-placement`,
+    HISTORY: equipmentId => `operation/equipment-mobilization/equipment/${equipmentId}/history`,
+  },
+
+  DAILY_ACTIVITY: {
+    ACCESS: 'operation/daily-activity/access',
+    LIST: 'operation/daily-activity/items',
+    DETAIL: id => `operation/daily-activity/by-header/${id}`,
+    CREATE: 'operation/daily-activity-bulk',
+    UPDATE: (id, status) => `operation/daily-activity/${id}/status/${status}/update`,
+    DELETE: id => `operation/daily-activity/${id}/destroy`,
   },
 
 

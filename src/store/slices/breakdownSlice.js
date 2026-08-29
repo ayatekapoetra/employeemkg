@@ -118,7 +118,7 @@ export const createBreakdown = createAsyncThunk(
       console.log('[Breakdown] Create response:', resp.data);
       return resp.data?.rows || resp.data || null;
     } catch (error) {
-      console.error('[Breakdown] Error creating breakdown:', error);
+      console.error('[Breakdown] Error creating breakdown:', error?.response?.data || error?.message || 'unknown error');
       return rejectWithValue(error.response?.data?.diagnostic?.message || error.message);
     }
   }

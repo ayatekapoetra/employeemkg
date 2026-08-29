@@ -30,7 +30,7 @@ export const loadSQLiteDataToRedux = createAsyncThunk(
       { key: 'penyewa', cacheKey: '@penyewa', slice: 'penyewa', name: 'Penyewa' },
       { key: 'shift', cacheKey: '@shift', slice: 'shift', name: 'Shift' },
       { key: 'kegiatanpit', cacheKey: '@kegiatan-pit', slice: 'kegiatanPit', name: 'Kegiatan Pit' },
-      { key: 'lokasipit', cacheKey: '@lokasipit', slice: 'lokasiPit', name: 'Lokasi Pit' },
+      { key: 'lokasipit', cacheKey: '@lokasipit', legacyCacheKeys: ['@lokasi-pit'], slice: 'lokasiPit', name: 'Lokasi Pit' },
       { key: 'oprdrv', cacheKey: '@oprdrv', slice: 'oprdrv', name: 'Operator/Driver' },
       { key: 'equipment', cacheKey: '@equipment', slice: 'equipment', name: 'Equipment' },
       { key: 'pemasok', cacheKey: '@pemasok', slice: 'pemasok', name: 'Pemasok' },
@@ -64,12 +64,26 @@ export const loadSQLiteDataToRedux = createAsyncThunk(
         // STEP 2: Fallback to AsyncStorage if SQLite empty or failed
         if (!data) {
           try {
-            const storageData = await AsyncStorage.getItem(config.cacheKey);
+            const keysToTry = [config.cacheKey, ...(config.legacyCacheKeys || [])].filter(Boolean);
+            let storageData = null;
+            let usedKey = null;
+            for (const key of keysToTry) {
+              storageData = await AsyncStorage.getItem(key);
+              if (storageData) {
+                usedKey = key;
+                break;
+              }
+            }
             if (storageData) {
               const parsedData = JSON.parse(storageData);
               if (Array.isArray(parsedData) && parsedData.length > 0) {
                 data = parsedData;
                 source = 'AsyncStorage';
+                // Migrate legacy key to canonical so form + download stay in sync
+                if (usedKey && usedKey !== config.cacheKey) {
+                  await AsyncStorage.setItem(config.cacheKey, JSON.stringify(parsedData));
+                  await AsyncStorage.removeItem(usedKey);
+                }
                 console.log(`✅ ${config.name}: Found ${parsedData.length} items in AsyncStorage`);
               } else {
                 console.log(`⚠️ ${config.name}: AsyncStorage empty or invalid`);

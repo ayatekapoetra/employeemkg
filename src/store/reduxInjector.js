@@ -28,7 +28,7 @@ export const injectDataToRedux = (dataType, data) => {
     
     console.log(`[ReduxInjector] Available Redux slices:`, availableSlices);
     
-    // Map the data type to the actual slice name in Redux store
+    // Store key in combineReducers (may differ from slice.name)
     const sliceNameMapping = {
       'karyawan': 'karyawan',
       'gudang': 'gudang',
@@ -43,6 +43,27 @@ export const injectDataToRedux = (dataType, data) => {
       'cabang': 'cabang',
       'koordinatChecklog': 'koordinatChecklog'
     };
+
+    // RTK slice.name used in action types (must match createSlice name)
+    const fulfilledActionMapping = {
+      'karyawan': 'karyawan/getList/fulfilled',
+      'pengawas': 'pengawas/getList/fulfilled',
+      'gudang': 'gudang/getList/fulfilled',
+      'barang': 'barang/getList/fulfilled',
+      'penyewa': 'penyewa/getList/fulfilled',
+      'shift': 'shift/getList/fulfilled',
+      'kegiatanpit': 'kegiatanPit/getList/fulfilled',
+      'lokasipit': 'lokasiPit/getList/fulfilled',
+      'oprdrv': 'oprdrv/getList/fulfilled',
+      'equipment': 'equipment/getList/fulfilled',
+      'pemasok': 'pemasok/getList/fulfilled',
+      'cabang': 'cabang/getList/fulfilled',
+      'koordinatChecklog': 'koordinatChecklog/getList/fulfilled',
+    };
+
+    const setDataActionMapping = {
+      'lokasipit': 'lokasiPit/setLokasiPitData',
+    };
     
     actualSliceName = sliceNameMapping[dataType] || dataType;
     
@@ -55,7 +76,15 @@ export const injectDataToRedux = (dataType, data) => {
 
     console.log(`[ReduxInjector] Current ${actualSliceName} state:`, currentState[actualSliceName]);
 
-    // Method 1: Try to use the slice's standard action
+    // Prefer dedicated setter when available (reliable, no meta payload shape issues)
+    const setDataType = setDataActionMapping[dataType];
+    if (setDataType) {
+      reduxStore.dispatch({ type: setDataType, payload: data });
+      console.log(`[ReduxInjector] ✅ setData action completed for ${actualSliceName}`);
+      return true;
+    }
+
+    // Method 1: Try to use the slice's standard fulfilled action
     try {
       const slice = currentState[actualSliceName];
       
@@ -65,8 +94,7 @@ export const injectDataToRedux = (dataType, data) => {
         hasData: !!data.length
       });
 
-      // Create the correct action type based on the slice's actual thunk
-      const actionType = `${actualSliceName}/getList/fulfilled`;
+      const actionType = fulfilledActionMapping[dataType] || `${actualSliceName}/getList/fulfilled`;
 
       const action = {
         type: actionType,
@@ -80,79 +108,13 @@ export const injectDataToRedux = (dataType, data) => {
 
       console.log(`[ReduxInjector] Dispatching ${actionType} for ${dataType}`);
       reduxStore.dispatch(action);
-      
-      // Verify immediately
-      setTimeout(() => {
-        const updatedState = reduxStore.getState()[actualSliceName];
-      }, 100);
 
       console.log(`[ReduxInjector] ✅ Method 1 completed for ${actualSliceName}`);
       return true;
 
     } catch (methodError) {
       console.error(`[ReduxInjector] Method 1 failed for ${actualSliceName}:`, methodError);
-      
-      // Method 2: Try a simpler setData action
-      try {
-        console.log(`[ReduxInjector] Trying Method 2 (setData action) for ${actualSliceName}`);
-        
-        // Capitalize the first letter for the action name
-        const actionName = actualSliceName.charAt(0).toUpperCase() + actualSliceName.slice(1);
-        const actionType = `${actualSliceName}/set${actionName}Data`;
-        
-        const simpleAction = {
-          type: actionType,
-          payload: data
-        };
-        
-        console.log(`[ReduxInjector] Dispatching ${actionType} for ${actualSliceName}`);
-        reduxStore.dispatch(simpleAction);
-        
-        setTimeout(() => {
-          const updatedState = reduxStore.getState()[actualSliceName];
-        }, 100);
-        
-        console.log(`[ReduxInjector] ✅ Method 2 succeeded for ${actualSliceName}`);
-        return true;
-        
-      } catch (method2Error) {
-        console.error(`[ReduxInjector] Method 2 also failed for ${actualSliceName}:`, method2Error);
-        
-        // Method 3: Direct state replacement (most reliable)
-        try {
-          console.log(`[ReduxInjector] Trying Method 3 (direct state replacement) for ${actualSliceName}`);
-          
-          // Get the current reducer function
-          const currentReducer = reduxStore.getState()[actualSliceName];
-          
-          // Create a new state object
-          const newState = {
-            ...currentReducer,
-            loading: false,
-            error: null,
-            data: data
-          };
-          
-          // Use replaceReducer to update the state
-          const replaceAction = {
-            type: `@@redux/REPLACE_${actualSliceName.toUpperCase()}`,
-            payload: newState
-          };
-          
-          reduxStore.dispatch(replaceAction);
-          
-          setTimeout(() => {
-            const updatedState = reduxStore.getState()[actualSliceName];
-          }, 100);
-          
-          console.log(`[ReduxInjector] ✅ Method 3 succeeded for ${actualSliceName}`);
-          return true;
-          
-        } catch (method3Error) {
-          console.error(`[ReduxInjector] Method 3 also failed for ${actualSliceName}:`, method3Error);
-          return false;
-        }
-      }
+      return false;
     }
 
   } catch (error) {

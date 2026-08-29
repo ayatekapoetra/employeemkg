@@ -1,17 +1,14 @@
-import moment from 'moment';
 import 'moment/locale/id';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { VStack, HStack, ScrollView, Text, Center, Image } from 'native-base';
-import { View, Dimensions, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
+import { VStack, HStack, ScrollView, Text } from 'native-base';
+import { TouchableOpacity, RefreshControl } from 'react-native';
+import { useSelector } from 'react-redux';
 import { AppScreen, HeaderScreen } from '../../src/components/common';
-import StatCard from '../../src/components/common/StatCard';
 import { COLORS } from '../../src/constants/colors';
 
 export default function OperationalFiturScreen() {
     const router = useRouter();
-    const dispatch = useDispatch();
     const [refreshing, setRefreshing] = useState(false);
 
 
@@ -19,7 +16,6 @@ export default function OperationalFiturScreen() {
 
     const textColor = mode === 'dark' ? COLORS.teks.dark[1] : COLORS.teks.light[1];
     const backgroundColor = mode === 'dark' ? COLORS.container.dark : COLORS.container.light;
-    const iconColor = mode === 'dark' ? '#9a8f90' : '#b31e02';
     const cardBg = mode === 'dark' ? '#3a3c4a' : '#ffffff';
     const cardBorder = mode === 'dark' ? '#5e5f6cff' : '#e5e7eb';
     const cardShadow = mode === 'dark' ? '#1a1b24' : '#d1d5db';
@@ -132,5 +128,17 @@ const ListMenu = [
         title: "Daily Events",
         subtitle: "Pencatatan dan monitoring kejadian harian selama operasional\n#Hujan #Jalan Licin dll",
         routePath: '/operational/daily-events'
+    },
+    {
+        id: 6,
+        title: "Mobilisasi Equipment",
+        subtitle: "Pencatatan mobilisasi equipment dari satu lokasi ke lokasi lain\n#mobilisasi",
+        routePath: '/operational/mobilisasi-equipment'
+    },
+    {
+        id: 7,
+        title: "Daily Activity Equipment",
+        subtitle: "Pencatatan status, kegiatan, operator dan HM/KM equipment harian\n#Beroperasi #Standby #Breakdown",
+        routePath: '/operational/daily-activity'
     },
 ]

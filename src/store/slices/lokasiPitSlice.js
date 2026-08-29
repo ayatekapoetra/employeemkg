@@ -4,41 +4,104 @@ import apiClient from '../../services/api/client';
 import { API_ENDPOINTS } from '../../services/api/endpoints';
 import database from '../../database/SQLiteService';
 
-const CACHE_KEY = '@lokasi-pit';
+// Canonical key used by download/preload/settings. Legacy key kept for migration.
+export const CACHE_KEY = '@lokasipit';
+const LEGACY_CACHE_KEY = '@lokasi-pit';
+const CACHE_META_KEY = '@lokasipit_meta';
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+const parseCache = (raw) => {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const readCachedLokasiPit = async () => {
+  const [canonical, legacy] = await Promise.all([
+    AsyncStorage.getItem(CACHE_KEY),
+    AsyncStorage.getItem(LEGACY_CACHE_KEY),
+  ]);
+
+  const canonicalData = parseCache(canonical);
+  if (canonicalData) {
+    if (legacy) {
+      AsyncStorage.removeItem(LEGACY_CACHE_KEY).catch(() => {});
+    }
+    return canonicalData;
+  }
+
+  const legacyData = parseCache(legacy);
+  if (legacyData) {
+    // Migrate legacy cache so download + form share the same key going forward
+    await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(legacyData));
+    AsyncStorage.removeItem(LEGACY_CACHE_KEY).catch(() => {});
+    return legacyData;
+  }
+
+  return null;
+};
+
+const writeCachedLokasiPit = async (data) => {
+  await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  await AsyncStorage.setItem(CACHE_META_KEY, JSON.stringify({ updatedAt: Date.now() }));
+  AsyncStorage.removeItem(LEGACY_CACHE_KEY).catch(() => {});
+};
+
+const isCacheFresh = async () => {
+  try {
+    const raw = await AsyncStorage.getItem(CACHE_META_KEY);
+    if (!raw) return false;
+    const meta = JSON.parse(raw);
+    if (!meta?.updatedAt) return false;
+    return Date.now() - Number(meta.updatedAt) < CACHE_TTL_MS;
+  } catch {
+    return false;
+  }
+};
 
 export const getLokasiPit = createAsyncThunk(
   'lokasiPit/getList',
   async (forceRefresh = false, { rejectWithValue }) => {
     try {
       if (!forceRefresh) {
-        const cached = await AsyncStorage.getItem(CACHE_KEY);
-        if (cached) {
+        const cached = await readCachedLokasiPit();
+        const fresh = await isCacheFresh();
+        if (cached && fresh) {
           console.log('Using cached lokasi pit data');
-          return { data: JSON.parse(cached) };
+          return { data: cached };
+        }
+        // Stale/missing meta: still show cache immediately via return only when fresh.
+        // If stale, fall through to API; if API fails, cached is used below.
+        if (cached && !fresh) {
+          console.log('[LokasiPit] Cache stale, refreshing from API...');
         }
       }
 
       console.log('Fetching lokasi pit from API...');
       const resp = await apiClient.get(API_ENDPOINTS.LOKASI_PIT.LIST);
       const data = resp.data?.rows || resp.data?.data || resp.data || [];
-      
+
       console.log('[LokasiPit] API response:', data.length, 'items');
 
       if (data && Array.isArray(data) && data.length > 0) {
-        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        await writeCachedLokasiPit(data);
         try {
           await database.syncLokasiPit(data);
         } catch (syncErr) {
           console.warn('[LokasiPit] Failed to sync SQLite:', syncErr?.message || syncErr);
         }
       }
-      
+
       return { data };
     } catch (error) {
       console.error('Error fetching lokasi pit:', error);
-      const cached = await AsyncStorage.getItem(CACHE_KEY);
+      const cached = await readCachedLokasiPit();
       if (cached) {
-        return { data: JSON.parse(cached) };
+        return { data: cached };
       }
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -58,12 +121,11 @@ export const getLokasiPitOffline = createAsyncThunk(
         return { data: dbData, source: 'sqlite' };
       }
 
-      // 2. FALLBACK TO ASYNCSTORAGE
-      const cached = await AsyncStorage.getItem(CACHE_KEY);
+      // 2. FALLBACK TO ASYNCSTORAGE (canonical + legacy)
+      const cached = await readCachedLokasiPit();
       if (cached) {
-        const parsed = JSON.parse(cached);
-        console.log('[LokasiPit] Loaded from AsyncStorage:', parsed.length, 'items');
-        return { data: parsed, source: 'asyncstorage' };
+        console.log('[LokasiPit] Loaded from AsyncStorage:', cached.length, 'items');
+        return { data: cached, source: 'asyncstorage' };
       }
 
       console.warn('[LokasiPit] No offline data found');
@@ -79,7 +141,7 @@ export const clearLokasiPitCache = createAsyncThunk(
   'lokasiPit/clearCache',
   async () => {
     try {
-      await AsyncStorage.removeItem(CACHE_KEY);
+      await AsyncStorage.multiRemove([CACHE_KEY, LEGACY_CACHE_KEY, CACHE_META_KEY]);
       await database.clear('master_lokasipit');
       console.log('[LokasiPit] Cache cleared');
     } catch (error) {
@@ -146,5 +208,5 @@ const lokasiPitSlice = createSlice({
   },
 });
 
-export const { clearLokasiPitData } = lokasiPitSlice.actions;
+export const { clearLokasiPitData, setLokasiPitData } = lokasiPitSlice.actions;
 export default lokasiPitSlice.reducer;

@@ -7,7 +7,7 @@ import { ArrowRight2, Profile, Whatsapp, ShieldSecurity, DriverRefresh, Calendar
 import { logout, unregisterPushBeforeLogout } from '../../src/store/slices/authSlice';
 import { saveTheme } from '../../src/store/slices/themeSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import Constants from 'expo-constants';
 import OTA_VERSION, { OTA_CHANNEL_MARKER } from '../../src/constants/otaVersion';
 
@@ -26,6 +26,14 @@ export default function SettingScreen() {
   useEffect(() => {
     router.prefetch('/setting/attendance-history');
   }, [router]);
+
+  // Reset flag loading saat halaman kembali mendapat focus
+  // (mencegah overlay loading stuck saat user route back dari absensi bulanan)
+  useFocusEffect(
+    React.useCallback(() => {
+      setNavigatingAttendanceHistory(false);
+    }, [])
+  );
 
   const actionHandle = (val) => {
     console.log(val);

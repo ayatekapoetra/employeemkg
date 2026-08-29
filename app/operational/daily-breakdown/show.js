@@ -28,6 +28,7 @@ import BottomSheetSelect from '../../../src/components/common/BottomSheetSelect'
 import { validateBreakdownForm } from '../../../src/utils/dailyBreakdown/utils';
 import database from '../../../src/database/SQLiteService';
 import { getKaryawan } from '../../../src/store/slices/karyawanSlice';
+import { getPenyewa } from '../../../src/store/slices/penyewaSlice';
 
 const STATUS_OPTIONS = {
   WT: { label: 'Wait Teknisi', color: '#fbbf24' },
@@ -50,6 +51,7 @@ export default function ShowBreakdownScreen() {
   const lokasiRedux = useSelector((state) => state.lokasikerja);
   const shiftRedux = useSelector((state) => state.shift);
   const karyawanRedux = useSelector((state) => state.karyawan);
+  const penyewaRedux = useSelector((state) => state.penyewa);
 
   const [formData, setFormData] = useState({
     equipment_id: '',
@@ -58,10 +60,14 @@ export default function ShowBreakdownScreen() {
     lokasi_label: '',
     pengawas_id: '',
     pengawas_label: '',
+    penyewa_id: '',
+    penyewa_label: '',
     shift_id: '',
     shift_label: '',
     breakdown_at: new Date(),
     smu: '',
+    hmkm_start: '',
+    hmkm_end: '',
     category: '',
     items: [],
   });
@@ -74,6 +80,7 @@ export default function ShowBreakdownScreen() {
   const [lokasiLocal, setLokasiLocal] = useState([]);
   const [shiftLocal, setShiftLocal] = useState([]);
   const [karyawanLocal, setKaryawanLocal] = useState([]);
+  const [penyewaLocal, setPenyewaLocal] = useState([]);
   const [modalState, setModalState] = useState({ visible: false, type: 'info', title: '', message: '' });
   const [confirmState, setConfirmState] = useState({ visible: false, title: '', message: '', onConfirm: null });
 
@@ -112,10 +119,12 @@ export default function ShowBreakdownScreen() {
         if (!kary || kary.length === 0) {
           kary = await database.getOprDrv?.();
         }
+        const peny = await database.getPenyewa?.();
         setEquipmentLocal(Array.isArray(eq) ? eq : []);
         setLokasiLocal(Array.isArray(lok) ? lok : []);
         setShiftLocal(Array.isArray(shift) ? shift : []);
         setKaryawanLocal(Array.isArray(kary) ? kary : []);
+        setPenyewaLocal(Array.isArray(peny) ? peny : []);
       } catch (e) {
         console.warn('[ShowBreakdown] loadLocal error:', e?.message || e);
       }
@@ -152,6 +161,21 @@ export default function ShowBreakdownScreen() {
       dispatch(getKaryawan());
     }
   }, [dispatch, karyawanRedux?.data, karyawanRedux?.loading]);
+
+  // Pastikan data penyewa tersedia dari Redux
+  useEffect(() => {
+    const data = penyewaRedux?.data;
+    const hasData = Array.isArray(data)
+      ? data.length > 0
+      : Array.isArray(data?.rows)
+        ? data.rows.length > 0
+        : Array.isArray(data?.data)
+          ? data.data.length > 0
+          : false;
+    if (!penyewaRedux?.loading && !hasData) {
+      dispatch(getPenyewa());
+    }
+  }, [dispatch, penyewaRedux?.data, penyewaRedux?.loading]);
 
   useEffect(() => {
     if (!currentBreakdown || !params.id) return;
@@ -193,10 +217,14 @@ const mappedItems = Array.isArray(currentBreakdown.items)
       lokasi_label: currentBreakdown.lokasi?.nama || currentBreakdown.lokasi?.name || '',
       pengawas_id: currentBreakdown.pengawas_id?.toString() || '',
       pengawas_label: currentBreakdown.pengawas?.nama || currentBreakdown.pengawas?.name || '',
+      penyewa_id: currentBreakdown.penyewa_id?.toString() || '',
+      penyewa_label: currentBreakdown.penyewa?.nama || currentBreakdown.penyewa?.name || '',
       shift_id: currentBreakdown.shift_id?.toString() || '',
       shift_label: currentBreakdown.shift?.nama || currentBreakdown.shift?.name || '',
       breakdown_at: parseDateValue(breakdownDate),
       smu: currentBreakdown.smu ? String(currentBreakdown.smu) : '',
+      hmkm_start: currentBreakdown.hmkm_start != null ? String(currentBreakdown.hmkm_start) : '',
+      hmkm_end: currentBreakdown.hmkm_end != null ? String(currentBreakdown.hmkm_end) : '',
       category: firstItem.category || '',
       items: mappedItems.length
         ? mappedItems
@@ -313,6 +341,25 @@ const mappedItems = Array.isArray(currentBreakdown.items)
       .filter(Boolean);
   }, [karyawanRedux?.data, karyawanLocal]);
 
+  const penyewaOptions = useMemo(() => {
+    let data = penyewaRedux?.data || [];
+    if (!Array.isArray(data)) data = data?.rows || data?.data || [];
+    if (!data?.length && penyewaLocal?.length) data = penyewaLocal;
+    if (!data || data.length === 0) return [];
+
+    return data
+      .map((item) => {
+        const id = item.id?.toString() || '';
+        if (!id) return null;
+        return {
+          id,
+          nama: item.nama || item.name || '[No Name]',
+          subtitle: item.abbr || item.kode || '',
+        };
+      })
+      .filter(Boolean);
+  }, [penyewaRedux?.data, penyewaLocal]);
+
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -332,6 +379,12 @@ const mappedItems = Array.isArray(currentBreakdown.items)
       problem_issue: it.problem_issue?.trim() || `Issue ${idx + 1}`,
       kode_wo: it.kode_wo,
     }));
+
+    if (!formData.penyewa_id) {
+      setErrors({ penyewa_id: 'Penyewa wajib dipilih' });
+      Alert.alert('Validasi Gagal', 'Penyewa wajib dipilih.');
+      return;
+    }
 
     const validationPayload = {
       equipment_id: formData.equipment_id,
@@ -357,9 +410,12 @@ const mappedItems = Array.isArray(currentBreakdown.items)
       equipment_id: formData.equipment_id,
       lokasi_id: formData.lokasi_id,
       pengawas_id: formData.pengawas_id,
+      penyewa_id: formData.penyewa_id,
       shift_id: formData.shift_id,
       breakdown_at: breakdownAtValue,
-      smu: formData.smu ? parseFloat(formData.smu) : null,
+      smu: null,
+      hmkm_start: formData.hmkm_start ? parseFloat(formData.hmkm_start) : 0,
+      hmkm_end: formData.hmkm_end ? parseFloat(formData.hmkm_end) : 0,
       items: sanitizedItems,
     };
 
@@ -511,6 +567,28 @@ const mappedItems = Array.isArray(currentBreakdown.items)
         </View>
 
         <View style={[styles.sectionCard, { backgroundColor: cardColor, borderColor: cardBorder }]}>
+          <Text style={[styles.label, { color: textColor }]}>Penyewa *</Text>
+          <BottomSheetSelect
+            label="Penyewa"
+            value={formData.penyewa_id?.toString()}
+            options={penyewaOptions}
+            onChange={(val) => {
+              const option = penyewaOptions.find((o) => o.id === val);
+              updateField('penyewa_id', val || '');
+              updateField('penyewa_label', option?.nama || '');
+            }}
+            mode={mode}
+            placeholder="Pilih penyewa"
+            allowClear
+            displayKey="nama"
+            displaySubKey="subtitle"
+          />
+          {errors.penyewa_id ? (
+            <Text style={[styles.errorText, { color: COLORS.danger }]}>{errors.penyewa_id}</Text>
+          ) : null}
+        </View>
+
+        <View style={[styles.sectionCard, { backgroundColor: cardColor, borderColor: cardBorder }]}>
           <Text style={[styles.label, { color: textColor }]}>Tanggal & Waktu *</Text>
           <View style={styles.rowGap}>
             <TouchableOpacity
@@ -539,15 +617,40 @@ const mappedItems = Array.isArray(currentBreakdown.items)
         </View>
 
         <View style={[styles.sectionCard, { backgroundColor: cardColor, borderColor: cardBorder }]}>
-          <Text style={[styles.label, { color: textColor }]}>SMU (Hour Meter)</Text>
-          <TextInput
-            style={[styles.input, { borderColor: cardBorder, color: textColor }]}
-            placeholder="Contoh: 1234"
-            placeholderTextColor={subtitleColor}
-            keyboardType="decimal-pad"
-            value={formData.smu}
-            onChangeText={(val) => updateField('smu', val)}
-          />
+          <Text style={[styles.label, { color: textColor }]}>HM/KM Saat Perbaikan</Text>
+          <View style={[styles.rowGap, { marginBottom: 8 }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.helperText, { color: subtitleColor, marginBottom: 4 }]}>Start</Text>
+              <TextInput
+                style={[styles.input, { borderColor: cardBorder, color: textColor }]}
+                placeholder="Mulai"
+                placeholderTextColor={subtitleColor}
+                keyboardType="decimal-pad"
+                value={formData.hmkm_start}
+                onChangeText={(val) => updateField('hmkm_start', val)}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.helperText, { color: subtitleColor, marginBottom: 4 }]}>End</Text>
+              <TextInput
+                style={[styles.input, { borderColor: cardBorder, color: textColor }]}
+                placeholder="Selesai"
+                placeholderTextColor={subtitleColor}
+                keyboardType="decimal-pad"
+                value={formData.hmkm_end}
+                onChangeText={(val) => updateField('hmkm_end', val)}
+              />
+            </View>
+          </View>
+          {formData.hmkm_start !== '' && formData.hmkm_end !== '' ? (
+            <Text style={[styles.helperText, { color: subtitleColor }]}>
+              Selisih (pakai perbaikan): {(() => {
+                const s = parseFloat(formData.hmkm_start) || 0
+                const e = parseFloat(formData.hmkm_end) || 0
+                return (e - s).toFixed(2)
+              })()}
+            </Text>
+          ) : null}
         </View>
 
         <View style={[styles.sectionCard, { backgroundColor: cardColor, borderColor: cardBorder }]}>

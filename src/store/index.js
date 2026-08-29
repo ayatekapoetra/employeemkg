@@ -15,6 +15,7 @@ import equipmentDraftPlanReducer from './slices/equipmentDraftPlanSlice';
 import checklogReducer from './slices/checklogSlice';
 import gudangReducer from './slices/gudangSlice';
 import barangReducer from './slices/barangSlice';
+import materialRitaseReducer from './slices/materialRitaseSlice';
 import penyewaReducer from './slices/penyewaSlice';
 import lokasiPitReducer from './slices/lokasiPitSlice';
 import kegiatanPitReducer from './slices/kegiatanPitSlice';
@@ -34,6 +35,8 @@ import crewWorksheetReducer from './slices/crewWorksheetSlice';
 import appReducer from './slices/appSlice';
 import eventHistoryReducer from './slices/eventHistorySlice';
 import eventCtgReducer from './slices/eventCtgSlice';
+import equipmentMobilizationReducer from './slices/equipmentMobilizationSlice';
+import dailyActivityReducer from './slices/dailyActivitySlice';
 
 const isDevelopment = __DEV__;
 
@@ -52,6 +55,7 @@ const store = configureStore({
     checklog: checklogReducer,
     gudang: gudangReducer,
     barang: barangReducer,
+    materialRitase: materialRitaseReducer,
     penyewa: penyewaReducer,
     lokasikerja: lokasiPitReducer,
     kegiatankerja: kegiatanPitReducer,
@@ -70,6 +74,8 @@ const store = configureStore({
     app: appReducer,
     eventHistory: eventHistoryReducer,
     eventCtg: eventCtgReducer,
+    equipmentMobilization: equipmentMobilizationReducer,
+    dailyActivity: dailyActivityReducer,
   },
   middleware: (getDefaultMiddleware) => {
     const middleware = getDefaultMiddleware({

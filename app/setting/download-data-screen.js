@@ -106,7 +106,7 @@ export default function DownloadDataScreen() {
       }
 
       const storageKeys = [
-        '@barang', '@equipment', '@lokasipit', '@oprdrv', '@pemasok',
+        '@barang', '@equipment', '@lokasipit', '@lokasi-pit', '@lokasipit_meta', '@oprdrv', '@pemasok',
         '@penyewa', '@shift', '@gudang', '@karyawan', '@kegiatan-pit',
         '@masterDataLastFetch'
       ];

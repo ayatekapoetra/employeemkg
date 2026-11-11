@@ -2,15 +2,18 @@ import { ArrowDown2, Calendar, CloseSquare, SearchNormal1 } from 'iconsax-react-
 import moment from 'moment';
 import { HStack, Text, VStack } from 'native-base';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Modal, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, Keyboard, Modal, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useSelector } from 'react-redux';
 import apiClient from '../../../services/api/client';
 import { API_ENDPOINTS } from '../../../services/api/endpoints';
 
-const BottomSheetSelect = ({ label, value, options, onSelect, mode, placeholder }) => {
+export const BottomSheetSelect = ({ label, value, options, onSelect, mode, placeholder, disabled = false }) => {
   const [showOptions, setShowOptions] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  useEffect(() => {
+    if (disabled) setShowOptions(false);
+  }, [disabled]);
   const textColor = mode === 'dark' ? '#ffffff' : '#1f2937';
   const labelColor = mode === 'dark' ? '#9ca3af' : '#6b7280';
   
@@ -73,7 +76,14 @@ const BottomSheetSelect = ({ label, value, options, onSelect, mode, placeholder 
         {label}
       </Text>
       <TouchableOpacity
-        onPress={() => setShowOptions(true)}
+        onPress={() => {
+          Keyboard.dismiss();
+          setShowOptions(true);
+        }}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled }}
         style={{
           backgroundColor: mode === 'dark' ? '#374151' : '#f9fafb',
           borderWidth: 1,
@@ -83,6 +93,7 @@ const BottomSheetSelect = ({ label, value, options, onSelect, mode, placeholder 
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
+          opacity: disabled ? 0.5 : 1,
         }}
       >
         <Text 

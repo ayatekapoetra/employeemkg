@@ -186,6 +186,7 @@ export const API_ENDPOINTS = {
 
   PEMASOK: {
     LIST: '/master/pemasok/list',
+    BANK_ACCOUNTS: id => `/master/pemasok/${encodeURIComponent(id)}/rekening`,
   },
 
   LOKASI_PIT: {
@@ -238,6 +239,7 @@ export const API_ENDPOINTS = {
   DAILY_ACTIVITY: {
     ACCESS: 'operation/daily-activity/access',
     LIST: 'operation/daily-activity/items',
+    OPTIONS: 'operation/daily-activity/options',
     DETAIL: id => `operation/daily-activity/by-header/${id}`,
     CREATE: 'operation/daily-activity-bulk',
     UPDATE: (id, status) => `operation/daily-activity/${id}/status/${status}/update`,
@@ -273,6 +275,14 @@ export const API_ENDPOINTS = {
     UPDATE_ITEM: '/scm/purchase-request/update-item',
     APPROVE: '/scm/purchase-request/approve',
     ROLLBACK: '/scm/purchase-request/rollback',
+  },
+
+  PURCHASE_ORDER: {
+    ACCESS: '/scm/purchase-orders/access',
+    LIST: '/scm/purchase-orders',
+    DETAIL: id => `/scm/purchase-orders/${encodeURIComponent(id)}`,
+    PERMISSIONS: id => `/scm/purchase-orders/${encodeURIComponent(id)}/permissions`,
+    VERIFY: id => `/scm/purchase-orders/${encodeURIComponent(id)}/verify`,
   },
 
   EVENT: {

@@ -1,19 +1,22 @@
-import { useRouter } from 'expo-router';
-import { VStack, ScrollView, Text, HStack } from 'native-base';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { Button, VStack, ScrollView, Text, HStack } from 'native-base';
 import { useSelector } from 'react-redux';
 import { AppScreen, HeaderScreen, LoadingHauler } from '../../src/components/common';
 import { COLORS } from '../../src/constants/colors';
 import ApprovalCard from '../../src/features/approval/components/ApprovalCard';
 import { ClipboardTick } from 'iconsax-react-native';
 import { View, RefreshControl } from 'react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import apiClient from '../../src/services/api/client';
 import { API_ENDPOINTS } from '../../src/services/api/endpoints';
 import usePengajuanDanaAccess from '../../src/hooks/usePengajuanDanaAccess';
+import { getPurchaseOrderAccess, getVerifyPurchaseOrders } from '../../src/services/api/purchaseOrders';
+import { DEFAULT_PERMISSIONS, getPurchaseOrderError } from '../../src/features/approval/purchase-order/utils';
 
 export default function ApprovalManagement() {
   const router = useRouter();
   const mode = useSelector(state => state.themes)?.value || 'light';
+  const token = useSelector(state => state.auth?.token);
   const {
     permissions: pengajuanAccess,
     loading: accessLoading,
@@ -27,15 +30,18 @@ export default function ApprovalManagement() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const refreshRequested = useRef(false);
+  const [purchaseOrderAccess, setPurchaseOrderAccess] = useState(DEFAULT_PERMISSIONS);
+  const [purchaseOrderError, setPurchaseOrderError] = useState('');
   const [counts, setCounts] = useState({
     timesheet: 0,
     purchaseRequest: 0,
     purchaseRequestActive: 0,
     purchaseRequestApproved: 0,
+    purchaseOrder: 0,
     pengajuanDana: 0,
   });
 
-  const fetchApprovalCounts = useCallback(async (isRefreshing = false, canReadPengajuan = false) => {
+  const fetchApprovalCounts = useCallback(async (isRefreshing = false, canReadPengajuan = false, signal) => {
     try {
       if (isRefreshing) {
         setRefreshing(true);
@@ -43,14 +49,24 @@ export default function ApprovalManagement() {
         setLoading(true);
       }
 
-      const [timesheetRes, purchaseRequestActiveRes, purchaseRequestApprovedRes, pengajuanDanaRes] = await Promise.allSettled([
-        apiClient.get(API_ENDPOINTS.TIMESHEET.APPROVAL_LIST_COUNT),
-        apiClient.get(`${API_ENDPOINTS.PURCHASE_REQUEST.LIST}?status=active&limit=1`),
-        apiClient.get(`${API_ENDPOINTS.PURCHASE_REQUEST.LIST}?status=approved&limit=1`),
+      const purchaseOrderSummary = async () => {
+        const permissions = await getPurchaseOrderAccess({ signal });
+        const result = permissions.can_read ? await getVerifyPurchaseOrders({ limit: 1 }, { signal }) : null;
+        return { permissions, count: result?.total || 0 };
+      };
+      const [timesheetRes, purchaseRequestActiveRes, purchaseRequestApprovedRes, pengajuanDanaRes, purchaseOrderRes] = await Promise.allSettled([
+        apiClient.get(API_ENDPOINTS.TIMESHEET.APPROVAL_LIST_COUNT, { signal }),
+        apiClient.get(`${API_ENDPOINTS.PURCHASE_REQUEST.LIST}?status=active&limit=1`, { signal }),
+        apiClient.get(`${API_ENDPOINTS.PURCHASE_REQUEST.LIST}?status=approved&limit=1`, { signal }),
         canReadPengajuan
-          ? apiClient.get(API_ENDPOINTS.PENGAJUAN.APPROVAL_LIST_COUNT)
+          ? apiClient.get(API_ENDPOINTS.PENGAJUAN.APPROVAL_LIST_COUNT, { signal })
           : Promise.resolve(null),
+        purchaseOrderSummary(),
       ]);
+
+      if (signal?.aborted) return;
+      setPurchaseOrderAccess(purchaseOrderRes.status === 'fulfilled' ? purchaseOrderRes.value.permissions : DEFAULT_PERMISSIONS);
+      setPurchaseOrderError(purchaseOrderRes.status === 'rejected' ? getPurchaseOrderError(purchaseOrderRes.reason, 'Gagal memuat approval Purchase Order.') : '');
 
       const activeCount = purchaseRequestActiveRes.status === 'fulfilled' ? (purchaseRequestActiveRes.value?.data?.total || 0) : 0;
       const approvedCount = purchaseRequestApprovedRes.status === 'fulfilled' ? (purchaseRequestApprovedRes.value?.data?.total || 0) : 0;
@@ -60,22 +76,30 @@ export default function ApprovalManagement() {
         purchaseRequest: activeCount + approvedCount,
         purchaseRequestActive: activeCount,
         purchaseRequestApproved: approvedCount,
+        purchaseOrder: purchaseOrderRes.status === 'fulfilled' ? purchaseOrderRes.value.count : 0,
         pengajuanDana: canReadPengajuan && pengajuanDanaRes.status === 'fulfilled' ? (pengajuanDanaRes.value?.data?.count || 0) : 0,
       });
     } catch (error) {
       console.error('Error fetching approval counts:', error);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, []);
 
-  useEffect(() => {
-    if (!accessLoading) {
-      fetchApprovalCounts(refreshRequested.current, pengajuanAccess.can_read);
+  useFocusEffect(useCallback(() => {
+    const controller = new AbortController();
+    if (!token) {
+      setPurchaseOrderAccess(DEFAULT_PERMISSIONS);
+      setLoading(false);
+    } else if (!accessLoading) {
+      fetchApprovalCounts(refreshRequested.current, pengajuanAccess.can_read, controller.signal);
       refreshRequested.current = false;
     }
-  }, [accessLoading, fetchApprovalCounts, pengajuanAccess.can_read]);
+    return () => controller.abort();
+  }, [accessLoading, fetchApprovalCounts, pengajuanAccess.can_read, token]));
 
   const onRefresh = () => {
     refreshRequested.current = true;
@@ -113,6 +137,16 @@ export default function ApprovalManagement() {
       iconBgColor: mode === 'dark' ? '#065f46' : '#d1fae5',
     },
     {
+      id: 'purchase-order',
+      title: 'Purchase Order',
+      description: 'Verifikasi dan finalisasi dokumen pembelian berstatus verify',
+      icon: require('../../assets/images/cart-part.png'),
+      count: counts.purchaseOrder,
+      detailCount: `Verify: ${counts.purchaseOrder}`,
+      route: '/approval/purchase-order',
+      iconBgColor: mode === 'dark' ? '#1e3a8a' : '#dbeafe',
+    },
+    {
       id: 'funds',
       title: 'Pengajuan Dana',
       description: 'Persetujuan pengajuan dana operasional',
@@ -122,7 +156,8 @@ export default function ApprovalManagement() {
       iconBgColor: mode === 'dark' ? '#7c2d12' : '#fed7aa',
     },
     
-  ].filter(item => item.id !== 'funds' || pengajuanAccess.can_read);
+  ].filter(item => (item.id !== 'funds' || pengajuanAccess.can_read)
+    && (item.id !== 'purchase-order' || purchaseOrderAccess.can_read));
 
   const totalPending = approvalData.reduce((sum, item) => sum + parseInt(item.count), 0);
 
@@ -225,6 +260,13 @@ export default function ApprovalManagement() {
               />
             ))}
           </VStack>
+
+          {purchaseOrderError ? (
+            <VStack p={4} space={2} bg={mode === 'dark' ? '#2a2c3e' : '#ffffff'} rounded="xl">
+              <Text color={textColor} fontSize="sm">Purchase Order: {purchaseOrderError}</Text>
+              <Button variant="outline" onPress={onRefresh}>Muat Ulang Purchase Order</Button>
+            </VStack>
+          ) : null}
 
           <VStack
             mt={4}

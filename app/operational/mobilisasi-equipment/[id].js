@@ -31,10 +31,13 @@ import CustomAlert from '../../../src/components/common/CustomAlert'
 import StatusBadge from './components/StatusBadge'
 import ProgressTrack from './components/ProgressTrack'
 import {
+  activePlacementArrivedAt,
+  datetimeLowerBound,
   formatDateTime,
   formatNow,
   getRouteLabel,
   getThemeColors,
+  laterOf,
   meterTypeFromEquipment,
 } from './utils'
 import {
@@ -90,6 +93,7 @@ export default function MobilisasiEquipmentDetailScreen() {
   })
   const [actionForm, setActionForm] = useState({
     datetime: new Date(),
+    min_datetime: null,
     meter: '',
     meter_type: 'UNKNOWN',
     recipient_name: '',
@@ -124,9 +128,14 @@ export default function MobilisasiEquipmentDetailScreen() {
   const items = detail?.items || []
 
   const openAction = (type, item) => {
-    const defaultTime = new Date()
+    const lowerBound = datetimeLowerBound(type, item)
+    const now = new Date()
+    // Jangan biarkan default jatuh di bawah batas bawah (mis. placement yang
+    // tiba di masa depan), supaya user tidak langsung mendapat nilai invalid.
+    const defaultTime = lowerBound && lowerBound.getTime() > now.getTime() ? lowerBound : now
     setActionForm({
       datetime: defaultTime,
+      min_datetime: lowerBound,
       meter: '',
       meter_type: meterTypeFromEquipment(item?.equipment || {}),
       recipient_name: '',
@@ -173,7 +182,7 @@ export default function MobilisasiEquipmentDetailScreen() {
       const merged = new Date(selectedDate)
       merged.setHours(base.getHours(), base.getMinutes(), 0, 0)
       setTempDatetime(merged)
-      setActionForm((prev) => ({ ...prev, datetime: merged }))
+      setActionForm((prev) => ({ ...prev, datetime: laterOf(merged, prev.min_datetime) || merged }))
       // lanjut pilih jam
       setAndroidPicker({ visible: true, mode: 'time' })
       return
@@ -184,12 +193,13 @@ export default function MobilisasiEquipmentDetailScreen() {
     const merged = new Date(base)
     merged.setHours(selectedDate.getHours(), selectedDate.getMinutes(), 0, 0)
     setTempDatetime(merged)
-    setActionForm((prev) => ({ ...prev, datetime: merged }))
+    setActionForm((prev) => ({ ...prev, datetime: laterOf(merged, prev.min_datetime) || merged }))
     setAndroidPicker({ visible: false, mode: 'date' })
   }
 
   const confirmIosDatetime = () => {
-    setActionForm((prev) => ({ ...prev, datetime: tempDatetime || new Date() }))
+    const picked = tempDatetime || new Date()
+    setActionForm((prev) => ({ ...prev, datetime: laterOf(picked, prev.min_datetime) || picked }))
     setIosPickerVisible(false)
   }
 
@@ -206,11 +216,17 @@ export default function MobilisasiEquipmentDetailScreen() {
     try {
       if (type === 'dispatch') {
         if (!actionForm.meter) throw new Error('Meter berangkat wajib diisi')
+        const departedAt = actionForm.datetime instanceof Date ? actionForm.datetime : new Date(actionForm.datetime)
+        if (!departedAt || Number.isNaN(departedAt.getTime())) throw new Error('Waktu berangkat tidak valid')
+        const placementArrivedAt = activePlacementArrivedAt(item)
+        if (placementArrivedAt && departedAt.getTime() < placementArrivedAt.getTime()) {
+          throw new Error(`Waktu berangkat tidak boleh lebih awal dari waktu tiba placement aktif (${formatDateTime(placementArrivedAt)})`)
+        }
         await dispatch(dispatchMobilizationItem({
           id: detail.id,
           itemId: item.id,
           data: {
-            departed_at: moment(actionForm.datetime).format('YYYY-MM-DD HH:mm:ss'),
+            departed_at: moment(departedAt).format('YYYY-MM-DD HH:mm:ss'),
             departed_meter: Number(actionForm.meter),
             departed_meter_type: actionForm.meter_type || 'UNKNOWN',
             dispatch_notes: actionForm.notes || null,
@@ -624,7 +640,9 @@ export default function MobilisasiEquipmentDetailScreen() {
                       </View>
                     </View>
                     <Text style={{ color: theme.subtitle, fontSize: 11, fontFamily: 'Quicksand-Medium', marginTop: 6 }}>
-                      Default waktu sekarang. Ketuk untuk mengubah tanggal/jam aktual.
+                      {actionForm.min_datetime
+                        ? `Tidak boleh lebih awal dari ${moment(actionForm.min_datetime).format('DD MMM YYYY HH:mm')}.`
+                        : 'Default waktu sekarang. Ketuk untuk mengubah tanggal/jam aktual.'}
                     </Text>
                   </TouchableOpacity>
 
@@ -644,6 +662,7 @@ export default function MobilisasiEquipmentDetailScreen() {
                         mode="datetime"
                         display="spinner"
                         themeVariant={mode === 'dark' ? 'dark' : 'light'}
+                        minimumDate={actionForm.min_datetime || undefined}
                         onChange={(_, selectedDate) => {
                           if (selectedDate) setTempDatetime(selectedDate)
                         }}
@@ -791,6 +810,7 @@ export default function MobilisasiEquipmentDetailScreen() {
           mode={androidPicker.mode}
           display="default"
           is24Hour
+          minimumDate={actionForm.min_datetime || undefined}
           onChange={onAndroidDatetimeChange}
         />
       )}

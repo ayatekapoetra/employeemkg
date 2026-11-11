@@ -78,6 +78,12 @@ export const formatDateTime = (value, fallback = '-') => {
 
 export const formatNow = () => moment().format('YYYY-MM-DD HH:mm:ss')
 
+export {
+  activePlacementArrivedAt,
+  datetimeLowerBound,
+  laterOf,
+} from './datetimeBounds'
+
 export const getProgress = (item = {}) => {
   const draft = Number(item.draft_count || 0)
   const inTransit = Number(item.in_transit_count || 0)

@@ -384,7 +384,7 @@ export default function DailyActivityListScreen() {
             alignItems: "center",
             justifyContent: "center",
             borderRadius: 20,
-            backgroundColor: "#10B981",
+            backgroundColor: "#0479ed",
             elevation: 6,
           }}
         >

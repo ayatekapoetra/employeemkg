@@ -61,7 +61,7 @@ export default function DailyActivityForm({ editId }) {
   const masters = useSelector((state) => ({ equipment: state.equipment, sites: state.penyewa, pits: state.lokasikerja, activities: state.kegiatankerja, materials: state.materialRitase, supervisors: state.pengawas, operators: state.oprdrv, shifts: state.shift }))
   const theme = themeColors(mode)
   const employee = auth?.karyawan || auth?.user?.karyawan || {}
-  const [header, setHeader] = useState({ date_ops: moment().format('YYYY-MM-DD'), shift_id: '1', lokasi_site_id: '', lokasi_site_nama: '', lokasi_pit_id: '', lokasi_pit_nama: '', kontraktor: '', cuaca: '', category_id: '', ctgunit: '', notes: '' })
+  const [header, setHeader] = useState({ date_ops: moment().format('YYYY-MM-DD'), shift_id: '1', area: '', cabang_id: '', lokasi_site_id: '', lokasi_site_nama: '', lokasi_pit_id: '', lokasi_pit_nama: '', kontraktor: '', cuaca: '', category_id: '', ctgunit: '', notes: '' })
   const [batches, setBatches] = useState([])
   const [draft, setDraft] = useState(freshBatch())
   const [activeStatus, setActiveStatus] = useState('beroperasi')
@@ -70,6 +70,9 @@ export default function DailyActivityForm({ editId }) {
   const [editingBatchId, setEditingBatchId] = useState('')
   const [initializing, setInitializing] = useState(!!editId)
   const [contractors, setContractors] = useState([])
+  const [branches, setBranches] = useState([])
+  const [placementOptions, setPlacementOptions] = useState({ sites: [], pits: [], equipments: [] })
+  const [placementLoading, setPlacementLoading] = useState(false)
 
   useEffect(() => {
     if (!editId) dispatch(getDailyActivityAccess())
@@ -78,6 +81,10 @@ export default function DailyActivityForm({ editId }) {
       const data = response.data?.rows || response.data?.data || response.data || []
       setContractors(normalize(data).map((item) => ({ id: String(item.initial || item.id), nama: [item.initial, item.name || item.nama].filter(Boolean).join(' - ') })))
     }).catch(() => setContractors([]))
+    apiClient.get(API_ENDPOINTS.CABANG.LIST).then((response) => {
+      const data = response.data?.rows || response.data?.data || response.data || []
+      setBranches(normalize(data))
+    }).catch(() => setBranches([]))
   }, [dispatch, editId])
   useEffect(() => {
     if (!editId) return
@@ -87,31 +94,76 @@ export default function DailyActivityForm({ editId }) {
     }).then((data) => {
       const source = data?.data || data || {}
       const h = source.header || {}
-      setHeader({ date_ops: h.date_ops || moment().format('YYYY-MM-DD'), shift_id: String(h.shift_id || '1'), lokasi_site_id: String(h.lokasi_site_id || ''), lokasi_site_nama: h.lokasi_site_nama || '', lokasi_pit_id: String(h.lokasi_pit_id || ''), lokasi_pit_nama: h.lokasi_pit_nama || '', kontraktor: h.kontraktor || '', cuaca: h.cuaca || '', category_id: h.category_id || '', ctgunit: h.ctgunit || '', notes: h.notes || '' })
+      setHeader({ date_ops: h.date_ops || moment().format('YYYY-MM-DD'), shift_id: String(h.shift_id || '1'), area: '', cabang_id: String(h.cabang_id || ''), lokasi_site_id: String(h.lokasi_site_id || ''), lokasi_site_nama: h.lokasi_site_nama || '', lokasi_pit_id: String(h.lokasi_pit_id || ''), lokasi_pit_nama: h.lokasi_pit_nama || '', kontraktor: h.kontraktor || '', cuaca: h.cuaca || '', category_id: h.category_id || '', ctgunit: h.ctgunit || '', notes: h.notes || '' })
       setBatches(groupDetail(source.items || []))
     }).catch((error) => Alert.alert('Gagal', String(error))).finally(() => setInitializing(false))
   }, [dispatch, editId])
 
+  useEffect(() => {
+    if (header.area || !branches.length) return
+    const branch = branches.find((item) => String(item.id) === String(header.cabang_id))
+    if (!branch?.area) return
+    setHeader((prev) => prev.area ? prev : { ...prev, area: String(branch.area) })
+  }, [header.area, header.cabang_id, branches])
+
+  useEffect(() => {
+    if (!header.area) { setPlacementOptions({ sites: [], pits: [], equipments: [] }); return }
+    let active = true
+    setPlacementLoading(true)
+    apiClient.get(API_ENDPOINTS.DAILY_ACTIVITY.OPTIONS, { params: { area: header.area, lokasi_site_id: header.lokasi_site_id } })
+      .then((response) => {
+        if (!active) return
+        const payload = response.data?.data || response.data?.rows || response.data || {}
+        const siteRows = normalize(payload.sites)
+        const pitRows = normalize(payload.pits)
+        const equipmentRows = normalize(payload.equipments)
+        console.log('[DailyActivityForm] options response payload:', JSON.stringify({ area: header.area, siteCount: siteRows.length, pitCount: pitRows.length, equipmentCount: equipmentRows.length }))
+        setPlacementOptions({
+          sites: siteRows.map((x) => option(x, 'site')),
+          pits: pitRows.map((x) => option(x, 'pit')),
+          equipments: equipmentRows.map((x) => option(x, 'equipment')),
+        })
+      })
+      .catch(() => { if (active) setPlacementOptions({ sites: [], pits: [], equipments: [] }) })
+      .finally(() => { if (active) setPlacementLoading(false) })
+    return () => { active = false }
+  }, [header.area, header.lokasi_site_id])
+
+  const areaOptions = useMemo(() => {
+    const areas = [...new Set(branches.map((item) => String(item.area || '').trim()).filter(Boolean))].sort()
+    return areas.map((area) => ({ id: area, nama: area }))
+  }, [branches])
+
   const options = useMemo(() => ({
-    equipment: normalize(masters.equipment?.data).map((x) => option(x, 'equipment')),
-    site: normalize(masters.sites?.data).map((x) => option(x, 'site')),
-    pit: normalize(masters.pits?.data).map((x) => option(x, 'pit')),
+    equipment: header.area ? placementOptions.equipments : normalize(masters.equipment?.data).map((x) => option(x, 'equipment')),
+    site: header.area ? placementOptions.sites : [],
+    pit: header.area ? placementOptions.pits : [],
     kegiatan: normalize(masters.activities?.data).map((x) => option(x, 'kegiatan')),
     material: normalize(masters.materials?.data).map((x) => option(x, 'material')),
     pengawas: normalize(masters.supervisors?.data).map((x) => option(x, 'pengawas')),
     operator: normalize(masters.operators?.data).map((x) => option(x, 'operator')),
     shift: [{ id: '1', nama: 'Shift Pagi' }, { id: '2', nama: 'Shift Malam' }],
-  }), [masters])
-  const allowedEquipment = useMemo(() => options.equipment.filter((x) => {
-    const category = String(x.raw?.kategori || x.raw?.ctg || '').toUpperCase()
-    if (header.ctgunit === 'HE' && category && category !== 'HE') return false
-    if (header.ctgunit === 'DT' && category && category !== 'DT') return false
-    if (String(header.ctgunit).toUpperCase() === 'DRILL' && category && !['AD', 'MD', 'DRILL'].includes(category)) return false
-    return true
-  }), [options.equipment, header.ctgunit])
+  }), [masters, placementOptions, header.area])
+  const allowedEquipment = useMemo(() => {
+    const seen = new Set()
+    return options.equipment.filter((x) => {
+      if (seen.has(x.id)) return false
+      seen.add(x.id)
+      const category = String(x.raw?.kategori || x.raw?.ctg || '').toUpperCase()
+      if (header.ctgunit === 'HE' && category && category !== 'HE') return false
+      if (header.ctgunit === 'DT' && category && category !== 'DT') return false
+      if (String(header.ctgunit).toUpperCase() === 'DRILL' && category && !['AD', 'MD', 'DRILL'].includes(category)) return false
+      return true
+    })
+  }, [options.equipment, header.ctgunit])
   const usedElsewhere = useMemo(() => new Set(batches.filter((x) => x.id !== editingBatchId).flatMap((x) => x.equipment_ids.map(String))), [batches, editingBatchId])
   const selectedEquipment = draft.equipment_ids.map((id) => allowedEquipment.find((x) => x.id === String(id))).filter(Boolean)
-  const patchHeader = (key, value, selected) => setHeader((prev) => ({ ...prev, [key]: value || '', ...(key === 'lokasi_site_id' ? { lokasi_site_nama: selected?.nama || '' } : {}), ...(key === 'lokasi_pit_id' ? { lokasi_pit_nama: selected?.nama || '' } : {}) }))
+  const patchHeader = (key, value, selected) => setHeader((prev) => {
+    if (key === 'area') return { ...prev, area: value || '', cabang_id: '', lokasi_site_id: '', lokasi_site_nama: '', lokasi_pit_id: '', lokasi_pit_nama: '' }
+    if (key === 'lokasi_site_id') return { ...prev, lokasi_site_id: value || '', lokasi_site_nama: selected?.nama || '' }
+    if (key === 'lokasi_pit_id') return { ...prev, lokasi_pit_id: value || '', lokasi_pit_nama: selected?.nama || '', cabang_id: selected?.raw?.cabang_id || prev.cabang_id }
+    return { ...prev, [key]: value || '' }
+  })
   const patchDraft = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }))
   const chooseNamed = (key, nameKey, value, list) => { const selected = list.find((x) => x.id === String(value)); setDraft((prev) => ({ ...prev, [key]: value || '', [nameKey]: selected?.nama || '' })) }
   const setStatus = (value) => {
@@ -154,7 +206,7 @@ export default function DailyActivityForm({ editId }) {
   }
   const editBatch = (batch) => { setEditingBatchId(batch.id); setActiveStatus(batch.status); setDraft({ ...batch, equipment_ids: [...batch.equipment_ids], equipment_assignments: { ...batch.equipment_assignments } }) }
   const validateAll = () => {
-    if (!header.date_ops || !header.shift_id || !header.lokasi_site_id || !header.lokasi_pit_id || !header.kontraktor.trim() || !header.cuaca || !header.category_id || !header.ctgunit) return 'Lengkapi seluruh informasi umum yang wajib'
+    if (!header.date_ops || !header.shift_id || !header.area || !header.lokasi_site_id || !header.lokasi_pit_id || !header.kontraktor.trim() || !header.cuaca || !header.category_id || !header.ctgunit) return 'Lengkapi seluruh informasi umum yang wajib'
     if (!batches.length) return 'Tambahkan minimal 1 batch status'
     const ids = batches.flatMap((x) => x.equipment_ids.map(String)); if (new Set(ids).size !== ids.length) return 'Equipment harus unik di seluruh status'
     return ''
@@ -162,7 +214,7 @@ export default function DailyActivityForm({ editId }) {
   const payloadBatches = () => batches.map((batch) => ({ status: batch.status, sequence: batch.sequence, start_time: moment(batch.start_time).format('YYYY-MM-DD HH:mm:ss'), finish_time: moment(batch.finish_time).format('YYYY-MM-DD HH:mm:ss'), kegiatan_id: batch.kegiatan_id, kegiatan_name: batch.kegiatan_name, material_id: batch.material_id, material_name: batch.material_name, pengawas_id: batch.pengawas_id, pengawas_name: batch.pengawas_name, issue_breakdown: batch.issue_breakdown, note: batch.note, equipment_ids: batch.equipment_ids, equipment_assignments: batch.equipment_assignments }))
   const submit = async () => {
     const error = validateAll(); if (error) return Alert.alert('Validasi', error)
-    const headerPayload = { ...header, shift_id: Number(header.shift_id), author_id: employee?.id || 0, cabang_id: employee?.cabang_id || employee?.cabang?.id || 0 }
+    const headerPayload = { ...header, shift_id: Number(header.shift_id), author_id: employee?.id || 0, cabang_id: header.cabang_id ? Number(header.cabang_id) : null }
     try {
       if (editId) await dispatch(updateDailyActivity({ id: editId, header: headerPayload, batches: payloadBatches() })).unwrap()
       else await dispatch(createDailyActivity({ ...headerPayload, items: payloadBatches() })).unwrap()
@@ -180,8 +232,9 @@ export default function DailyActivityForm({ editId }) {
       <View style={{ padding: 14, borderRadius: 18, backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }}><Text style={{ color: theme.text, fontFamily: 'Poppins-Bold', fontSize: 17 }}>Informasi Umum</Text><Text style={{ color: theme.muted, fontSize: 12, marginBottom: 14 }}>Header berlaku untuk semua batch status</Text>
         <Label>Tanggal Operasional *</Label><TouchableOpacity onPress={() => setTimeField('date_ops')} style={{ ...fieldStyle, flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}><Text style={{ color: theme.text }}>{moment(header.date_ops).format('DD MMMM YYYY')}</Text><Calendar size={18} color={theme.primary} /></TouchableOpacity>
           <BottomSheetSelect label="Shift *" placeholder="Pilih shift" value={header.shift_id} options={options.shift} onChange={(v) => patchHeader('shift_id', v)} /><View style={{ height: 10 }} />
-        <BottomSheetSelect label="Site Penyewa *" placeholder="Pilih site" value={header.lokasi_site_id} options={options.site} onChange={(v, selected) => patchHeader('lokasi_site_id', v, selected || options.site.find((x) => x.id === String(v)))} /><View style={{ height: 10 }} />
-        <BottomSheetSelect label="Lokasi Pit *" placeholder="Pilih pit" value={header.lokasi_pit_id} options={options.pit} onChange={(v, selected) => patchHeader('lokasi_pit_id', v, selected || options.pit.find((x) => x.id === String(v)))} /><View style={{ height: 10 }} />
+        <BottomSheetSelect label="Area Cabang *" placeholder="Pilih area cabang" value={header.area} options={areaOptions} onChange={(v) => patchHeader('area', v)} /><View style={{ height: 10 }} />
+        <BottomSheetSelect label="Site Penyewa *" placeholder={header.area ? 'Pilih site' : 'Pilih area terlebih dahulu'} value={header.lokasi_site_id} options={options.site} onChange={(v, selected) => patchHeader('lokasi_site_id', v, selected || options.site.find((x) => x.id === String(v)))} /><View style={{ height: 10 }} />
+        <BottomSheetSelect label="Lokasi Pit *" placeholder={header.area ? 'Pilih pit' : 'Pilih area terlebih dahulu'} value={header.lokasi_pit_id} options={options.pit} onChange={(v, selected) => patchHeader('lokasi_pit_id', v, selected || options.pit.find((x) => x.id === String(v)))} /><View style={{ height: 10 }} />
         <BottomSheetSelect label="Kontraktor Mining *" placeholder="Pilih kontraktor" value={contractors.find((item) => item.nama === header.kontraktor)?.id || ''} options={contractors} onChange={(v) => patchHeader('kontraktor', contractors.find((item) => item.id === String(v))?.nama || '')} /><View style={{ height: 10 }} />
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
           <View style={{ flex: 1 }}>

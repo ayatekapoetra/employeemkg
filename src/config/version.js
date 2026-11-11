@@ -21,7 +21,7 @@ export const APP_VERSION = process.env.EXPO_PUBLIC_APP_VERSION || '1.2.33';
 export const BUILD_NUMBER = process.env.EXPO_PUBLIC_BUILD_NUMBER || '39';
 
 // OTA revision marker independent from binary build/runtime version
-export const OTA_UPDATE_VERSION = process.env.EXPO_PUBLIC_OTA_UPDATE_VERSION || '1';
+export const OTA_UPDATE_VERSION = process.env.EXPO_PUBLIC_OTA_UPDATE_VERSION || '43';
 
 // OTA channel marker for environment/build identification
 export const OTA_CHANNEL = process.env.EXPO_PUBLIC_OTA_CHANNEL || 'proemployeeapp';
@@ -82,6 +82,8 @@ export const getVersionInfo = () => ({
  * - 1.2.26 (26): Pengawas data integration
  */
 export const VERSION_HISTORY = [
+  { version: '1.2.33', build: '39', ota: '43', date: '2026-10-22', notes: 'penambahan fitur approval purchase order; runtime disesuaikan dengan aplikasi store 1.2.33' },
+  { version: '1.2.34', build: '39', ota: '42', date: '2026-10-22', notes: 'penambahan fitur approval purchase order' },
   { version: '1.2.33', build: '39', ota: '1', date: '2026-08-06', notes: 'Notification inbox and Android release bump' },
   { version: '1.2.32', build: '35', ota: '1', date: '2026-07-22', notes: 'Android versionCode bump for Play Store upload' },
   { version: '1.2.31', build: '32', ota: '1', date: '2026-06-12', notes: 'OTA marker bump for latest update delivery' },

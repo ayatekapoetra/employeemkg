@@ -95,7 +95,7 @@ module.exports = ({ config }) => {
       // App version configuration
       EXPO_PUBLIC_APP_VERSION: process.env.EXPO_PUBLIC_APP_VERSION || '1.2.33',
       EXPO_PUBLIC_BUILD_NUMBER: process.env.EXPO_PUBLIC_BUILD_NUMBER || '39',
-      EXPO_PUBLIC_OTA_UPDATE_VERSION: process.env.EXPO_PUBLIC_OTA_UPDATE_VERSION || '1',
+      EXPO_PUBLIC_OTA_UPDATE_VERSION: process.env.EXPO_PUBLIC_OTA_UPDATE_VERSION || '43',
       EXPO_PUBLIC_OTA_CHANNEL: process.env.EXPO_PUBLIC_OTA_CHANNEL || 'proemployeeapp',
 
       // Optional: Google Maps API Keys
